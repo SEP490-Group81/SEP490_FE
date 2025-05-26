@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { Button, Layout } from 'antd';
 import "./style.scss";
-import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined } from '@ant-design/icons';
+import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined,MenuOutlined } from '@ant-design/icons';
 import { Menu } from "antd";
 
 const { SubMenu } = Menu;
@@ -37,7 +37,10 @@ function LayoutCommon() {
 
                     </div>
                     <div className="header__content__bottom">
-                        <Menu mode="horizontal">
+                        <Menu
+                         mode="horizontal" 
+                        overflowedIndicator= {<MenuOutlined/>}
+                        >
                             <Menu.Item key="support">
                                 <a href="/">Hỗ trợ đặt khám</a>
                             </Menu.Item>
