@@ -2,12 +2,12 @@ import { Layout } from "antd";
 import { Content, Header } from "antd/es/layout/layout";
 import Sider from "antd/es/layout/Sider";
 import "./LayoutDefault.css";
-import logo from "./logo/logo.png";
-import logo_fold from "./logo/logo-fold.png";
+import logo from "../common/logo/logo.png";
+import logo_fold from "../common/logo/logo-fold.png";
 import {SearchOutlined, MenuFoldOutlined} from '@ant-design/icons';
 import { useState } from "react";
-import Notify from "../../components/Notify";
-import MenuSider from "../../components/MenuSider";
+import Notify from "../Notify";
+import MenuSider from "../MenuSider";
 import { Link, NavLink, Outlet } from "react-router-dom";
 function LayoutCommon() {
     const[collapsed, setCallapsed] = useState(false);

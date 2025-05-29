@@ -1,11 +1,10 @@
 import { Col, Collapse, Row } from 'antd';
 import CardItem from "./CardItem";
 import Panel from 'antd/es/splitter/Panel';
-function Admin() {
+function Item() {
     return (
         <>
         
-     
             <Row gutter={[16, 16]}>
                 <Col xl={6} lg={12} md={24} xs={24}>
                     <CardItem title="Box-1" />
@@ -56,4 +55,4 @@ function Admin() {
     )
 }
 
-export default Admin;
+export default Item;

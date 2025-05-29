@@ -13,13 +13,16 @@
     margin: auto;
 
     &__logo {
-        color: rgb(246, 70, 70);
-        font-weight: 700;
-        font-size: 40px;
+  
         padding: 0px 20px;
         display: flex;
         justify-content: center;
         align-items: center;
+
+        img{
+            width: 140px;
+            height: auto;
+        }
     }
 
 

@@ -3,7 +3,7 @@ import { Button, Layout } from 'antd';
 import "./style.scss";
 import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined,MenuOutlined } from '@ant-design/icons';
 import { Menu } from "antd";
-
+import logo from "../common/Logo/dabs-logo.png"
 const { SubMenu } = Menu;
 const { Header, Footer } = Layout;
 function LayoutCommon() {
@@ -12,7 +12,7 @@ function LayoutCommon() {
             <Header className="header">
 
                 <div className="header__logo">
-                    DABS
+                    <img alt="logo" src={logo}></img>
                 </div>
                 <div className="header__content">
                     <div className="header__content__top">
