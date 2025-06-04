@@ -124,7 +124,6 @@ function LayoutCommon() {
                 Ant Design ©{new Date().getFullYear()} Created by G81
             </Footer>
         </Layout>
-        <Outlet />
     </>
 }
 
