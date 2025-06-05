@@ -1,11 +1,11 @@
 
 import { Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
-import Login from "../pages/Login";
-import LayoutCommon from "../components/LayoutCommon";
-import Home from "../pages/Home";
-import Register from "../pages/Register";
-import Appointment from "../pages/Appointment";
+import Login from "../../pages/Login";
+import LayoutCommon from "../../components/LayoutCommon";
+import Home from "../../pages/Home";
+import Register from "../../pages/Register";
+import Appointment from "../../pages/Appointment";
 
 export const routes = [
   //public
