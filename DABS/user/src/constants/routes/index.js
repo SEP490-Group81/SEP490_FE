@@ -6,7 +6,7 @@ import LayoutCommon from "../../components/LayoutCommon";
 import Home from "../../pages/Home";
 import Register from "../../pages/Register";
 import Appointment from "../../pages/Appointment";
-
+import ErrorPage from "../../pages/Error";
 export const routes = [
   //public
   {
@@ -24,6 +24,10 @@ export const routes = [
       {
         path: "register",
         element: <Register />
+      },
+      {
+        path:"unauthorized",
+        element: <ErrorPage />
       },
       {
         path: "job/:id",

@@ -9,7 +9,7 @@ function Home() {
     const onSearch = (value, _e, info) =>
         console.log(info === null || info === void 0 ? void 0 : info.source, value);
     return <>
-        <Row justify="center" style={{ marginBottom: 20 }}>
+        <Row justify="center" style={{ marginBottom: 20 , marginTop : 50}}>
             <Col className="gutter-row" span={12} style={{ textAlign: 'center' }}>
                 <h1>Kết nối Người Dân với Cơ sở & Dịch vụ Y tế hàng đầu</h1>
             </Col>

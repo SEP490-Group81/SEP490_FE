@@ -3,7 +3,7 @@ import { Button, Layout } from 'antd';
 import "./style.scss";
 import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined,MenuOutlined } from '@ant-design/icons';
 import { Menu } from "antd";
-import logo from "../common/Logo/dabs-logo.png"
+import logo from "../../assets/images/dabs-logo.png"
 const { SubMenu } = Menu;
 const { Header, Footer } = Layout;
 function LayoutCommon() {
