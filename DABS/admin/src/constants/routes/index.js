@@ -3,8 +3,8 @@
 // import CreateRoom from "../Pages/CreateRoom";
 // import Dashboard from "../Pages/Dashboard";
 // import ListRoom from "../Pages/ListRoom";
-import LayoutCommon from "../components/LayoutCommon";
-import Dashboard from "../pages/Dashboard";
+import LayoutCommon from "../../components/LayoutCommon";
+import Dashboard from "../../pages/Dashboard";
 
 export const routes = [
   {
