@@ -1,5 +1,5 @@
 import axios from 'axios';
-const API_DOMAIN = "http://localhost:3002/";
+import { API_DOMAIN } from '../constants/api/api';
 
 export const get = async (path) => {
     const response = await axios.get(API_DOMAIN + path);
