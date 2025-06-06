@@ -8,6 +8,8 @@ import Register from "../../pages/Register";
 import Appointment from "../../pages/Appointment";
 import ErrorPage from "../../pages/Error";
 import BlankLayout from "../../components/BlankLayout";
+import ForgetPassword from "../../pages/ForgetPassword";
+import NewPassword from "../../pages/NewPassword";
 export const routes = [
   //public
   {
@@ -17,10 +19,6 @@ export const routes = [
       {
         index: true,
         element: <Home />
-      },
-      {
-        path: "register",
-        element: <Register />
       },
       {
         path: "unauthorized",
@@ -49,7 +47,19 @@ export const routes = [
       {
         index: true,
         element: <Login />
-      }
+      },
+      {
+        path: "register",
+        element: <Register />
+      },
+      {
+        path: "forget-password",
+        element: <ForgetPassword />
+      },
+      {
+        path: "new-password",
+        element: <NewPassword />
+      },
     ]
   },
   // bác sĩ hoặc quản lý nếu phải tách riêng

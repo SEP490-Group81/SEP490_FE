@@ -2,22 +2,22 @@ import React from "react";
 import { Form, Input, Button, Typography, Card, Space } from "antd";
 import { UserOutlined, LockOutlined, HomeOutlined } from "@ant-design/icons";
 import logo from "../../assets/images/dabs-logo.png"
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 const { Title } = Typography;
 
-function Login() {
+function ForgetPassword() {
     const navigate = useNavigate();
     const onFinish = (values) => {
-        // handle login logic here
+        // handle forget password logic here
         console.log("Received values: ", values);
+        // You might want to call an API to send reset email here
     };
 
     return (
-
         <Card
             style={{
                 width: 400,
-                height: 500,
+                minHeight: 500,
                 borderRadius: 16,
                 boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
                 marginRight: 0,
@@ -26,13 +26,13 @@ function Login() {
             }}
         >
             <div style={{ textAlign: "center", marginBottom: 24 }}>
-                <img src={logo} alt="logo" style={{ width: 100, marginBottom: -20, marginTop: -40 }} />
+                <img src={logo} alt="logo" style={{ width: 100, marginBottom: -20 }} />
                 <Title level={2} style={{ color: "#1890ff", margin: 0 }}>
-                    Đăng nhập DABS
+                    Quên mật khẩu
                 </Title>
-                <div style={{ color: "#888" }}>Đăng nhập vào hệ thống bệnh viện</div>
+                <div style={{ color: "#888" }}>Nhập email để lấy lại mật khẩu</div>
             </div>
-            <Form name="login" onFinish={onFinish} layout="vertical">
+            <Form name="forget-password" onFinish={onFinish} layout="vertical">
                 <Form.Item
                     name="email"
                     label="Email"
@@ -47,17 +47,6 @@ function Login() {
                         size="large"
                     />
                 </Form.Item>
-                <Form.Item
-                    name="password"
-                    label="Mật khẩu"
-                    rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
-                >
-                    <Input.Password
-                        prefix={<LockOutlined />}
-                        placeholder="Nhập mật khẩu"
-                        size="large"
-                    />
-                </Form.Item>
                 <Form.Item>
                     <Button
                         type="primary"
@@ -66,13 +55,30 @@ function Login() {
                         size="large"
                         style={{ borderRadius: 6, background: "#1890ff" }}
                     >
-                        Đăng nhập
+                        Gửi yêu cầu đặt lại mật khẩu
                     </Button>
                 </Form.Item>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                   <Link to="/login/forget-password"  style={{color: "#1890ff" }}>Quên mật khẩu?</Link>
-                    <Link to="/login/register"  style={{color: "#1890ff" }}>Đăng ký</Link>
-                  
+                    <a
+                        href="#"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            navigate('/login');
+                        }}
+                        style={{ color: "#1890ff" }}
+                    >
+                        Đăng nhập
+                    </a>
+                    <a
+                        href="#"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            navigate('/login/register');
+                        }}
+                        style={{ color: "#1890ff" }}
+                    >
+                        Đăng ký
+                    </a>
                 </div>
             </Form>
             <Button
@@ -85,8 +91,7 @@ function Login() {
                 Quay về trang chính
             </Button>
         </Card>
-
     );
 }
 
-export default Login;
+export default ForgetPassword;
