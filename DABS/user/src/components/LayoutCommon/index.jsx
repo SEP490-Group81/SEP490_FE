@@ -4,9 +4,11 @@ import "./style.scss";
 import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined,MenuOutlined } from '@ant-design/icons';
 import { Menu } from "antd";
 import logo from "../../assets/images/dabs-logo.png"
+import { useNavigate } from 'react-router-dom';
 const { SubMenu } = Menu;
 const { Header, Footer } = Layout;
 function LayoutCommon() {
+    const navigate = useNavigate();
     return <>
         <Layout className="layout-default">
             <Header className="header">
@@ -31,7 +33,7 @@ function LayoutCommon() {
                         </div>
                         <div className="header__content__top__wrapper">
                             <div className="header__content__top__wrapper__account">
-                                <Button type="primary"><UserOutlined />Tài khoản</Button>
+                                <Button onClick={() => navigate('/login')} type="primary"><UserOutlined />Tài khoản</Button>
                             </div>
                         </div>
 

@@ -7,6 +7,7 @@ import Home from "../../pages/Home";
 import Register from "../../pages/Register";
 import Appointment from "../../pages/Appointment";
 import ErrorPage from "../../pages/Error";
+import BlankLayout from "../../components/BlankLayout";
 export const routes = [
   //public
   {
@@ -18,15 +19,11 @@ export const routes = [
         element: <Home />
       },
       {
-        path: "login",
-        element: <Login />
-      },
-      {
         path: "register",
         element: <Register />
       },
       {
-        path:"unauthorized",
+        path: "unauthorized",
         element: <ErrorPage />
       },
       {
@@ -41,48 +38,59 @@ export const routes = [
         path: "*",
         element: <Navigate to="/" />
       },
+
+    ]
+
+  },
+  {
+    path: "/login",
+    element: <BlankLayout />,
+    children: [
+      {
+        index: true,
+        element: <Login />
+      }
     ]
   },
-
   // bác sĩ hoặc quản lý nếu phải tách riêng
 
-//   {
-//     element: <PrivateRoute />,
-//     children: [
-//       {
-//         element: <LayoutAdmin />,
-//         children: [
-//           {
-//             path: "admin",
-//             element: <Dashboard />
-//           },
-//           {
-//             path: "info-company",
-//             element: <InfoCompany />
-//           },
-//           {
-//             path: "job-mangage",
-//             element: <JobManage />
-//           },
-//           {
-//             path: "create-job",
-//             element: <CreateJob />
-//           },
-//           {
-//             path: "detail-job/:id",
-//             element: <JobDetailAdmin />
-//           },
-//           {
-//             path: "cv-manage",
-//             element: <CVManage />
-//           },
-//           {
-//             path: "detail-cv/:id",
-//             element: <CVDetail />
-//           },
-//         ]
-//       }
-//     ]
-//   }
+  //   {
+  //     element: <PrivateRoute />,
+  //     children: [
+  //       {
+  //         element: <LayoutAdmin />,
+  //         children: [
+  //           {
+  //             path: "admin",
+  //             element: <Dashboard />
+  //           },
+  //           {
+  //             path: "info-company",
+  //             element: <InfoCompany />
+  //           },
+  //           {
+  //             path: "job-mangage",
+  //             element: <JobManage />
+  //           },
+  //           {
+  //             path: "create-job",
+  //             element: <CreateJob />
+  //           },
+  //           {
+  //             path: "detail-job/:id",
+  //             element: <JobDetailAdmin />
+  //           },
+  //           {
+  //             path: "cv-manage",
+  //             element: <CVManage />
+  //           },
+  //           {
+  //             path: "detail-cv/:id",
+  //             element: <CVDetail />
+  //           },
+  //         ]
+  //       }
+  //     ]
+  //   }
 ];
 
