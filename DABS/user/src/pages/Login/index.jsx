@@ -3,13 +3,16 @@ import { Form, Input, Button, Typography, Card, Space } from "antd";
 import { UserOutlined, LockOutlined, HomeOutlined } from "@ant-design/icons";
 import logo from "../../assets/images/dabs-logo.png"
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch } from "react-redux";
+import { setMessage } from "../../redux/slices/messageSlice";
 const { Title } = Typography;
 
 function Login() {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const onFinish = (values) => {
-        // handle login logic here
-        console.log("Received values: ", values);
+        dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
+        navigate('/');
     };
 
     return (
@@ -34,16 +37,16 @@ function Login() {
             </div>
             <Form name="login" onFinish={onFinish} layout="vertical">
                 <Form.Item
-                    name="email"
-                    label="Email"
+                    name="phoneNumber"
+                    label="Số điện thoại"
                     rules={[
-                        { required: true, message: "Vui lòng nhập email!" },
-                        { type: "email", message: "Email không hợp lệ!" }
+                        { required: true, message: "Vui lòng nhập số điện thoại!" },
+                        { pattern: /^0[0-9]{9}$/, message: "Số điện thoại không hợp lệ!" }
                     ]}
                 >
                     <Input
                         prefix={<UserOutlined />}
-                        placeholder="Nhập email"
+                        placeholder="Nhập số điện thoại"
                         size="large"
                     />
                 </Form.Item>
@@ -70,9 +73,9 @@ function Login() {
                     </Button>
                 </Form.Item>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                   <Link to="/login/forget-password"  style={{color: "#1890ff" }}>Quên mật khẩu?</Link>
-                    <Link to="/login/register"  style={{color: "#1890ff" }}>Đăng ký</Link>
-                  
+                    <Link to="/login/forget-password" style={{ color: "#1890ff" }}>Quên mật khẩu?</Link>
+                    <Link to="/login/register" style={{ color: "#1890ff" }}>Đăng ký</Link>
+
                 </div>
             </Form>
             <Button

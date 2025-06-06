@@ -34,16 +34,16 @@ function Register() {
                 <Form name="register" onFinish={onFinish} layout="vertical">
 
                     <Form.Item
-                        name="email"
-                        label="Email"
+                        name="phoneNumber"
+                        label="Số điện thoại"
                         rules={[
-                            { required: true, message: "Vui lòng nhập email!" },
-                            { type: "email", message: "Email không hợp lệ!" }
+                            { required: true, message: "Vui lòng nhập số điện thoại!" },
+                            { pattern: /^0[0-9]{9}$/, message: "Số điện thoại không hợp lệ!" }
                         ]}
                     >
                         <Input
                             prefix={<UserOutlined />}
-                            placeholder="Nhập email"
+                            placeholder="Nhập số điện thoại"
                             size="large"
                         />
                     </Form.Item>
