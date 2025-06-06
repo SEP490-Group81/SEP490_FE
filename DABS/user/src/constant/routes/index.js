@@ -10,6 +10,7 @@ import ErrorPage from "../../pages/Error";
 import BlankLayout from "../../components/BlankLayout";
 import ForgetPassword from "../../pages/ForgetPassword";
 import NewPassword from "../../pages/NewPassword";
+
 export const routes = [
   //public
   {
