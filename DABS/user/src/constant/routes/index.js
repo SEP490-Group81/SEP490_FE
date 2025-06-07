@@ -11,6 +11,7 @@ import BlankLayout from "../../components/BlankLayout";
 import ForgetPassword from "../../pages/ForgetPassword";
 import NewPassword from "../../pages/NewPassword";
 import CreateProfile from "../../pages/UserProfile/Create";
+import UserAccount from "../../pages/UserAccount";
 
 export const routes = [
   //public
@@ -25,10 +26,14 @@ export const routes = [
       {
         path: "unauthorized",
         element: <ErrorPage />
-      }, 
+      },
       {
         path: "create-profile",
         element: <CreateProfile />
+      },
+      {
+        path: "account",
+        element: <UserAccount />
       },
       {
         path: "job/:id",
