@@ -126,7 +126,7 @@ function CreateProfile() {
                     name="email"
                     label={<span style={{ fontSize: "17px", fontWeight: "bold" }}>Địa chỉ Email</span>}
                     rules={[
-                      { required: true, message: "Vui lòng nhập email!" },
+                      {  message: "Vui lòng nhập email!" },
                       { type: "email", message: "Email không hợp lệ!" },
                     ]}
                   >
