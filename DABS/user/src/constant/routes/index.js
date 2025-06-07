@@ -11,7 +11,8 @@ import BlankLayout from "../../components/BlankLayout";
 import ForgetPassword from "../../pages/ForgetPassword";
 import NewPassword from "../../pages/NewPassword";
 import CreateProfile from "../../pages/UserProfile/Create";
-import UserAccount from "../../pages/UserAccount";
+import UserAccount from "../../pages/UserAccount/Detail";
+import ChangePassword from "../../pages/UserAccount/ChangePassword";
 
 export const routes = [
   //public
@@ -34,6 +35,10 @@ export const routes = [
       {
         path: "account",
         element: <UserAccount />
+      }, 
+      {
+        path: "change-password",
+        element: <ChangePassword />
       },
       {
         path: "job/:id",
