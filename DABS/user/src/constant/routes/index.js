@@ -33,9 +33,16 @@ export const routes = [
         element: <CreateProfile />
       },
       {
+
         path: "account",
-        element: <UserAccount />
-      }, 
+
+        element:
+          // <ProtectedRoute allowedRoles={['user']}>
+            <UserAccount />
+          // </ProtectedRoute>
+
+
+      },
       {
         path: "change-password",
         element: <ChangePassword />
