@@ -32,8 +32,9 @@ function Login() {
 
             console.log("Token data: ", tokenData);
             dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
-
-            navigate('/');
+            setTimeout(() => {
+                navigate('/');
+            }, 800);
         } catch (error) {
             console.error("Login failed: ", error);
             dispatch(setMessage({ type: 'error', content: 'Đăng nhập thất bại. Vui lòng thử lại!' }));
