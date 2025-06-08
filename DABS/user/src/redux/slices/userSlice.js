@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { deleteCookie, setCookie } from '../../utils/cookieSettings';
 import { checkUserCredentials } from '../../services/loginServices';
+import { deleteCookie, storeTokens } from '../../utils/cookieSettings';
+import { fetchToken } from '../../services/auth';
 
 
 
@@ -8,12 +9,11 @@ export const loginUser = createAsyncThunk(
     'auth/loginUser',
     async ({ email, password }, { rejectWithValue }) => {
         try {
-            const result = await checkUserCredentials(email, password);
-
-            if (result.success) {
-                return result.user;
+            const tokenData = await fetchToken(email, password);
+            if (tokenData?.token && tokenData?.refreshToken && tokenData?.refreshTokenExpiryTime) {
+                return tokenData;
             } else {
-                return rejectWithValue(result.message);
+                return rejectWithValue('Invalid login response');
             }
         } catch (error) {
             return rejectWithValue(error.message);
@@ -36,7 +36,8 @@ const authSlice = createSlice({
             state.token = null;
             state.isInitializing = false;
             localStorage.clear();
-            deleteCookie('user');
+            deleteCookie('token');
+            deleteCookie('refreshToken');
         },
         restoreSession: (state, action) => {
             state.user = action.payload.user;
@@ -49,16 +50,23 @@ const authSlice = createSlice({
             .addCase(loginUser.pending, (state) => {
                 state.isLoading = true;
                 state.error = null;
-                
+
             })
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.user = action.payload;
                 state.token = action.payload.token;
+                state.refreshToken = action.payload.refreshToken;
+                state.refreshTokenExpiryTime = action.payload.refreshTokenExpiryTime;
+               
                 localStorage.setItem('token', action.payload.token);
-                localStorage.setItem('user', action.payload);
-                const time = 0.01;
-                setCookie("user", action.payload, time);
+                localStorage.setItem('refreshToken', action.payload.refreshToken);
+                localStorage.setItem('refreshTokenExpiryTime', action.payload.refreshTokenExpiryTime);
+
+                storeTokens(
+                    action.payload.token,
+                    action.payload.refreshToken,
+                    action.payload.refreshTokenExpiryTime
+                );
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.isLoading = false;
