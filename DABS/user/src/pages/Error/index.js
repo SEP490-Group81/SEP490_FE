@@ -14,7 +14,7 @@ function ErrorPage() {
             justify="center"
             align="middle"
             style={{
-                minHeight: '74.2vh',
+                minHeight: '76vh',
                 margin: 0,
                 background: '#D4F1EF',
             }}
