@@ -1,0 +1,44 @@
+.ant-carousel .slick-dots li button {
+  background: #d9d9d9;
+}
+
+.ant-carousel .slick-dots li.slick-active button {
+  background: #1890ff;
+}
+
+.ant-carousel .slick-dots-bottom {
+  bottom: -20px;
+}
+
+.medical-facilities {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 20px;
+  margin-top: 20px;
+
+  .facility-card {
+    width: 23%; // Chiếm khoảng 1/4 chiều rộng (để có 4 card/hàng)
+    min-width: 250px;
+    margin-bottom: 0;
+    transition: transform 0.3s;
+
+    &:hover {
+      transform: translateY(-5px);
+    }
+  }
+}
+
+// Responsive styling
+@media (max-width: 992px) {
+  .medical-facilities {
+    overflow-x: auto;
+    padding-bottom: 20px;
+
+    .facility-card {
+      min-width: 250px;
+      flex: 0 0 auto;
+    }
+  }
+}
