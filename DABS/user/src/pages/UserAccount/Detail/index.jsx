@@ -182,7 +182,7 @@ function UserAccount() {
                                             size="large"
                                             htmlType="button"
                                         >
-                                            <Link to="/login/forget-password" style={{ color: "#fff" }}>Đổi mật khẩu</Link>
+                                            <Link to="/change-password" style={{ color: "#fff" }}>Đổi mật khẩu</Link>
                                         </Button>
                                     </Form.Item>
                                 </Col>

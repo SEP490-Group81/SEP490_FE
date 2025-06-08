@@ -7,22 +7,26 @@ export const get = async (path) => {
     const result = response.data;
     return result;
 }
- 
+
 export const post = async (path, options) => {
     try {
         const response = await axios.post(
             API_DOMAIN + path,
-            options, 
+            options,
             {
                 headers: {
                     "Content-Type": "application/json"
                 }
             }
         );
-        return response.data; 
+        return response.data;
     } catch (error) {
-        console.error("Error in POST request:", error);
-        throw error; 
+        if (error.response) {
+            console.error("Error response from server:", error.response.data);
+        } else {
+            console.error("Error in POST request:", error.message);
+        }
+        throw error;
     }
 };
 
@@ -31,7 +35,7 @@ export const register = async (options) => {
     return result;
 }
 
-export const checkExist = async(key,value) => {
+export const checkExist = async (key, value) => {
     const result = await get(`users?${key}=${value}`);
     return result;
 }
