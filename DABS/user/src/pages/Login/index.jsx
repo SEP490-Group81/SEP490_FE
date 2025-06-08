@@ -6,6 +6,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { clearMessage, setMessage } from "../../redux/slices/messageSlice";
 import { fetchToken } from "../../services/auth";
+import { storeTokens } from "../../utils/cookieSettings";
+import { loginUser } from "../../redux/slices/userSlice";
 const { Title } = Typography;
 
 function Login() {
@@ -23,23 +25,34 @@ function Login() {
             dispatch(clearMessage());
         }
     }, [messageState, dispatch]);
-    const onFinish = async (values) => {
+ const onFinish = async (values) => {
+    try {
+        console.log("Received values: ", values);
 
-        try {
-            console.log("Received values: ", values);
+        const resultAction = await dispatch(loginUser({ email: values.email, password: values.password }));
 
-            const tokenData = await fetchToken(values.email, values.password);
+        if (loginUser.fulfilled.match(resultAction)) {
+            const tokenData = resultAction.payload;
+            if (tokenData?.token && tokenData?.refreshToken && tokenData?.refreshTokenExpiryTime) {
+                console.log("Token data: ", tokenData);
 
-            console.log("Token data: ", tokenData);
-            dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
-            setTimeout(() => {
-                navigate('/');
-            }, 800);
-        } catch (error) {
-            console.error("Login failed: ", error);
-            dispatch(setMessage({ type: 'error', content: 'Đăng nhập thất bại. Vui lòng thử lại!' }));
+                dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
+
+                setTimeout(() => {
+                    navigate('/');
+                }, 800);
+            } else {
+                throw new Error("Dữ liệu token không hợp lệ.");
+            }
+        } else {
+            // Nếu bị rejected, lấy lỗi message từ payload
+            throw new Error(resultAction.payload || "Đăng nhập thất bại");
         }
-    };
+    } catch (error) {
+        console.error("Login failed: ", error);
+        dispatch(setMessage({ type: 'error', content: 'Đăng nhập thất bại. Vui lòng thử lại!' }));
+    }
+};
 
     return (
         <>
