@@ -1,7 +1,7 @@
 import { post } from "../utils/request";
 
 export const fetchToken = async (email, password) => {
-    const path = "/api/v1/token";
+    const path = "/api/v1/tokens";
     const options = {
         email,
         password,
@@ -11,7 +11,11 @@ export const fetchToken = async (email, password) => {
         const data = await post(path, options);
         return data; 
     } catch (error) {
-        console.error("Failed to fetch token:", error);
+        if (error.response) {
+            console.error("Backend responded with an error:", error.response.data);
+        } else {
+            console.error("Failed to fetch token:", error.message);
+        }
         throw error;
     }
 };
