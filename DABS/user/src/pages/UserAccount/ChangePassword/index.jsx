@@ -47,7 +47,7 @@ function ChangePassword() {
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
           }
           .centered-alert .ant-alert {
             width: 70%;
@@ -59,7 +59,7 @@ function ChangePassword() {
         </style>
         <div className="centered-alert">
 
-          <Divider orientation="left" className="divider-text" style={{ fontSize: "30px" }} >Đổi mật khẩu</Divider>
+          <Divider  className="divider-text" style={{ fontSize: "30px" }} >Đổi mật khẩu</Divider>
 
           <Form style={{ width: "100vh" }} name="createUserProfile" onFinish={handleFinish} layout="vertical">
             <Row gutter={16}>
