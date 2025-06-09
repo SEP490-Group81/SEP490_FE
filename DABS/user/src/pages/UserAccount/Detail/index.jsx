@@ -42,21 +42,21 @@ function UserAccount() {
 
                 <style>
                     {`
-          .centered-alert {
-            width: 40%;
-            min-width: 1000px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-          }
-          .centered-alert .ant-alert {
-            width: 70%;
-          }
-          .centered-alert .required-text {
-            margin-top: 20px;
-          }
-        `}
+                    .centered-alert {
+                        width: 40%;
+                        min-width: 1000px;
+                        margin: 0 auto;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                    }
+                    .centered-alert .ant-alert {
+                        width: 70%;
+                    }
+                    .centered-alert .required-text {
+                        margin-top: 20px;
+                    }
+            `}
                 </style>
                 <div className="centered-alert">
                     <Alert
@@ -169,7 +169,7 @@ function UserAccount() {
                                     </Form.Item>
                                 </Col>
                             </Row>
-                         
+
                             <Row gutter={16}>
                                 <Col span={24}>
                                     <Form.Item>
@@ -177,7 +177,7 @@ function UserAccount() {
                                             Cập nhật
                                         </Button>
                                         <Button
-                                            style={{ marginLeft:"20px", width: "130px", height: "40px", fontSize: "18px" }}
+                                            style={{ marginLeft: "20px", width: "130px", height: "40px", fontSize: "18px" }}
                                             type="primary"
                                             size="large"
                                             htmlType="button"
@@ -186,7 +186,7 @@ function UserAccount() {
                                         </Button>
                                     </Form.Item>
                                 </Col>
-                              
+
                             </Row>
 
                         </Form>
