@@ -1,7 +1,7 @@
 import { post } from "../utils/request";
 
 export const fetchToken = async (email, password) => {
-    const path = "/api/v1/tokens";
+    const path = "/tokens";
     const options = {
         email,
         password,
@@ -19,3 +19,8 @@ export const fetchToken = async (email, password) => {
         throw error;
     }
 };
+
+export const register = async (options) => {
+    const result = await post('users', options);
+    return result;
+}

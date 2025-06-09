@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { checkUserCredentials } from '../../services/loginServices';
 import { deleteCookie, storeTokens } from '../../utils/cookieSettings';
 import { fetchToken } from '../../services/auth';
-
+import { decodeToken, setCookieWithExpiryFromToken } from '../../utils/jwtUtils';
+import { getUserById } from '../../services/user';
 
 
 export const loginUser = createAsyncThunk(
@@ -10,12 +10,24 @@ export const loginUser = createAsyncThunk(
     async ({ email, password }, { rejectWithValue }) => {
         try {
             const tokenData = await fetchToken(email, password);
-            if (tokenData?.token && tokenData?.refreshToken && tokenData?.refreshTokenExpiryTime) {
-                return tokenData;
-            } else {
-                return rejectWithValue('Invalid login response');
+            console.log('Token data received:', tokenData);  
+            if (
+                tokenData?.token &&
+                tokenData?.refreshToken &&
+                tokenData?.refreshTokenExpiryTime
+            ) {
+                const decoded = decodeToken(tokenData.token);
+                console.log('Decoded token:', decoded);
+                if (decoded) {
+                    const user = await getUserById(decoded.nameidentifier);
+                    setCookieWithExpiryFromToken('token', tokenData.token);
+                    return { user };
+                }
+                throw new Error('Token decoding failed');
             }
+            throw new Error('Invalid token data');
         } catch (error) {
+            console.error('Error fetching user:', error);
             return rejectWithValue(error.message);
         }
     }
@@ -25,7 +37,6 @@ const authSlice = createSlice({
     name: 'auth',
     initialState: {
         user: null,
-        token: null,
         isLoading: false,
         isInitializing: true,
         error: null,
@@ -33,15 +44,14 @@ const authSlice = createSlice({
     reducers: {
         logout: (state) => {
             state.user = null;
-            state.token = null;
             state.isInitializing = false;
             localStorage.clear();
             deleteCookie('token');
             deleteCookie('refreshToken');
+            deleteCookie('refreshTokenExpiryTime');
         },
         restoreSession: (state, action) => {
             state.user = action.payload.user;
-            state.token = action.payload.token;
             state.isInitializing = false;
         },
     },
@@ -54,23 +64,13 @@ const authSlice = createSlice({
             })
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.isLoading = false;
-                state.token = action.payload.token;
-                state.refreshToken = action.payload.refreshToken;
-                state.refreshTokenExpiryTime = action.payload.refreshTokenExpiryTime;
-               
-                localStorage.setItem('token', action.payload.token);
-                localStorage.setItem('refreshToken', action.payload.refreshToken);
-                localStorage.setItem('refreshTokenExpiryTime', action.payload.refreshTokenExpiryTime);
-
-                storeTokens(
-                    action.payload.token,
-                    action.payload.refreshToken,
-                    action.payload.refreshTokenExpiryTime
-                );
+                state.user = action.payload.user;
+                localStorage.setItem('user', JSON.stringify(action.payload.user));
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.isLoading = false;
                 state.error = action.payload || 'Login failed';
+                console.error('Login failed:', action.error.message);
             });
     },
 });

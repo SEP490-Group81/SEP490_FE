@@ -33,9 +33,10 @@ function Login() {
 
         if (loginUser.fulfilled.match(resultAction)) {
             const tokenData = resultAction.payload;
-            if (tokenData?.token && tokenData?.refreshToken && tokenData?.refreshTokenExpiryTime) {
-                console.log("Token data: ", tokenData);
+             console.log("Token data in login: ", tokenData);
 
+            if (tokenData?.user) {
+               
                 dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
 
                 setTimeout(() => {
