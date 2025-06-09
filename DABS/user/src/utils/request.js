@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { API_DOMAIN } from '../constant/api/api';
+import { API_DOMAIN, PATH } from '../constant/api/api';
 
 
 export const get = async (path) => {
-    const response = await axios.get(API_DOMAIN + path);
+    const response = await axios.get(API_DOMAIN + PATH + path);
     const result = response.data;
     return result;
 }
@@ -11,7 +11,7 @@ export const get = async (path) => {
 export const post = async (path, options) => {
     try {
         const response = await axios.post(
-            API_DOMAIN + path,
+            API_DOMAIN + PATH + path,
             options,
             {
                 headers: {
@@ -30,12 +30,9 @@ export const post = async (path, options) => {
     }
 };
 
-export const register = async (options) => {
-    const result = await post('users', options);
-    return result;
-}
 
-export const checkExist = async (key, value) => {
-    const result = await get(`users?${key}=${value}`);
-    return result;
-}
+
+// export const checkExist = async (key, value) => {
+//     const result = await get(`users?${key}=${value}`);
+//     return result;
+// }
