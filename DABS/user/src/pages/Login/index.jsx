@@ -46,7 +46,6 @@ function Login() {
                 throw new Error("Dữ liệu token không hợp lệ.");
             }
         } else {
-            // Nếu bị rejected, lấy lỗi message từ payload
             throw new Error(resultAction.payload || "Đăng nhập thất bại");
         }
     } catch (error) {
