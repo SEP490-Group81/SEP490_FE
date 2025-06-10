@@ -47,7 +47,7 @@ function CreateProfile() {
             margin: 0 auto;
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
+            align-items: center;
           }
           .centered-alert .ant-alert {
             width: 70%;
