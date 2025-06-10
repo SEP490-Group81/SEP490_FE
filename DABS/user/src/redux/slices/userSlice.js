@@ -10,7 +10,7 @@ export const loginUser = createAsyncThunk(
     async ({ email, password }, { rejectWithValue }) => {
         try {
             const tokenData = await fetchToken(email, password);
-            console.log('Token data received:', tokenData);  
+            console.log('Token data received:', tokenData);
             if (
                 tokenData?.token &&
                 tokenData?.refreshToken &&
@@ -36,7 +36,7 @@ export const loginUser = createAsyncThunk(
 const authSlice = createSlice({
     name: 'auth',
     initialState: {
-        user: null,
+        user: JSON.parse(localStorage.getItem('user')) || null,
         isLoading: false,
         isInitializing: true,
         error: null,
