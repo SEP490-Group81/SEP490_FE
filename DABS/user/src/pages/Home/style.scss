@@ -10,6 +10,15 @@
   bottom: -20px;
 }
 
+
+.background-img {
+  background-image: url('https://img.freepik.com/free-vector/white-background-with-blue-tech-hexagon_1017-19366.jpg?ga=GA1.1.1948660935.1749499310&semt=ais_hybrid&w=740');
+  background-size: cover;
+  background-position: center;
+  padding: 60px 0;
+  position: relative;
+}
+
 .medical-facilities {
   display: flex;
   flex-direction: row;
