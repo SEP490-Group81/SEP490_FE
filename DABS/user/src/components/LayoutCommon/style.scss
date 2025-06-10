@@ -1,3 +1,11 @@
+.nav-sticky-wrapper {
+    width: 100%;
+    background-color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
 .header {
     display: flex;
     border-bottom: 1px solid #ddd;
@@ -11,12 +19,10 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     min-width: 0;
     margin: auto;
-    position: sticky;
-    top: 0; // Thêm dòng này để sticky hoạt động
+    position: relative;
     z-index: 100;
 
     &__logo {
-
         padding: 0px 20px;
         display: flex;
         justify-content: center;
@@ -27,8 +33,6 @@
             height: auto;
         }
     }
-
-
 
     &__content {
         display: flex;
@@ -44,7 +48,6 @@
             justify-content: space-between;
             align-items: center;
             position: relative;
-
             min-width: 0;
 
             &__wrapper {
@@ -73,9 +76,7 @@
                         }
                     }
                 }
-
             }
-
 
             &__network {
                 display: flex;
@@ -116,7 +117,6 @@
                         width: 1px;
                         height: 20%;
                         background-color: #ddd;
-
                     }
                 }
 
@@ -128,10 +128,7 @@
                     transform: scale(1.1);
                     transition: all 0.3s ease;
                 }
-
             }
-
-
 
             &::after {
                 content: '';
@@ -150,6 +147,7 @@
             justify-content: center;
             min-width: 0;
             width: 100%;
+
 
             .ant-menu-horizontal {
                 width: 100% !important;
@@ -173,8 +171,6 @@
                     transition: all 0.21s ease-out;
                     border-bottom: 2px solid transparent;
 
-
-
                     a {
                         color: inherit;
                         text-decoration: none;
@@ -196,7 +192,6 @@
                         &:hover {
                             color: #006699;
                             font-weight: bold;
-
                         }
                     }
 
@@ -218,15 +213,9 @@
                     display: flex;
                     align-items: center;
                 }
-
-
             }
-
         }
-
     }
-
-
 }
 
 .layout-default {
@@ -244,6 +233,37 @@ main {
 .footer {
     text-align: center;
     background-color: #23bef1;
+
+    .footer-content {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+            margin-bottom: 20px;
+
+            h4 {
+                color: white;
+                margin-bottom: 16px;
+            }
+
+            .footer-social {
+                display: flex;
+                gap: 16px;
+                font-size: 24px;
+
+                a {
+                    color: white;
+
+                    &:hover {
+                        color: #1890ff;
+                    }
+                }
+            }
+        }
+    }
 }
 
 @media (max-width: 680px) {
@@ -264,8 +284,6 @@ main {
                 width: 100%;
                 display: flex;
                 justify-content: flex-end;
-
-
             }
         }
     }
