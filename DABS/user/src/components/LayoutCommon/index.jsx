@@ -5,10 +5,13 @@ import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, Yout
 import { Menu } from "antd";
 import logo from "../../assets/images/dabs-logo.png"
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from "react-redux";
 const { SubMenu } = Menu;
 const { Header, Footer } = Layout;
 function LayoutCommon() {
     const navigate = useNavigate();
+    const {user} = useSelector((state) => state.user);
+    console.log("User in LayoutCommon:", user);
     return <>
         <Layout className="layout-default">
             <Header className="header">
@@ -32,8 +35,17 @@ function LayoutCommon() {
 
                         </div>
                         <div className="header__content__top__wrapper">
+
                             <div className="header__content__top__wrapper__account">
-                                <Button onClick={() => navigate('/login')} type="primary"><UserOutlined />Tài khoản</Button>
+                                {user ? (
+                                   <Button onClick={() => navigate('/login')} type="primary">
+                                        <UserOutlined /> {user.fullName || user.email}
+                                    </Button>
+                                ) : (
+                                    <Button onClick={() => navigate('/login')} type="primary">
+                                        <UserOutlined /> Đăng nhập
+                                    </Button>
+                                )}
                             </div>
                         </div>
 
