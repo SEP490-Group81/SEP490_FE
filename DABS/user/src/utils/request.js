@@ -1,13 +1,30 @@
 import axios from 'axios';
 import { API_DOMAIN, PATH } from '../constant/api/api';
+import Cookies from 'js-cookie';
 
 
-export const get = async (path) => {
-    const response = await axios.get(API_DOMAIN + PATH + path);
-    const result = response.data;
-    return result;
-}
-
+export const get = async (path, headers = {}) => {
+    try {
+        const response = await axios.get(`${API_DOMAIN}${PATH}${path}`, {
+            headers,
+        });
+        console.log(`GET request to ${path} successful:`, response.data);
+        return response.data; 
+    } catch (error) {
+        console.error(`Error in GET request to ${path}:`, error.message);
+        throw error;
+    }
+};
+export const getAuth = () => {
+    const token = Cookies.get('accessToken');
+    if (!token) {
+        console.warn('Access token is missing.');
+        return {}; 
+    }
+    return {
+        Authorization: `Bearer ${token}`,
+    };
+};
 export const post = async (path, options) => {
     try {
         const response = await axios.post(
