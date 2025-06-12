@@ -30,6 +30,7 @@ export const refreshToken = async (refreshToken) => {
 
     try {
         const data = await post(path, options);
+        console.log("Token data in refreshToken:", data);
         return data;
     } catch (error) {
         if (error.response) {
@@ -40,3 +41,4 @@ export const refreshToken = async (refreshToken) => {
         throw error;
     }
 };
+

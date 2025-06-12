@@ -1,9 +1,8 @@
-import { get, getAuth } from "../utils/request";
+import { get, getAuth} from "../utils/request";
 
 export const getUserById = async (id) => {
     try {
-        const headers = getAuth();
-        const result = await get(`/user/${id}`, headers);
+        const result = await getAuth(`/user/${id}`);
         console.log(`User with ID ${id} fetched successfully:`, result.result);
         if (!result || !result.result) {
             throw new Error('User data is missing in the response.');

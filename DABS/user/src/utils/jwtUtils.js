@@ -37,3 +37,13 @@ export const setCookieWithExpiryFromToken = (name, token) => {
 };
 
 
+export const isTokenExpired = (token) => {
+  try {
+    const decoded = jwtDecode(token);
+    const currentTime = Math.floor(Date.now() / 1000); 
+    return decoded.exp < currentTime;
+  } catch (error) {
+    console.error('Invalid token in isTokenExpired:', error);
+    return true; 
+  }
+};
