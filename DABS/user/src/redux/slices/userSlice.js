@@ -8,27 +8,27 @@ export const refreshToken = createAsyncThunk(
     'auth/refreshToken',
     async (_, { rejectWithValue, dispatch }) => {
         try {
-            const refreshToken = getCookie('refreshToken');
-            if (!refreshToken) {
+            const refreshTokenInput = getCookie('refreshToken');
+            if (!refreshTokenInput) {
                 dispatch(logout());
                 throw new Error('No refresh token found');
             }
 
-            const tokenData = await refreshTokenService(refreshToken);
+            const tokenData = await refreshTokenService(refreshTokenInput);
 
             if (!tokenData?.token || !tokenData?.refreshToken || !tokenData?.refreshTokenExpiryTime) {
                 throw new Error('Invalid token data');
             }
-
+            const accessToken = tokenData.token;
             const decoded = decodeToken(tokenData.token);
             if (!decoded) throw new Error('Token decoding failed');
-
+            setCookieWithExpiryFromToken('accessToken', tokenData.token);
+            storeTokens(tokenData.refreshToken, tokenData.refreshTokenExpiryTime);
             const user = await getUserById(decoded.nameidentifier);
 
-           // setCookieWithExpiryFromToken('accessToken', tokenData.token);
-            storeTokens(tokenData.refreshToken, tokenData.refreshTokenExpiryTime);
 
-            return { user };
+
+            return { accessToken, user };
         } catch (error) {
             console.error('Refresh token failed:', error);
             if (error.response?.status === 401) dispatch(logout());
@@ -51,12 +51,13 @@ export const loginUser = createAsyncThunk(
                 const decoded = decodeToken(tokenData.token);
                 console.log('Decoded token:', decoded);
                 if (decoded) {
-                    //setCookieWithExpiryFromToken('accessToken', tokenData.token);
+                    setCookieWithExpiryFromToken('accessToken', tokenData.token);
+                    storeTokens(tokenData.refreshToken, tokenData.refreshTokenExpiryTime);
                     const user = await getUserById(decoded.nameidentifier);
-                    const accessToken = tokenData.token;
+
                     console.log('User fetched:', user);
-                    
-                    return { user, accessToken };
+
+                    return { accessToken: tokenData.token, user };
                 }
                 throw new Error('Token decoding failed');
             }
@@ -72,7 +73,7 @@ const authSlice = createSlice({
     name: 'auth',
     initialState: {
         user: JSON.parse(localStorage.getItem('user')) || null,
-        accessToken: localStorage.getItem("accessToken") || null,
+        accessToken: getCookie('accessToken') || null,
         isLoading: false,
         isInitializing: true,
         error: null,
@@ -102,9 +103,11 @@ const authSlice = createSlice({
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.user = action.payload.user;
+                state.accessToken = action.payload.accessToken;
                 console.log('User after login:', action.payload.user);
                 localStorage.setItem('user', JSON.stringify(action.payload.user));
-                localStorage.setItem('accessToken', action.payload.accessToken);
+
+
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.isLoading = false;
@@ -119,8 +122,10 @@ const authSlice = createSlice({
             .addCase(refreshToken.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.user = action.payload.user;
+                state.accessToken = action.payload.accessToken;
                 console.log('User after token refresh:', action.payload.user);
                 localStorage.setItem('user', JSON.stringify(action.payload.user));
+
             })
             .addCase(refreshToken.rejected, (state, action) => {
                 state.isLoading = false;

@@ -6,14 +6,8 @@ import reportWebVitals from './reportWebVitals';
 import { Provider } from 'react-redux';
 import store from './redux/store';
 import { BrowserRouter } from 'react-router-dom';
-import { setAuthHandlers } from './constant/api/apiInterceptors';
-import { logout, refreshToken } from './redux/slices/userSlice';
 
-setAuthHandlers({
-  getAccessToken: () => store.getState().auth.accessToken,
-  refreshToken: () => store.dispatch(refreshToken()).unwrap(),
-  logout: () => store.dispatch(logout()),
-});
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
    <Provider store={store}>

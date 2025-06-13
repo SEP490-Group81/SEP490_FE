@@ -17,10 +17,10 @@ export const setAuthHandlers = ({ getAccessToken, refreshToken, logout }) => {
 
   api.interceptors.request.use(async (config) => {
     let token = getAccessToken();
-
     if (token && isTokenExpired(token)) {
+      console.log("Token expired, refreshing...");
       try {
-        token = await refreshTokenCallback(); 
+        token = await refreshTokenCallback();
       } catch (e) {
         logoutCallback();
         throw new axios.Cancel('Session expired');
@@ -28,6 +28,7 @@ export const setAuthHandlers = ({ getAccessToken, refreshToken, logout }) => {
     }
 
     if (token) {
+      console.log("Setting Authorization header with token: " + token);
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;

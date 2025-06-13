@@ -14,12 +14,22 @@ export const getAuth = async (path) => {
   return response.data;
 };
 
-export const post = async (path, data) => {
+export const postAuth = async (path, data) => {
   const response = await api.post(path, data);
   return response.data;
 };
 
 
+export const post = async (path, data) => {
+    try {
+        const url = `${API_DOMAIN}${PATH}${path}`;
+        const response = await axios.post(url, data); 
+        return response.data;
+    } catch (error) {
+        console.error(`Error in POST request to ${path}:`, error.message);
+        throw error;
+    }
+};
 
 // export const checkExist = async (key, value) => {
 //     const result = await get(`users?${key}=${value}`);
