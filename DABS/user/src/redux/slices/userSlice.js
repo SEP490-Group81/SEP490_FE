@@ -85,7 +85,7 @@ const authSlice = createSlice({
             state.isInitializing = false;
             localStorage.clear();
             deleteCookie('refreshToken');
-            deleteCookie('refreshTokenExpiryTime');
+            deleteCookie('accessToken');
         },
         restoreSession: (state, action) => {
             state.user = action.payload.user;
