@@ -13,6 +13,7 @@ export const decodeToken = (token) => {
 export const setCookieWithExpiryFromToken = (name, token) => {
     try {
         const decoded = jwtDecode(token);
+        console.log('Decoded token in setCookieWithExpiryFromToken:', decoded);
         const exp = decoded.exp; 
         const currentTime = Math.floor(Date.now() / 1000); 
         const expiryTimeInSeconds = exp - currentTime;
@@ -36,3 +37,13 @@ export const setCookieWithExpiryFromToken = (name, token) => {
 };
 
 
+export const isTokenExpired = (token) => {
+  try {
+    const decoded = jwtDecode(token);
+    const currentTime = Math.floor(Date.now() / 1000); 
+    return decoded.exp < currentTime;
+  } catch (error) {
+    console.error('Invalid token in isTokenExpired:', error);
+    return true; 
+  }
+};

@@ -5,8 +5,6 @@ import logo from "../../assets/images/dabs-logo.png"
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { clearMessage, setMessage } from "../../redux/slices/messageSlice";
-import { fetchToken } from "../../services/auth";
-import { storeTokens } from "../../utils/cookieSettings";
 import { loginUser } from "../../redux/slices/userSlice";
 const { Title } = Typography;
 
