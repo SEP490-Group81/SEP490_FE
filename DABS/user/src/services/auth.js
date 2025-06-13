@@ -24,3 +24,21 @@ export const register = async (options) => {
     const result = await post('users', options);
     return result;
 }
+export const refreshToken = async (refreshToken) => {
+    const path = "/tokens/refresh";
+    const options = { refreshToken };
+
+    try {
+        const data = await post(path, options);
+        console.log("Token data in refreshToken:", data);
+        return data;
+    } catch (error) {
+        if (error.response) {
+            console.error("Backend responded with an error:", error.response.data);
+        } else {
+            console.error("Failed to refresh token:", error.message);
+        }
+        throw error;
+    }
+};
+
