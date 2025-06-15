@@ -31,6 +31,15 @@ export const post = async (path, data) => {
     }
 };
 
+export const putAuth = async (path, data) => {
+  try {
+    const response = await api.put(path, data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error in PUT request to ${path}:`, error.message);
+    throw error;
+  }
+};
 // export const checkExist = async (key, value) => {
 //     const result = await get(`users?${key}=${value}`);
 //     return result;

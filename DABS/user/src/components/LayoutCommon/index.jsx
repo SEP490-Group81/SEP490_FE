@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
-import { Button, Layout } from 'antd';
+import { Button, Dropdown, Layout } from 'antd';
 import "./style.scss";
-import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined, MenuOutlined } from '@ant-design/icons';
+import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined, MenuOutlined, ProfileOutlined, LoginOutlined, BellOutlined, FileTextOutlined, LogoutOutlined } from '@ant-design/icons';
 import { Menu } from "antd";
 import logo from "../../assets/images/dabs-logo.png"
 import { useNavigate } from 'react-router-dom';
@@ -10,8 +10,12 @@ const { SubMenu } = Menu;
 const { Header, Footer } = Layout;
 function LayoutCommon() {
     const navigate = useNavigate();
-    const {user} = useSelector((state) => state.user);
+    const { user } = useSelector((state) => state.user);
     console.log("User in LayoutCommon:", user);
+
+
+
+
     return <>
         <Layout className="layout-default">
             <Header className="header">
@@ -19,7 +23,7 @@ function LayoutCommon() {
                 <div className="header__logo">
                     <img alt="logo" src={logo}></img>
                 </div>
-                <div className="header__content">
+                <div className="header__content" style={{ display: 'flex', justifyContent: 'center' }}>
                     <div className="header__content__top">
                         <div className="header__content__top__network">
 
@@ -38,9 +42,43 @@ function LayoutCommon() {
 
                             <div className="header__content__top__wrapper__account">
                                 {user ? (
-                                   <Button onClick={() => navigate('/login')} type="primary">
-                                        <UserOutlined /> {user.fullName || user.email}
-                                    </Button>
+                                    <Dropdown
+                                        overlay={
+                                            <Menu>
+                                                <Menu.Item key="greeting" disabled icon={<UserOutlined />}>
+                                                    Xin chào {user ? (user.fullName || user.email) : 'khách'}
+                                                </Menu.Item>
+                                                <Menu.Divider />
+                                                {user ? (
+                                                    <>
+                                                        <Menu.Item key="profile" icon={<ProfileOutlined />} onClick={() => navigate('/profile')}>
+                                                            Hồ sơ bệnh nhân
+                                                        </Menu.Item>
+                                                        <Menu.Item key="records" icon={<FileTextOutlined />} onClick={() => navigate('/records')}>
+                                                            Phiếu khám
+                                                        </Menu.Item>
+                                                        <Menu.Item key="notification" icon={<BellOutlined />} onClick={() => navigate('/notifications')}>
+                                                            Thông báo
+                                                        </Menu.Item>
+                                                        <Menu.Divider />
+                                                        <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={() => {/* Xử lý đăng xuất */ }}>
+                                                            Đăng xuất
+                                                        </Menu.Item>
+                                                    </>
+                                                ) : (
+                                                    <Menu.Item key="login" icon={<LoginOutlined />} onClick={() => navigate('/login')}>
+                                                        Đăng nhập
+                                                    </Menu.Item>
+                                                )}
+                                            </Menu>
+                                        }
+                                        placement="bottomRight"
+                                        trigger={['click']}
+                                    >
+                                        <Button type="primary" icon={<UserOutlined />}>
+                                            {user ? (user.fullName || user.email) : 'Tài khoản'}
+                                        </Button>
+                                    </Dropdown>
                                 ) : (
                                     <Button onClick={() => navigate('/login')} type="primary">
                                         <UserOutlined /> Đăng nhập

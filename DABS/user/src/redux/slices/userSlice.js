@@ -53,6 +53,7 @@ export const loginUser = createAsyncThunk(
                 if (decoded) {
                     setCookieWithExpiryFromToken('accessToken', tokenData.token);
                     storeTokens(tokenData.refreshToken, tokenData.refreshTokenExpiryTime);
+                   
                     const user = await getUserById(decoded.nameidentifier);
 
                     console.log('User fetched:', user);
@@ -79,6 +80,9 @@ const authSlice = createSlice({
         error: null,
     },
     reducers: {
+        updateAccessToken: (state, action) => {
+            state.accessToken = action.payload;
+        },
         logout: (state) => {
             state.user = null;
             state.accessToken = null;
@@ -134,5 +138,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { logout, restoreSession } = authSlice.actions;
+export const { logout, restoreSession,updateAccessToken } = authSlice.actions;
 export default authSlice.reducer;

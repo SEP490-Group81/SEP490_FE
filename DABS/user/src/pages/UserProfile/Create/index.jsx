@@ -3,15 +3,63 @@ import { UserOutlined, CalendarOutlined, PhoneOutlined, MailOutlined } from "@an
 import viVN from "antd/lib/locale/vi_VN";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
+import { useDispatch, useSelector } from "react-redux";
 dayjs.locale("vi");
 const { Text } = Typography;
 function CreateProfile() {
+  // const dispatch = useDispatch();
+  const userDefault = useSelector((state) => state.user.user);
+
+  console.log("userDefault in createProfile", userDefault);
   const { Option } = Select;
+
+
+  const fieldMap = {
+    userName: 'fullName',
+    dob: 'dob',
+    phoneNumber: 'phoneNumber',
+    email: 'email',
+    gender: 'gender',
+    job: 'job',
+    address: 'streetAddress'
+  };
+
+  const getMappedData = (values) => {
+    const mapped = {};
+    Object.keys(fieldMap).forEach((formField) => {
+      if (values[formField] !== undefined && values[formField] !== null && values[formField] !== "") {
+        if (formField === 'dob') {
+          mapped[fieldMap[formField]] = values.dob.format ? values.dob.format('YYYY-MM-DD') : values.dob;
+        } else if (formField === 'gender') {
+          mapped[fieldMap[formField]] = values.gender === "1" || values.gender === 1 || values.gender === true;
+        } else {
+          mapped[fieldMap[formField]] = values[formField];
+        }
+      }
+    });
+    return mapped;
+  };
+
   const handleFinish = (values) => {
-    console.log("Form values:", values);
+    const mappedData = getMappedData(values);
+    const newUser = { ...userDefault, ...mappedData };
+    console.log("Mapped Data:", mappedData);
+    console.log("New User Data:", newUser);
+    try {
+      // Gửi dữ liệu lên server
+      // const res = await putAuth('/api/v1/user/update', newUser);
+
+      // // Sau khi thành công, cập nhật lại Redux (giả sử res.result là user mới)
+      // if (res && res.result) {
+      //   dispatch(setUser(res.result));
+      // }
+    } catch (error) {
+      // Xử lý lỗi nếu cần
+      console.error(error);
+    }
   };
   return (
-    <>
+    <div>
       <div style={{ textAlign: "center", backgroundColor: "#fff", padding: "20px", borderRadius: "8px" }}>
         <h1
           style={{
@@ -43,7 +91,7 @@ function CreateProfile() {
           {`
           .centered-alert {
             width: 40%;
-            min-width: 1000px;
+             max-width: 90vx;
             margin: 0 auto;
             display: flex;
             flex-direction: column;
@@ -61,14 +109,14 @@ function CreateProfile() {
           <Alert
             message="Vui lòng cung cấp thông tin chính xác để được phục vụ tốt nhất."
             type="info"
-            style={{ fontSize: "15px" }}
+            style={{ fontSize: "15px", width: "100%", textAlign: "center" }}
           />
           <Text className="required-text" style={{ fontSize: "15px" }} type="danger">
             (*) Thông tin bắt buộc nhập
           </Text>
           <Divider orientation="left" className="divider-text" style={{ fontSize: "30px" }} >Thông tin chung</Divider>
           <ConfigProvider locale={viVN}>
-            <Form style={{ width: "100vh" }} name="createUserProfile" onFinish={handleFinish} layout="vertical">
+            <Form style={{ width: "100%", maxWidth: 800, margin: "0 auto" }} name="createUserProfile" onFinish={handleFinish} layout="vertical">
               <Row gutter={16}>
                 <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
                   <Form.Item
@@ -82,11 +130,12 @@ function CreateProfile() {
                     <Input
                       prefix={<UserOutlined />}
                       placeholder="Ví dụ: Nguyễn Văn A"
+                      defaultValue={userDefault?.fullName || ""}
                       size="large"
                     />
                   </Form.Item>
                 </Col>
-                <Col  xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
+                <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
                   <Form.Item
                     name="dob"
                     label={<span style={{ fontSize: "17px", fontWeight: "bold" }}>Ngày tháng năm sinh</span>}
@@ -95,7 +144,8 @@ function CreateProfile() {
                     ]}
                   >
                     <DatePicker
-                     prefix={<CalendarOutlined />}
+                      defaultValue={dayjs(userDefault?.dob, "DD-MM-YYYY")}
+                      prefix={<CalendarOutlined />}
                       style={{ width: "100%" }}
                       format="DD/MM/YYYY"
                       size="large"
@@ -105,7 +155,7 @@ function CreateProfile() {
                 </Col>
               </Row>
               <Row gutter={16}>
-                <Col  xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
+                <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
                   <Form.Item
                     name="phoneNumber"
                     label={<span style={{ fontSize: "17px", fontWeight: "bold" }}>Số điện thoại</span>}
@@ -115,22 +165,25 @@ function CreateProfile() {
                     ]}
                   >
                     <Input
+                      defaultValue={userDefault?.phoneNumber || ""}
                       prefix={<PhoneOutlined />}
                       placeholder="Nhập số điện thoại"
                       size="large"
                     />
                   </Form.Item>
                 </Col>
-                <Col  xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
+                <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
                   <Form.Item
                     name="email"
                     label={<span style={{ fontSize: "17px", fontWeight: "bold" }}>Địa chỉ Email</span>}
                     rules={[
-                      {  message: "Vui lòng nhập email!" },
+                      { message: "Vui lòng nhập email!" },
                       { type: "email", message: "Email không hợp lệ!" },
                     ]}
                   >
-                    <Input prefix={<MailOutlined />} placeholder="Nhập email" size="large" />
+                    <Input
+                      defaultValue={userDefault?.email || ""}
+                      prefix={<MailOutlined />} placeholder="Nhập email" size="large" />
                   </Form.Item>
                 </Col>
               </Row>
@@ -144,18 +197,24 @@ function CreateProfile() {
 
                     ]}
                   >
-                    <Select placeholder="Chọn giới tính ..." size="large">
-                      <Option value="true">Male</Option>
-                      <Option value="false">Female</Option>
+                    <Select
+                      placeholder="Chọn giới tính ..."
+                      size="large"
+                      defaultValue={userDefault?.gender !== undefined ? userDefault.gender.toString() : ""}
+                    >
+                      <Option value="1">Male</Option>
+                      <Option value="0">Female</Option>
                     </Select>
                   </Form.Item>
                 </Col>
-                <Col  xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
+                <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
                   <Form.Item
                     name="job"
                     label={<span style={{ fontSize: "17px", fontWeight: "bold" }}>Nghề nghiệp (không bắt buộc)</span>}
                   >
-                    <Input placeholder="Nghề nghiệp của bạn" size="large" />
+                    <Input
+                      defaultValue={userDefault?.job || ""}
+                      placeholder="Nghề nghiệp của bạn" size="large" />
                   </Form.Item>
                 </Col>
               </Row>
@@ -166,24 +225,17 @@ function CreateProfile() {
                     name="address"
                     label={<span style={{ fontSize: "17px", fontWeight: "bold" }}>Nơi ở hiện tại (không bắt buộc)</span>}
                   >
-                    <Input placeholder="Nơi ở của bạn" size="large" />
+                    <Input
+                      defaultValue={userDefault?.streetAddress || ""}
+                      placeholder="Nơi ở của bạn" size="large" />
                   </Form.Item>
                 </Col>
               </Row>
-              <Row >
-                <Col span={24}>
-                  <Form.Item
-                    name="symptoms"
-                    label={<span style={{ fontSize: "17px", fontWeight: "bold" }}>Triệu chứng hiện tại (không bắt buộc)</span>}
-                  >
-                    <Input.TextArea rows={4} placeholder="Nhập mô tả triệu chứng của bạn..." />
-                  </Form.Item>
-                </Col>
-              </Row>
+
               <Row gutter={16}>
                 <Col span={24}>
                   <Form.Item>
-                    <Button style={{width: "100px", height:"40px", fontSize: "18px"}} type="primary" htmlType="submit" size="large">
+                    <Button style={{ width: "100px", height: "40px", fontSize: "18px" }} type="primary" htmlType="submit" size="large">
                       Tạo mới
                     </Button>
                   </Form.Item>
@@ -194,7 +246,7 @@ function CreateProfile() {
           </ConfigProvider>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

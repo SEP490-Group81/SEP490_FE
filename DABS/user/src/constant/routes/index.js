@@ -29,7 +29,7 @@ export const routes = [
         element: <ErrorPage />
       },
       {
-        path: "create-profile",
+        path: "profile",
         element: <CreateProfile />
       },
       {
