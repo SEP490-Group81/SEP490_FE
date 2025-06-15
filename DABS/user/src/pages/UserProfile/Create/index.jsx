@@ -59,7 +59,7 @@ function CreateProfile() {
     }
   };
   return (
-    <>
+    <div>
       <div style={{ textAlign: "center", backgroundColor: "#fff", padding: "20px", borderRadius: "8px" }}>
         <h1
           style={{
@@ -109,14 +109,14 @@ function CreateProfile() {
           <Alert
             message="Vui lòng cung cấp thông tin chính xác để được phục vụ tốt nhất."
             type="info"
-            style={{ fontSize: "15px" }}
+            style={{ fontSize: "15px", width: "100%", textAlign: "center" }}
           />
           <Text className="required-text" style={{ fontSize: "15px" }} type="danger">
             (*) Thông tin bắt buộc nhập
           </Text>
           <Divider orientation="left" className="divider-text" style={{ fontSize: "30px" }} >Thông tin chung</Divider>
           <ConfigProvider locale={viVN}>
-            <Form style={{ width: "100vh", maxWidth: 800, margin: "0 auto" }} name="createUserProfile" onFinish={handleFinish} layout="vertical">
+            <Form style={{ width: "100%", maxWidth: 800, margin: "0 auto" }} name="createUserProfile" onFinish={handleFinish} layout="vertical">
               <Row gutter={16}>
                 <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
                   <Form.Item
@@ -246,7 +246,7 @@ function CreateProfile() {
           </ConfigProvider>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
