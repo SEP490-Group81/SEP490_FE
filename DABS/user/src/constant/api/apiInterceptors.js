@@ -17,6 +17,7 @@ export const setAuthHandlers = ({ getAccessToken, refreshToken, logout }) => {
 
   api.interceptors.request.use(async (config) => {
     let token = getAccessToken();
+    console.log("token in api intercetors : " + token);
     if (token && isTokenExpired(token)) {
       console.log("Token expired, refreshing...");
       try {
