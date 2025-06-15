@@ -1,4 +1,4 @@
-import { get, getAuth} from "../utils/request";
+import { getAuth} from "../utils/request";
 
 export const getUserById = async (id) => {
     try {

@@ -1,5 +1,6 @@
 import { jwtDecode } from 'jwt-decode';
-
+import store from '../redux/store';
+import { updateAccessToken } from '../redux/slices/userSlice';
 export const decodeToken = (token) => {
     try {
         return jwtDecode(token);
@@ -27,6 +28,7 @@ export const setCookieWithExpiryFromToken = (name, token) => {
             const expiryDate = new Date();
             expiryDate.setTime(expiryDate.getTime() + expiryTimeInSeconds * 1000); 
             document.cookie = `${name}=${token}; expires=${expiryDate.toUTCString()}; path=/; Secure; SameSite=Strict`;
+             store.dispatch(updateAccessToken(token));
         } else {
             console.error('JWT has already expired, cannot set cookie.');
         }
