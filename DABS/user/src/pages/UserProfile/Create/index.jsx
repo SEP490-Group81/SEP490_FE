@@ -4,6 +4,8 @@ import viVN from "antd/lib/locale/vi_VN";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { getDistricts, getProvinces, getWards } from "../../../services/provinceService";
 dayjs.locale("vi");
 const { Text } = Typography;
 function CreateProfile() {
@@ -21,24 +23,28 @@ function CreateProfile() {
     email: 'email',
     gender: 'gender',
     job: 'job',
-    address: 'streetAddress'
+    address: 'streetAddress',
+    province: 'province',
+    district: 'district',
+    ward: 'ward'
   };
 
-  const getMappedData = (values) => {
-    const mapped = {};
-    Object.keys(fieldMap).forEach((formField) => {
-      if (values[formField] !== undefined && values[formField] !== null && values[formField] !== "") {
-        if (formField === 'dob') {
-          mapped[fieldMap[formField]] = values.dob.format ? values.dob.format('YYYY-MM-DD') : values.dob;
-        } else if (formField === 'gender') {
-          mapped[fieldMap[formField]] = values.gender === "1" || values.gender === 1 || values.gender === true;
-        } else {
-          mapped[fieldMap[formField]] = values[formField];
-        }
+const getMappedData = (values) => {
+  const mapped = {};
+  Object.keys(fieldMap).forEach((formField) => {
+    if (values[formField] !== undefined && values[formField] !== null && values[formField] !== "") {
+      if (formField === 'dob') {
+        mapped[fieldMap[formField]] = values.dob.format ? values.dob.format('YYYY-MM-DD') : values.dob;
+      } else if (formField === 'gender') {
+        mapped[fieldMap[formField]] = values.gender === "1" || values.gender === 1 || values.gender === true;
+      } else {
+        mapped[fieldMap[formField]] = values[formField];
       }
-    });
-    return mapped;
-  };
+    }
+  });
+  return mapped;
+};
+
 
   const handleFinish = (values) => {
     const mappedData = getMappedData(values);
@@ -58,6 +64,49 @@ function CreateProfile() {
       console.error(error);
     }
   };
+
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+
+  const [selectedProvince, setSelectedProvince] = useState(null);
+  const [selectedDistrict, setSelectedDistrict] = useState(null);
+
+  useEffect(() => {
+    getProvinces()
+      .then(data => setProvinces(data))
+      .catch(err => {
+        console.error("Error fetching provinces:", err);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (selectedProvince) {
+      getDistricts(selectedProvince)
+        .then(data => setDistricts(data))
+        .catch(err => {
+          console.error("Error fetching districts:", err);
+        });
+      setWards([]);
+      setSelectedDistrict(null);
+    } else {
+      setDistricts([]);
+      setWards([]);
+      setSelectedDistrict(null);
+    }
+  }, [selectedProvince]);
+
+  useEffect(() => {
+    if (selectedDistrict) {
+      getWards(selectedDistrict)
+        .then(data => setWards(data))
+        .catch(err => {
+          console.error("Error fetching wards:", err);
+        });
+    } else {
+      setWards([]);
+    }
+  }, [selectedDistrict]);
   return (
     <div>
       <div style={{ textAlign: "center", backgroundColor: "#fff", padding: "20px", borderRadius: "8px" }}>
@@ -219,19 +268,59 @@ function CreateProfile() {
                 </Col>
               </Row>
               <Row gutter={16}>
+                <Col span={8}>
+                  <Form.Item label="Tỉnh/Thành phố" name="province">
+                    <Select
+                      showSearch
+                      filterOption={(input, option) =>
+                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                      }
+                      placeholder="Chọn tỉnh/thành phố"
+                      options={provinces.map(p => ({ label: p.name, value: p.code }))}
+                      onChange={value => setSelectedProvince(value)}
+                      allowClear
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item label="Quận/Huyện" name="district">
+                    <Select
+                      showSearch
+                      filterOption={(input, option) =>
+                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                      }
+                      placeholder="Chọn quận/huyện"
+                      options={districts.map(d => ({ label: d.name, value: d.code }))}
+                      onChange={value => setSelectedDistrict(value)}
+                      disabled={!selectedProvince}
+                      allowClear
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item label="Phường/Xã" name="ward">
+                    <Select
+                      showSearch
+                      filterOption={(input, option) =>
+                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                      }
+                      placeholder="Chọn phường/xã"
+                      options={wards.map(w => ({ label: w.name, value: w.code }))}
+                      disabled={!selectedDistrict}
+                      allowClear
+                    />
+                  </Form.Item>
+                </Col>
 
-                <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
-                  <Form.Item
-                    name="address"
-                    label={<span style={{ fontSize: "17px", fontWeight: "bold" }}>Nơi ở hiện tại (không bắt buộc)</span>}
-                  >
-                    <Input
-                      defaultValue={userDefault?.streetAddress || ""}
-                      placeholder="Nơi ở của bạn" size="large" />
+              </Row>
+
+              <Row>
+                <Col span={24}>
+                  <Form.Item label="Số nhà, đường" name="streetAddress">
+                    <Input placeholder="Nhập số nhà, tên đường" />
                   </Form.Item>
                 </Col>
               </Row>
-
               <Row gutter={16}>
                 <Col span={24}>
                   <Form.Item>

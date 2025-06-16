@@ -1,4 +1,3 @@
-
 import { Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 import Login from "../../pages/Login";
@@ -13,6 +12,10 @@ import NewPassword from "../../pages/NewPassword";
 import CreateProfile from "../../pages/UserProfile/Create";
 import UserAccount from "../../pages/UserAccount/Detail";
 import ChangePassword from "../../pages/UserAccount/ChangePassword";
+import HomeUserNavBar from "../../pages/UserProfile/HomeUser/HomeUserNavBar";
+import UserProfile from "../../pages/UserProfile/HomeUser/Page/UserProfile";
+import UserNotification from "../../pages/UserProfile/HomeUser/Page/UserNotification";
+import UserMedicalForm from "../../pages/UserProfile/HomeUser/Page/UserMedicalForm";
 
 export const routes = [
   //public
@@ -38,8 +41,8 @@ export const routes = [
 
         element:
           // <ProtectedRoute allowedRoles={['user']}>
-            <UserAccount />
-          // </ProtectedRoute>
+          <UserAccount />
+        // </ProtectedRoute>
 
 
       },
@@ -59,7 +62,24 @@ export const routes = [
         path: "*",
         element: <Navigate to="/" />
       },
-
+      {
+        path: "user",
+        element: <HomeUserNavBar />, 
+        children: [
+          {
+            index: true,
+            element: <UserProfile />
+          },
+          {
+            path: "user-notification",
+            element: <UserNotification />
+          },
+          {
+            path: "user-medical-forms",
+            element: <UserMedicalForm />
+          }
+        ]
+      },
     ]
 
   },
@@ -84,7 +104,7 @@ export const routes = [
         element: <NewPassword />
       },
     ]
-  },
+  }
   // bác sĩ hoặc quản lý nếu phải tách riêng
 
   //   {
