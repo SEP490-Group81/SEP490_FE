@@ -67,13 +67,13 @@ function LayoutCommon() {
                                     <Dropdown
                                         overlay={
                                             <Menu>
-                                                <Menu.Item key="greeting" disabled icon={<UserOutlined />}>
-                                                    Xin chào {user ? (user.fullName || user.email) : 'khách'}
+                                                <Menu.Item key="greeting"  disabled icon={<UserOutlined /> }>
+                                                    {user ? (user.Fullname || user.email) : 'khách'}
                                                 </Menu.Item>
                                                 <Menu.Divider />
                                                 {user ? (
                                                     <>
-                                                        <Menu.Item key="profile" icon={<ProfileOutlined />} onClick={() => navigate('/profile')}>
+                                                        <Menu.Item key="profile" >
                                                             Hồ sơ bệnh nhân
                                                         </Menu.Item>
                                                         <Menu.Item key="records" icon={<FileTextOutlined />} onClick={() => navigate('/records')}>
