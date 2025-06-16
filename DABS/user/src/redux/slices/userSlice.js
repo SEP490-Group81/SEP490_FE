@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { deleteCookie, storeTokens, getCookie } from '../../utils/cookieSettings';
-import { fetchToken, refreshToken as refreshTokenService } from '../../services/auth';
+import { fetchToken, refreshToken as refreshTokenService } from '../../services/authService';
 import { decodeToken, setCookieWithExpiryFromToken } from '../../utils/jwtUtils';
-import { getUserById } from '../../services/user';
+import { getUserById } from '../../services/userService';
 
 export const refreshToken = createAsyncThunk(
     'auth/refreshToken',

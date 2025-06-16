@@ -1,11 +1,14 @@
 import { Outlet } from "react-router-dom";
-import { Button, Dropdown, Layout } from 'antd';
+import { Button, Dropdown, Layout, message } from 'antd';
 import "./style.scss";
 import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined, MenuOutlined, ProfileOutlined, LoginOutlined, BellOutlined, FileTextOutlined, LogoutOutlined } from '@ant-design/icons';
 import { Menu } from "antd";
 import logo from "../../assets/images/dabs-logo.png"
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../../redux/slices/userSlice";
+import { useEffect } from "react";
+import { clearMessage, setMessage } from "../../redux/slices/messageSlice";
 const { SubMenu } = Menu;
 const { Header, Footer } = Layout;
 function LayoutCommon() {
@@ -13,10 +16,29 @@ function LayoutCommon() {
     const { user } = useSelector((state) => state.user);
     console.log("User in LayoutCommon:", user);
 
+    const dispatch = useDispatch();
+    const [messageApi, contextHolder] = message.useMessage();
+    const messageState = useSelector((state) => state.message)
+    useEffect(() => {
+        if (messageState) {
+            messageApi.open({
+                type: messageState.type,
+                content: messageState.content,
 
-
-
+            });
+            dispatch(clearMessage());
+        }
+    }, [messageState, dispatch]);
+    const handleLogout = () => {
+        try {
+            dispatch(logout());
+            dispatch(setMessage({ type: 'success', content: 'Đăng xuất thành công!' }));
+        } catch (error) {
+            dispatch(setMessage({ type: 'error', content: 'Đăng xuất thất bại. Vui lòng thử lại!' }));
+        };
+    }
     return <>
+        {contextHolder}
         <Layout className="layout-default">
             <Header className="header">
 
@@ -61,7 +83,7 @@ function LayoutCommon() {
                                                             Thông báo
                                                         </Menu.Item>
                                                         <Menu.Divider />
-                                                        <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={() => {/* Xử lý đăng xuất */ }}>
+                                                        <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={handleLogout}>
                                                             Đăng xuất
                                                         </Menu.Item>
                                                     </>
