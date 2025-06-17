@@ -18,7 +18,7 @@ function LayoutCommon() {
 
     const dispatch = useDispatch();
     const [messageApi, contextHolder] = message.useMessage();
-    const messageState = useSelector((state) => state.message)
+    const messageState = useSelector((state) => state.message);
     useEffect(() => {
         if (messageState) {
             messageApi.open({
@@ -29,6 +29,7 @@ function LayoutCommon() {
             dispatch(clearMessage());
         }
     }, [messageState, dispatch]);
+
     const handleLogout = () => {
         try {
             dispatch(logout());
@@ -67,13 +68,13 @@ function LayoutCommon() {
                                     <Dropdown
                                         overlay={
                                             <Menu>
-                                                <Menu.Item key="greeting" disabled icon={<UserOutlined />}>
-                                                    Xin chào {user ? (user.fullName || user.email) : 'khách'}
+                                                <Menu.Item key="greeting"  disabled icon={<UserOutlined /> }>
+                                                    {user ? (user.fullname?.trim() || user.email|| 'khách') : 'khách'}
                                                 </Menu.Item>
                                                 <Menu.Divider />
                                                 {user ? (
                                                     <>
-                                                        <Menu.Item key="profile" icon={<ProfileOutlined />} onClick={() => navigate('/profile')}>
+                                                        <Menu.Item key="profile" onClick={() => navigate('/profile')} >
                                                             Hồ sơ bệnh nhân
                                                         </Menu.Item>
                                                         <Menu.Item key="records" icon={<FileTextOutlined />} onClick={() => navigate('/records')}>
@@ -98,7 +99,7 @@ function LayoutCommon() {
                                         trigger={['click']}
                                     >
                                         <Button type="primary" icon={<UserOutlined />}>
-                                            {user ? (user.fullName || user.email) : 'Tài khoản'}
+                                            {user ? (user.fullname?.trim() || user.email) : 'Tài khoản'}
                                         </Button>
                                     </Dropdown>
                                 ) : (
