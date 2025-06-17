@@ -9,13 +9,13 @@ import ErrorPage from "../../pages/Error";
 import BlankLayout from "../../components/BlankLayout";
 import ForgetPassword from "../../pages/ForgetPassword";
 import NewPassword from "../../pages/NewPassword";
-import CreateProfile from "../../pages/UserProfile/Create";
 import UserAccount from "../../pages/UserAccount/Detail";
 import ChangePassword from "../../pages/UserAccount/ChangePassword";
 import HomeUserNavBar from "../../pages/UserProfile/HomeUser/HomeUserNavBar";
 import UserProfile from "../../pages/UserProfile/HomeUser/Page/UserProfile";
 import UserNotification from "../../pages/UserProfile/HomeUser/Page/UserNotification";
 import UserMedicalForm from "../../pages/UserProfile/HomeUser/Page/UserMedicalForm";
+import UpadteProfile from "../../pages/UserProfile/Update";
 
 export const routes = [
   //public
@@ -33,7 +33,7 @@ export const routes = [
       },
       {
         path: "profile",
-        element: <CreateProfile />
+        element: <UpadteProfile />
       },
       {
 
@@ -53,7 +53,7 @@ export const routes = [
       {
         path: "job/:id",
         element: (
-          <ProtectedRoute allowedRoles={['user', 'admin']}>
+          <ProtectedRoute allowedRoles={['user']}>
             <Appointment />
           </ProtectedRoute>
         )

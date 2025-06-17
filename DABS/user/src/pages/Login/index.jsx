@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Form, Input, Button, Typography, Card, Space, message } from "antd";
-import { UserOutlined, LockOutlined, HomeOutlined, MailOutlined } from "@ant-design/icons";
+import { LockOutlined, HomeOutlined, MailOutlined } from "@ant-design/icons";
 import logo from "../../assets/images/dabs-logo.png"
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";

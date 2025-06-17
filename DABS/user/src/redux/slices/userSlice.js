@@ -53,7 +53,7 @@ export const loginUser = createAsyncThunk(
                 if (decoded) {
                     setCookieWithExpiryFromToken('accessToken', tokenData.token);
                     storeTokens(tokenData.refreshToken, tokenData.refreshTokenExpiryTime);
-                   
+
                     const user = await getUserById(decoded.nameidentifier);
 
                     console.log('User fetched:', user);
@@ -91,11 +91,11 @@ const authSlice = createSlice({
             deleteCookie('refreshToken');
             deleteCookie('accessToken');
         },
-        restoreSession: (state, action) => {
-            state.user = action.payload.user;
-            state.accessToken = action.payload.accessToken;
-            state.isInitializing = false;
-        },
+     
+        updateUserSlice: (state, action) => {
+            state.user = { ...state.user, ...action.payload };
+            localStorage.setItem('user', JSON.stringify(state.user));
+        }
     },
     extraReducers: (builder) => {
         builder
@@ -138,5 +138,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { logout, restoreSession,updateAccessToken } = authSlice.actions;
+export const { logout, updateAccessToken, updateUserSlice } = authSlice.actions;
 export default authSlice.reducer;
