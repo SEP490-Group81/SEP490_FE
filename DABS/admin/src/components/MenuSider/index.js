@@ -1,8 +1,13 @@
 import { Menu } from "antd";
-import { OrderedListOutlined, UserAddOutlined, RadarChartOutlined, HeatMapOutlined, AndroidOutlined } from '@ant-design/icons';
+import { OrderedListOutlined, UserAddOutlined, RadarChartOutlined, HeatMapOutlined, AndroidOutlined, UserOutlined, HomeOutlined, DashboardOutlined } from '@ant-design/icons';
 import { Link } from "react-router-dom";
 function MenuSider() {
     const items = [
+        {
+            key: "home",
+            label: <Link to="/">Dashboard</Link>,
+            icon: <DashboardOutlined />
+        },
         {
             key: "menu-1",
             label: "Menu 1",
@@ -44,7 +49,12 @@ function MenuSider() {
             key: "list-room",
             label: <Link to="/list-room">List Room</Link>,
             icon: <OrderedListOutlined />
-        }
+        },
+        {
+            key: "user-management",
+            label: <Link to="/admin/users">User Management</Link>,
+            icon: <UserOutlined />
+        },
     ];
     return (
         <>

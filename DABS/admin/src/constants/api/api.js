@@ -1,1 +1,1 @@
-export const API_DOMAIN = "http://localhost:3002/";
+export const API_DOMAIN = "https://localhost:8175/api/v1";
