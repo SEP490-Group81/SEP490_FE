@@ -23,3 +23,46 @@ export const getAllUsers = async (params) => {
     }
 };
 
+// Get user by ID
+export const getUserById = async (id) => {
+    try {
+        const response = await api.get(`https://localhost:8175/api/v1/user/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching user ${id}:`, error);
+        return null;
+    }
+};
+
+// Create new user
+export const createUser = async (userData) => {
+    try {
+        const response = await api.post(`https://localhost:8175/api/v1/user`, userData);
+        return response.data;
+    } catch (error) {
+        console.error('Error creating user:', error);
+        return null;
+    }
+};
+
+// Update user
+export const updateUser = async (id, userData) => {
+    try {
+        const response = await api.put(`https://localhost:8175/api/v1/user/${id}`, userData);
+        return response.data;
+    } catch (error) {
+        console.error(`Error updating user ${id}:`, error);
+        return null;
+    }
+};
+
+// Delete user
+export const deleteUser = async (id) => {
+    try {
+        const response = await api.delete(`https://localhost:8175/api/v1/user/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Error deleting user ${id}:`, error);
+        return null;
+    }
+};
