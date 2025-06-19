@@ -1,62 +1,127 @@
 
 import { Button, Col, Flex, Row, Tooltip, Card, Carousel, Rate } from "antd";
 import { Input, Space } from 'antd';
-import { CheckCircleFilled, EnvironmentOutlined } from "@ant-design/icons";
+import { CheckCircleFilled, EnvironmentOutlined, RightOutlined } from "@ant-design/icons";
 import "./style.scss";
+import banner1 from "../../assets/images/banner1.png";
+import banner2 from "../../assets/images/banner2.png";
+import banner3 from "../../assets/images/banner3.png";
+import { useEffect, useState } from "react";
+import { getHospitalList } from "../../services/hospitalService";
+import imgErrorHospital from "../../assets/images/errorImgHospital.jpg";
+import Slider from "react-slick";
+import { useNavigate } from "react-router-dom";
+import { getSpecializationList } from "../../services/specializationService";
 const { Search } = Input;
 
 function Home() {
+    const INITIAL_COUNT = 16;
+    const navigate = useNavigate();
+    const settings = {
+        centerMode: true,
+        centerPadding: "0px",
+        dots: false,
+        infinite: true,
+        speed: 200,
+        slidesToShow: 4,
+        slidesToScroll: 1,
+        autoplay: true,
+        autoplaySpeed: 20000,
+        responsive: [
+            {
+                breakpoint: 1024,
+                settings: {
+                    slidesToShow: 3,
+                    slidesToScroll: 1,
+                    infinite: true,
+                    dots: false
+                }
+            },
+            {
+                breakpoint: 600,
+                settings: {
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                    dots: false
+                }
+            }
+        ]
+    };
 
+    const [hospital, setHospital] = useState([]);
+    useEffect(() => {
+        const fetchApi = async () => {
+            const result = await getHospitalList();
+            if (result) {
+                setHospital(result);
+            } else {
+                console.error("No hospital data found");
+            }
+        };
+        fetchApi();
+    }, []);
+    console.log(hospital);
+
+    const [specialization, setSpecialization] = useState([]);
+    useEffect(() => {
+        const fetchApi = async () => {
+            const result = await getSpecializationList();
+            if (result) {
+                setSpecialization(result);
+            } else {
+                console.error("No hospital data found");
+            }
+        };
+        fetchApi();
+    }, []);
+    console.log(specialization);
+
+    const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
+
+    const handleShowMore = () => {
+        if (visibleCount >= specialization.length)
+            setVisibleCount(INITIAL_COUNT);
+        else
+            setVisibleCount(visibleCount + INITIAL_COUNT);
+    };
 
     const onSearch = (value, _e, info) =>
         console.log(info === null || info === void 0 ? void 0 : info.source, value);
     return <>
         <div className="background-img">
+            <div style={{
+                background: '#E8F4FD',
+                borderRadius: 12,
+                boxShadow: '0 4px 16px 0 rgba(24, 144, 255, 0.12)',
+                padding: 24,
+                marginBottom: 20, marginTop: 0
+            }}>
+                <Row justify="center" >
+                    <Col className="gutter-row" span={12} style={{ textAlign: 'center', marginBottom: 20, marginTop: 20 }}>
+                        <h1>Kết nối Người Dân với Cơ sở & Dịch vụ Y tế hàng đầu</h1>
+                    </Col>
+                </Row>
+                <Row justify="center">
+                    <Col className="gutter-row" span={12} style={{ textAlign: 'center', marginBottom: 40 }}>
 
-            <Row justify="center" style={{ marginBottom: 20, marginTop: 50 }}>
-                <Col className="gutter-row" span={12} style={{ textAlign: 'center' }}>
-                    <h1>Kết nối Người Dân với Cơ sở & Dịch vụ Y tế hàng đầu</h1>
-                </Col>
-            </Row>
-            <Row justify="center">
-                <Col className="gutter-row" span={12} style={{ textAlign: 'center' }}>
+                        <Search
+                            placeholder="Tìm kiếm bác sĩ, gói khám, cơ sở khám, ..."
+                            allowClear
+                            enterButton="Search"
+                            size="large"
+                            onSearch={onSearch}
+                        />
+                    </Col>
+                </Row>
+            </div>
 
-                    <Search
-                        placeholder="Tìm kiếm bác sĩ, gói khám, cơ sở khám, ..."
-                        allowClear
-                        enterButton="Search"
-                        size="large"
-                        onSearch={onSearch}
 
-                    />
 
-                </Col>
-            </Row>
-            <Row justify="center" style={{ marginTop: 20 }}>
-                <Col span={20}>
-                    <Flex justify="space-between" align="center" style={{ width: '100%' }}>
-                        <Card className="facility-card" hoverable style={{ width: 300 }}>
-                            yasuo
-                        </Card>
-                        <Card className="facility-card" hoverable style={{ width: 300 }}>
-                            yasuo
-                        </Card>
-                        <Card className="facility-card" hoverable style={{ width: 300 }}>
-                            yasuo
-                        </Card>
-                        <Card className="facility-card" hoverable style={{ width: 300 }}>
-                            yasuo
-                        </Card>
+            <Row justify="center" style={{
+                marginTop: 30,
 
-                    </Flex>
-                </Col>
-            </Row>
-            <Row justify="center" style={{ marginBottom: 20, marginTop: 50 }}>
-                <Col className="gutter-row" span={12} style={{ textAlign: 'center' }}>
-                    <h1>Được Tin tưởng bởi ...</h1>
-                </Col>
-            </Row>
-            <Row justify="center" style={{ marginTop: 20 }}>
+            }}
+            >
                 <Col span={20}>
                     <Carousel
                         autoplay
@@ -68,206 +133,185 @@ function Home() {
                         <div>
                             <div style={{
                                 height: '300px',
-                                background: '#e6f7ff',
+
                                 borderRadius: '8px',
                                 textAlign: 'center',
-                                overflow: 'hidden',
                                 position: 'relative'
                             }}>
                                 <img
-                                    src="https://cdn-media.sforum.vn/storage/app/media/wp-content/uploads/2022/04/tuong-quoc-dan-yasuo-tiep-tuc-co-trang-phuc-moi-trong-ban-cap-nhat-12.8-7.jpg"
+                                    src={banner1}
                                     alt="Banner 1"
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                 />
-                                <div style={{
-                                    position: 'absolute',
-                                    left: '50px',
-                                    top: '50px',
-                                    color: 'white',
-                                    textAlign: 'left'
-                                }}>
-                                    <h2>Nhà thuốc An Khang</h2>
-                                    <p>Đã có mặt trên DABS</p>
-                                    <Button type="primary" size="large">MUA THUỐC NGAY</Button>
-                                </div>
+
                             </div>
                         </div>
                         <div>
                             <div style={{
                                 height: '300px',
-                                background: '#e6f7ff',
                                 borderRadius: '8px',
                                 textAlign: 'center',
                                 overflow: 'hidden',
                                 position: 'relative'
                             }}>
                                 <img
-                                    src="https://cdn.gametv.vn/news_media/image/ys_0x0_1704962406.png"
-                                    alt="Banner 1"
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    src={banner2}
+                                    alt="Banner 2"
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                 />
-                                <div style={{
-                                    position: 'absolute',
-                                    left: '50px',
-                                    top: '50px',
-                                    color: 'white',
-                                    textAlign: 'left'
-                                }}>
-                                    <h2>Nhà thuốc An Khang</h2>
-                                    <p>Đã có mặt trên DABS</p>
-                                    <Button type="primary" size="large">MUA THUỐC NGAY</Button>
-                                </div>
+
                             </div>
                         </div>
                         <div>
                             <div style={{
                                 height: '300px',
-                                background: '#e6f7ff',
                                 borderRadius: '8px',
                                 textAlign: 'center',
                                 overflow: 'hidden',
                                 position: 'relative'
                             }}>
                                 <img
-                                    src="https://ddragon.leagueoflegends.com/cdn/img/champion/splash/Yasuo_0.jpg"
-                                    alt="Banner 1"
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    src={banner3}
+                                    alt="Banner 3"
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                 />
-                                <div style={{
-                                    position: 'absolute',
-                                    left: '50px',
-                                    top: '50px',
-                                    color: 'white',
-                                    textAlign: 'left'
-                                }}>
-                                    <h2>Nhà thuốc An Khang</h2>
-                                    <p>Đã có mặt trên DABS</p>
-                                    <Button type="primary" size="large">MUA THUỐC NGAY</Button>
-                                </div>
+
                             </div>
                         </div>
 
                     </Carousel>
-
-
-
                 </Col>
             </Row>
-            <Row justify="center" style={{ marginBottom: 20, marginTop: 50 }}>
+            <div style={{
+                marginBottom: 20,
+                marginTop: 50,
+                background: '#E8F4FD',
+                borderRadius: 12,
+                boxShadow: '0 4px 16px 0 rgba(24, 144, 255, 0.12)',
+                padding: 24,
+            }}>
+                <Row justify="center" style={{ marginBottom: 20 }}>
+                    <Col className="gutter-row" span={12} style={{ textAlign: 'center' }}>
+                        <h1>Cơ sở y tế đặt khám</h1>
+                    </Col>
+                </Row>
+
+                <Row justify="center">
+                    <Col span={20} >
+                        <Slider {...settings}>
+                            {hospital.map((item, idx) => (
+                                <div key={idx}>
+                                    <Card className="facility-card" hoverable>
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            marginBottom: 20,
+                                            height: 140
+                                        }}>
+                                            <img
+                                                src={item.image || imgErrorHospital}
+                                                alt="img is loading..."
+                                                style={{ width: 120, height: 120, objectFit: 'cover' }}
+                                            />
+                                        </div>
+                                        <div>
+                                            <h3 style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', height: 50, overflow: 'hidden' }}>
+                                                {item.name || "Cơ sở y tế"}
+                                                <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 5 }} />
+                                            </h3>
+                                            <p style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', height: 80, overflow: 'hidden' }}>
+                                                <EnvironmentOutlined /> {item.address || "Địa chỉ không xác định"}
+                                            </p>
+                                            <div style={{ marginBottom: 10 }}>
+                                                <span>(5) </span>
+                                                <Rate defaultValue={5} disabled style={{ fontSize: 16 }} />
+                                            </div>
+                                            <Button type="primary" block>
+                                                Đặt khám ngay
+                                            </Button>
+                                        </div>
+                                    </Card>
+                                </div>
+                            ))}
+
+
+                        </Slider>
+                    </Col>
+                </Row>
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20, marginBottom: 30 }}>
+                    <Button
+                        type="default"
+                        className="see-all-btn"
+                        onClick={() => navigate('/hospital-list')}
+                    >
+                        Xem tất cả
+                    </Button>
+                </div>
+
+            </div>
+            <Row justify="center" style={{ marginBottom: 20 }}>
                 <Col className="gutter-row" span={12} style={{ textAlign: 'center' }}>
-                    <h1>Cơ sở y tế đặt khám được yêu thích</h1>
+                    <h1>Chuyên khoa</h1>
                 </Col>
             </Row>
-            <Row justify="center">
-                <Col span={20}>
-                    <div className="medical-facilities">
-                        <Card className="facility-card" hoverable>
-                            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                                <img
-                                    src="https://images2.thanhnien.vn/zoom/686_429/Uploaded/vietthong/2020_09_09/thumb_BDTP.jpg"
-                                    alt="Doctor Check"
-                                    style={{ width: 120, height: 120, objectFit: 'cover' }}
-                                />
-                            </div>
-                            <div>
-                                <h3>
-                                    DABS1
-                                    <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 5 }} />
-                                </h3>
-                                <p>
-                                    <EnvironmentOutlined /> FPTU
-                                </p>
-                                <div style={{ marginBottom: 10 }}>
-                                    <span>(5) </span>
-                                    <Rate defaultValue={5} disabled style={{ fontSize: 16 }} />
-                                </div>
-                                <Button type="primary" block>
-                                    Đặt khám ngay
-                                </Button>
-                            </div>
-                        </Card>
-
-                        <Card className="facility-card" hoverable>
-                            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                                <img
-                                    src="https://genk.mediacdn.vn/2018/6/22/photo-1-15296435656571415043313.jpg"
-                                    alt="Bệnh viện Da Liễu"
-                                    style={{ width: 120, height: 120, objectFit: 'contain' }}
-                                />
-                            </div>
-                            <div>
-                                <h3>
-                                    DABS2
-                                    <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 5 }} />
-                                </h3>
-                                <p>
-                                    <EnvironmentOutlined /> FPTU
-                                </p>
-                                <div style={{ marginBottom: 10 }}>
-                                    <span>(4.5) </span>
-                                    <Rate defaultValue={4.5} disabled style={{ fontSize: 16 }} allowHalf />
-                                </div>
-                                <Button type="primary" block>
-                                    Đặt khám ngay
-                                </Button>
-                            </div>
-                        </Card>
-
-                        <Card className="facility-card" hoverable>
-                            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                                <img
-                                    src="https://turbosmurfs.gg/storage/splash/Lucian_31.jpg"
-                                    alt="Bệnh viện Đại học Y Dược"
-                                    style={{ width: 120, height: 120, objectFit: 'cover' }}
-                                />
-                            </div>
-                            <div>
-                                <h3>
-                                    DABS3
-                                    <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 5 }} />
-                                </h3>
-                                <p>
-                                    <EnvironmentOutlined /> FPTU
-                                </p>
-                                <div style={{ marginBottom: 10 }}>
-                                    <span>(4.7) </span>
-                                    <Rate defaultValue={4.7} disabled style={{ fontSize: 16 }} allowHalf />
-                                </div>
-                                <Button type="primary" block>
-                                    Đặt khám ngay
-                                </Button>
-                            </div>
-                        </Card>
-
-                        <Card className="facility-card" hoverable>
-                            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-                                <img
-                                    src="https://images.1v9.gg/Heartseeker%20Lucian-9ae8eff7fb08.webp"
-                                    alt="Phòng khám Hàng Xanh"
-                                    style={{ width: 120, height: 120, objectFit: 'cover' }}
-                                />
-                            </div>
-                            <div>
-                                <h3>
-                                    DABS4
-                                    <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 5 }} />
-                                </h3>
-                                <p>
-                                    <EnvironmentOutlined /> FPTU
-                                </p>
-                                <div style={{ marginBottom: 10 }}>
-                                    <span>(4) </span>
-                                    <Rate defaultValue={4} disabled style={{ fontSize: 16 }} />
-                                </div>
-                                <Button type="primary" block>
-                                    Đặt khám ngay
-                                </Button>
-                            </div>
-                        </Card>
-                    </div>
-                </Col>
+            <Row gutter={[0, 30]} justify="center" style={{ width: '80%', margin: '0 auto' }} >
+                {specialization.slice(0, visibleCount).map((item, idx) => (
+                    <Col key={idx}
+                        xs={24} sm={12} md={8} lg={6} xl={3}
+                        style={{
+                            cursor: "pointer",
+                            marginBottom: 50,
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }} >
+                        <img
+                            src={item.image}
+                            alt={item.description}
+                            style={{ width: 80, height: 80, margin: "0 0", display: "block" }}
+                        />
+                        <div style={{
+                            fontFamily: 'Roboto',
+                            fontSize: 20,
+                            textAlign: 'center',
+                            color: ' #003553',
+                            marginTop: 8,
+                            fontWeight: 400,
+                            height: 46,
+                            width: 105.5,
+                            display: "flex",
+                            justifyContent: "center",
+                            whiteSpace: "normal",
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            direction: 'ltr'
+                        }}>
+                            {item.name}
+                        </div>
+                    </Col>
+                ))}
             </Row>
-        </div>
+
+            <div style={{ marginTop: 24, justifyContent: 'center', display: 'flex', marginBottom: 100 }}>
+                <span
+                    style={{
+                        color: "#1890ff",
+                        cursor: "pointer",
+                        fontWeight: 500,
+                        fontSize: 18,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                    }}
+                    onClick={handleShowMore}
+                >
+                    {visibleCount < specialization.length ? "Xem tất cả" : "Thu gọn"}
+                </span>
+            </div>
+
+        </div >
     </>
 }
 export default Home;
