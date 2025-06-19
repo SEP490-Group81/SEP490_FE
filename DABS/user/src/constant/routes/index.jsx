@@ -17,6 +17,7 @@ import UserNotification from "../../pages/UserProfile/HomeUser/Page/UserNotifica
 import UserMedicalForm from "../../pages/UserProfile/HomeUser/Page/UserMedicalForm";
 import UpadteProfile from "../../pages/UserProfile/Update";
 import HospitalList from "../../pages/Hospital/HospitalList";
+import PatientRecords from "../../pages/HealthRecords"; // Thêm import cho component mới
 
 export const routes = [
   //public
@@ -78,6 +79,10 @@ export const routes = [
             element: <UserMedicalForm />
           }
         ]
+      },
+      {
+        path: "health-records", // Thêm route mới cho hồ sơ bệnh nhân
+        element: <PatientRecords />
       },
     ]
 
