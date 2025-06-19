@@ -5,6 +5,8 @@ import { setAuthHandlers } from './constant/api/apiInterceptors';
 import { refreshToken, logout } from './redux/slices/userSlice';
 import AllRouter from './components/AllRouter';
 import { useEffect, useRef } from 'react';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 const App = () => {
   const dispatch = useDispatch();
   const accessToken = useSelector((state) => state.user.accessToken);

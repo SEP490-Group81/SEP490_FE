@@ -16,6 +16,7 @@ import UserProfile from "../../pages/UserProfile/HomeUser/Page/UserProfile";
 import UserNotification from "../../pages/UserProfile/HomeUser/Page/UserNotification";
 import UserMedicalForm from "../../pages/UserProfile/HomeUser/Page/UserMedicalForm";
 import UpadteProfile from "../../pages/UserProfile/Update";
+import HospitalList from "../../pages/Hospital/HospitalList";
 
 export const routes = [
   //public
@@ -36,27 +37,25 @@ export const routes = [
         element: <UpadteProfile />
       },
       {
-
         path: "account",
-
         element:
           // <ProtectedRoute allowedRoles={['user']}>
           <UserAccount />
         // </ProtectedRoute>
-
-
       },
       {
         path: "change-password",
         element: <ChangePassword />
       },
       {
-        path: "job/:id",
+        path: "hospital/:id",
         element: (
-          <ProtectedRoute allowedRoles={['user']}>
-            <Appointment />
-          </ProtectedRoute>
+          <Appointment />
         )
+      },
+      {
+        path: "hospital-list",
+        element: <HospitalList />
       },
       {
         path: "*",
@@ -64,7 +63,7 @@ export const routes = [
       },
       {
         path: "user",
-        element: <HomeUserNavBar />, 
+        element: <HomeUserNavBar />,
         children: [
           {
             index: true,

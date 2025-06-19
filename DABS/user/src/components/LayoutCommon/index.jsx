@@ -43,9 +43,13 @@ function LayoutCommon() {
         <Layout className="layout-default">
             <Header className="header">
 
-                <div className="header__logo">
-                    <img alt="logo" src={logo}></img>
+                <div
+                    className="header__logo"
+                    onClick={() => navigate("/")}
+                >
+                    <img alt="logo" src={logo} />
                 </div>
+
                 <div className="header__content" style={{ display: 'flex', justifyContent: 'center' }}>
                     <div className="header__content__top">
                         <div className="header__content__top__network">
@@ -68,8 +72,8 @@ function LayoutCommon() {
                                     <Dropdown
                                         overlay={
                                             <Menu>
-                                                <Menu.Item key="greeting"  disabled icon={<UserOutlined /> }>
-                                                    {user ? (user.fullname?.trim() || user.email|| 'khách') : 'khách'}
+                                                <Menu.Item key="greeting" disabled icon={<UserOutlined />}>
+                                                    {user ? (user.fullname?.trim() || user.email || 'khách') : 'khách'}
                                                 </Menu.Item>
                                                 <Menu.Divider />
                                                 {user ? (
