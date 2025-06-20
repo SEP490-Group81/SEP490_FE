@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, Select, Button, Spin, notification, Row, Col } from 'antd';
 import { UserAddOutlined } from '@ant-design/icons';
-import { createUser } from '../../services/user';
+import { createUser } from '../../services/userService';
 
 const { Option } = Select;
 

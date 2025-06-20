@@ -2,9 +2,13 @@
 // import CreateRoom from "../Pages/CreateRoom";
 // import Dashboard from "../Pages/Dashboard";
 // import ListRoom from "../Pages/ListRoom";
+import BlankLayout from "../../components/BlankLayout";
 import LayoutCommon from "../../components/LayoutCommon";
 import Dashboard from "../../pages/Dashboard";
+import ErrorPage from "../../pages/Error";
+import Login from "../../pages/Login";
 import UserManagement from "../../pages/UserManagement";
+import ProtectedRoute from "./ProtectedRoute";
 
 export const routes = [
   {
@@ -17,10 +21,18 @@ export const routes = [
       },
       {
         path: "/admin/users",
-        element: <UserManagement />,
+        element:
+          <ProtectedRoute allowedRoles={['admin']}>
+            <UserManagement />
+          </ProtectedRoute>
+        ,
         // requireAuth: true,
         roles: ['admin'],
-      }
+      },
+      {
+        path: "unauthorized",
+        element: <ErrorPage />
+      },
       //   {
       //     path: "/book-room",
       //     element: <BookRoom />
@@ -36,7 +48,16 @@ export const routes = [
       //     element: <ListRoom />
       //   }
     ]
-
+  },
+  {
+    path: "/login",
+    element: <BlankLayout />,
+    children: [
+      {
+        index: true,
+        element: <Login />
+      }
+    ]
   }
 ];
 

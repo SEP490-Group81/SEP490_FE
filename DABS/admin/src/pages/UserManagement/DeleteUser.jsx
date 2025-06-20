@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Typography, Button, Spin, notification } from 'antd';
 import { ExclamationCircleOutlined, UserDeleteOutlined } from '@ant-design/icons';
-import { deleteUser } from '../../services/user';
+import { deleteUser } from '../../services/userService';
 
 const { Text, Paragraph } = Typography;
 
