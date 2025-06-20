@@ -6,7 +6,7 @@ import "./style.scss";
 import banner1 from "../../assets/images/banner1.png";
 import banner2 from "../../assets/images/banner2.png";
 import banner3 from "../../assets/images/banner3.png";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getHospitalList } from "../../services/hospitalService";
 import imgErrorHospital from "../../assets/images/errorImgHospital.jpg";
 import Slider from "react-slick";
@@ -47,6 +47,45 @@ function Home() {
             }
         ]
     };
+
+    const SpecializationItem = React.memo(({ item }) => (
+        <Col
+            xs={24} sm={12} md={8} lg={6} xl={3}
+            style={{
+                cursor: "pointer",
+                marginBottom: 50,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+            }}
+        >
+            <img
+                src={item.image}
+                alt={item.description}
+                loading="lazy"
+                style={{ width: 80, height: 80, margin: "0 0", display: "block" }}
+            />
+            <div style={{
+                fontFamily: 'Roboto',
+                fontSize: 20,
+                textAlign: 'center',
+                color: ' #003553',
+                marginTop: 8,
+                fontWeight: 400,
+                height: 46,
+                width: 105.5,
+                display: "flex",
+                justifyContent: "center",
+                whiteSpace: "normal",
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                direction: 'ltr'
+            }}>
+                {item.name}
+            </div>
+        </Col>
+    ));
 
     const [hospital, setHospital] = useState([]);
     useEffect(() => {
@@ -255,42 +294,9 @@ function Home() {
                     <h1>Chuyên khoa</h1>
                 </Col>
             </Row>
-            <Row gutter={[0, 30]} justify="center" style={{ width: '80%', margin: '0 auto' }} >
+            <Row gutter={[0, 30]} justify="center" style={{ width: '80%', margin: '0 auto' }}>
                 {specialization.slice(0, visibleCount).map((item, idx) => (
-                    <Col key={idx}
-                        xs={24} sm={12} md={8} lg={6} xl={3}
-                        style={{
-                            cursor: "pointer",
-                            marginBottom: 50,
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }} >
-                        <img
-                            src={item.image}
-                            alt={item.description}
-                            style={{ width: 80, height: 80, margin: "0 0", display: "block" }}
-                        />
-                        <div style={{
-                            fontFamily: 'Roboto',
-                            fontSize: 20,
-                            textAlign: 'center',
-                            color: ' #003553',
-                            marginTop: 8,
-                            fontWeight: 400,
-                            height: 46,
-                            width: 105.5,
-                            display: "flex",
-                            justifyContent: "center",
-                            whiteSpace: "normal",
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            direction: 'ltr'
-                        }}>
-                            {item.name}
-                        </div>
-                    </Col>
+                    <SpecializationItem key={idx} item={item} />
                 ))}
             </Row>
 
@@ -307,7 +313,7 @@ function Home() {
                     }}
                     onClick={handleShowMore}
                 >
-                    {visibleCount < specialization.length ? "Xem tất cả" : "Thu gọn"}
+                    {visibleCount < specialization.length ? "Xem thêm" : "Thu gọn"}
                 </span>
             </div>
 

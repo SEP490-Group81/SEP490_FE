@@ -33,7 +33,6 @@ function HospitalList() {
     };
 
 
-
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
@@ -137,6 +136,7 @@ function HospitalList() {
                                             wordBreak: 'break-word'
                                         }}>
                                             {item.name || "Cơ sở y tế"}
+                                         
                                             <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 6 }} />
                                         </h3>
                                         <p style={{
@@ -180,7 +180,7 @@ function HospitalList() {
                             />
                         </div>
                     </Col>
-                    <Col xs={0} sm={0} md={10} lg={10} xl={10} xxl={10}>
+                    <Col xs={0} sm={0} md={0} lg={0} xl={10} xxl={10}>
                         {selectedHospital && (
                             <Card
                                 style={{
@@ -193,6 +193,7 @@ function HospitalList() {
                                 }}
                             >
                                 <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                                      {selectedHospital.id || "chưa có id"}
                                     <img src={selectedHospital.image || imgErrorHospital} alt="Logo" style={{ height: 80 }} />
                                     <h2 style={{ color: '#1890ff', marginTop: 8 }}>{selectedHospital.name || "Bệnh viện"}</h2>
                                 </div>
@@ -200,9 +201,14 @@ function HospitalList() {
                                 <p style={{ color: '#333', marginBottom: 16 }}>{"Chưa có mô tả"}</p>
 
                                 {/* Bản đồ nhúng */}
+                                <div><h2 style={{
+                                    fontWeight: 500,
+                                    fontSize: 20,
+                                    color: '#003553'
+                                }}>Bản đồ</h2></div>
                                 <div style={{ marginBottom: 16 }}>
                                     <iframe
-                                        src={selectedHospital.googleMap}
+                                        src={selectedHospital.googleMapUri}
                                         width="100%"
                                         height="250"
                                         style={{ border: 0, borderRadius: 12 }}

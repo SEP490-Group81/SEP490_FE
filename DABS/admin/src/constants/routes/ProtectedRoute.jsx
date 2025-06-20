@@ -1,26 +1,27 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 
-const PrivateRoute = (
-    {allowedRoles}, 
-    { element },
-    {user}
+const ProtectedRoute = (
+    { allowedRoles }
 ) => {
-    const { token, isInitializing } = useSelector((state) => state.auth);
+    const { token, isInitializing, user } = useSelector((state) => state.auth);
 
     if (isInitializing) {
-        return null; // Hoặc hiển thị một spinner trong lúc chờ khởi tạo
+        return <div>...Loading</div>;  // sau dùng skeleton
     }
-    console.log("in priavate Route : "+ token);
+    console.log("in priavate Route : " + token);
     if (!token) {
         return <Navigate to="/login" replace />;
     }
+    console.log("allowRoles : " + allowedRoles);
+    console.log("user role : " + user.role);
 
     if (allowedRoles && !allowedRoles.includes(user?.role)) {
+
         return <Navigate to="/unauthorized" replace />;
     }
 
-    return element;
+    return <Outlet />;
 };
 
-export default PrivateRoute;
+export default ProtectedRoute;
