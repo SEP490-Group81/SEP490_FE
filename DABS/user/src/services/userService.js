@@ -7,7 +7,6 @@ export const getUserById = async (id) => {
         if (!result || !result.result) {
             throw new Error('User data is missing in the response.');
         }
-
         return result.result;
     } catch (error) {
         console.error(`Error fetching user with ID ${id}:`, error.message);

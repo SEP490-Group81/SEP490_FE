@@ -11,7 +11,7 @@ export const decodeToken = (token) => {
 };
 
 
-export const setCookieWithExpiryFromToken = (name, token) => {
+export const setCookieWithExpiryFromToken = (name, token, dispatch) => {
     try {
         const decoded = jwtDecode(token);
         console.log('Decoded token in setCookieWithExpiryFromToken:', decoded);
@@ -28,7 +28,7 @@ export const setCookieWithExpiryFromToken = (name, token) => {
             const expiryDate = new Date();
             expiryDate.setTime(expiryDate.getTime() + expiryTimeInSeconds * 1000); 
             document.cookie = `${name}=${token}; expires=${expiryDate.toUTCString()}; path=/; Secure; SameSite=Strict`;
-             store.dispatch(updateAccessToken(token));
+             dispatch(updateAccessToken(token));
         } else {
             console.error('JWT has already expired, cannot set cookie.');
         }

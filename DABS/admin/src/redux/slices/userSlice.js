@@ -3,7 +3,7 @@ import { deleteCookie, storeTokens, getCookie } from '../../utils/cookieSettings
 import { decodeToken, setCookieWithExpiryFromToken } from '../../utils/jwtUtils';
 import { getUserById } from '../../services/userService';
 import { fetchToken, refreshToken as refreshTokenService } from '../../services/authService';
-
+// import CryptoJS from 'crypto-js';
 export const refreshToken = createAsyncThunk(
     'auth/refreshToken',
     async (_, { rejectWithValue, dispatch }) => {
@@ -53,7 +53,8 @@ export const loginUser = createAsyncThunk(
                 if (decoded) {
                     setCookieWithExpiryFromToken('accessToken', tokenData.token, dispatch);
                     storeTokens(tokenData.refreshToken, tokenData.refreshTokenExpiryTime);
-
+                    //const encryptedToken = CryptoJS.AES.encrypt(tokenData.token, '301').toString();
+                    //localStorage.setItem('accessToken', encryptedToken);
                     const user = await getUserById(decoded.nameidentifier);
 
                     console.log('User fetched:', user);
