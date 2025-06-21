@@ -7,8 +7,9 @@ import AllRouter from './components/AllRouter';
 import { useEffect, useRef } from 'react';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { getDecryptedUserFromLocalStorage } from './utils/decryptedUtils';
 import { getCookie } from './utils/cookieSettings';
+import { decodeToken, isTokenExpired } from './utils/jwtUtils';
+import { getUserById } from './services/userService';
 const App = () => {
   const dispatch = useDispatch();
   const accessToken = useSelector((state) => state.user.accessToken);
@@ -27,19 +28,25 @@ const App = () => {
 
 useEffect(() => {
   const init = async () => {
-    const user = await getDecryptedUserFromLocalStorage();
-    if (user && accessTokenRef.current) {
-      dispatch(setUser(user));
-    } else {
-      if (getCookie('refreshToken')) {
-        try {
-          await dispatch(refreshToken()).unwrap();
-        } catch {
-          dispatch(logout());
-        }
-      }
+  let accessToken = localStorage.getItem('accessToken');
+  
+  if (!accessToken || isTokenExpired(accessToken)) {
+    console.log("Token expired or not found, refreshing...");
+    try {
+      await dispatch(refreshToken()).unwrap();
+      accessToken = localStorage.getItem('accessToken');
+    } catch {
+      dispatch(logout());
+      return;
     }
-  };
+  }
+
+  const decoded = decodeToken(accessToken);
+  if (decoded) {
+    const user = await getUserById(decoded.nameidentifier);
+    dispatch(setUser(user));
+  }
+};
   init();
 }, [dispatch]);
 

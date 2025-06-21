@@ -10,7 +10,6 @@ import { useNavigate } from 'react-router-dom';
 import { updateUser } from "../../../services/userService";
 import { setUser, updateUserSlice } from "../../../redux/slices/userSlice";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
-import { getDecryptedUserFromLocalStorage } from "../../../utils/decryptedUtils";
 dayjs.locale("vi");
 const { Text } = Typography;
 

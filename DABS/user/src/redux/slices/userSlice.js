@@ -1,23 +1,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { deleteCookie, storeTokens, getCookie } from '../../utils/cookieSettings';
 import { fetchToken, refreshToken as refreshTokenService } from '../../services/authService';
-import { decodeToken, setCookieWithExpiryFromToken } from '../../utils/jwtUtils';
+import { decodeToken } from '../../utils/jwtUtils';
 import { getUserById } from '../../services/userService';
-import CryptoJS from 'crypto-js';
-import { my_secret_key } from '../../constant/CryptoJS/secretKey';
 export const refreshToken = createAsyncThunk(
     'auth/refreshToken',
     async (_, { rejectWithValue, dispatch }) => {
         try {
             const refreshTokenValue = getCookie('refreshToken');
-            let accessToken = getCookie('accessToken');
-            if (!accessToken) {
-                const encryptedToken = localStorage.getItem('encryptedToken');
-                if (encryptedToken) {
-                    const bytes = CryptoJS.AES.decrypt(encryptedToken, my_secret_key);
-                    accessToken = bytes.toString(CryptoJS.enc.Utf8);
-                }
-            }
+            const accessToken = localStorage.getItem('accessToken');
+
             console.log("refreshTokenValue is " + refreshToken + " accessToken is " + accessToken);
             if (!refreshTokenValue || !accessToken) {
                 dispatch(logout());
@@ -26,13 +18,14 @@ export const refreshToken = createAsyncThunk(
 
             const tokenData = await refreshTokenService(accessToken, refreshTokenValue);
             const decoded = decodeToken(tokenData.token);
+            dispatch(updateAccessToken(tokenData.token));
+            localStorage.setItem('accessToken', tokenData.token);
             if (!decoded) throw new Error('Token decoding failed');
-            setCookieWithExpiryFromToken('accessToken', tokenData.token, dispatch);
+
             storeTokens(tokenData.refreshToken, tokenData.refreshTokenExpiryTime);
             const user = await getUserById(decoded.nameidentifier);
-            const encryptedToken = CryptoJS.AES.encrypt(tokenData.token, my_secret_key).toString();
 
-            return { accessToken: tokenData.token, user,encryptedToken };
+            return { accessToken: tokenData.token, user };
         } catch (error) {
             console.error('Refresh token failed:', error);
             if (error.response?.status === 401) dispatch(logout());
@@ -55,15 +48,15 @@ export const loginUser = createAsyncThunk(
                 const decoded = decodeToken(tokenData.token);
                 console.log('Decoded token:', decoded);
                 if (decoded) {
-                    setCookieWithExpiryFromToken('accessToken', tokenData.token, dispatch);
                     storeTokens(tokenData.refreshToken, tokenData.refreshTokenExpiryTime);
-                    const encryptedToken = CryptoJS.AES.encrypt(tokenData.token, my_secret_key).toString();
-
+                    console.log("access token in login : " + tokenData.token);
+                    localStorage.setItem('accessToken', tokenData.token);
+                    dispatch(updateAccessToken(tokenData.token));
                     const user = await getUserById(decoded.nameidentifier);
-
+                    console.log("user in login sucess : " + user);
                     console.log('User fetched:', user);
 
-                    return { accessToken: tokenData.token, user, encryptedToken };
+                    return { accessToken: tokenData.toke, user };
                 }
                 throw new Error('Token decoding failed');
             }
@@ -79,7 +72,7 @@ const authSlice = createSlice({
     name: 'auth',
     initialState: {
         user: null,
-        accessToken: getCookie('accessToken') || null,
+        accessToken: localStorage.getItem('accessToken') || null,
         isLoading: false,
         isInitializing: true,
         error: null,
@@ -94,7 +87,6 @@ const authSlice = createSlice({
             state.isInitializing = false;
             localStorage.clear();
             deleteCookie('refreshToken');
-            deleteCookie('accessToken');
         },
 
         updateUserSlice: (state, action) => {
@@ -117,8 +109,9 @@ const authSlice = createSlice({
                 state.isLoading = false;
                 state.user = action.payload.user;
                 state.accessToken = action.payload.accessToken;
-                console.log('User after login:', action.payload.user);
-                localStorage.setItem('encryptedToken', action.payload.encryptedToken);
+
+                // localStorage.setItem('accessToken', state.accessToken);
+                console.log('User after login success:', action.payload.accessToken);
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.isLoading = false;
@@ -135,7 +128,7 @@ const authSlice = createSlice({
                 state.user = action.payload.user;
                 state.accessToken = action.payload.accessToken;
                 console.log('User after token refresh:', action.payload.user);
-                localStorage.setItem('encryptedToken', action.payload.encryptedToken);
+
 
             })
             .addCase(refreshToken.rejected, (state, action) => {
