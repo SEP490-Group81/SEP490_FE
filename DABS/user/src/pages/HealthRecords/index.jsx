@@ -57,15 +57,7 @@ const PatientRecords = () => {
             <Row gutter={[24, 24]}>
                 <Col xs={24} md={6}>
                     <div className="sidebar">
-                        <div className="sidebar-header">
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                className="add-record-btn"
-                            >
-                                Thêm hồ sơ
-                            </Button>
-                        </div>
+
 
                         <div className="sidebar-menu">
                             <div className={`menu-item ${true ? 'active' : ''}`}>
