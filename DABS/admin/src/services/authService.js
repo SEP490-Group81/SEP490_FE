@@ -27,7 +27,6 @@ export const register = async (options) => {
 export const refreshToken = async (token, refreshToken) => {
     const path = "/tokens/refresh";
     const options = { token, refreshToken };
-
     try {
         const data = await post(path, options);
         console.log("Token data in refreshToken:", data);

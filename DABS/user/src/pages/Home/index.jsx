@@ -6,14 +6,16 @@ import "./style.scss";
 import banner1 from "../../assets/images/banner1.png";
 import banner2 from "../../assets/images/banner2.png";
 import banner3 from "../../assets/images/banner3.png";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getHospitalList } from "../../services/hospitalService";
 import imgErrorHospital from "../../assets/images/errorImgHospital.jpg";
 import Slider from "react-slick";
 import { useNavigate } from "react-router-dom";
+import { getSpecializationList } from "../../services/specializationService";
 const { Search } = Input;
 
 function Home() {
+    const INITIAL_COUNT = 16;
     const navigate = useNavigate();
     const settings = {
         centerMode: true,
@@ -46,6 +48,45 @@ function Home() {
         ]
     };
 
+    const SpecializationItem = React.memo(({ item }) => (
+        <Col
+            xs={24} sm={12} md={8} lg={6} xl={3}
+            style={{
+                cursor: "pointer",
+                marginBottom: 50,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+            }}
+        >
+            <img
+                src={item.image}
+                alt={item.description}
+                loading="lazy"
+                style={{ width: 80, height: 80, margin: "0 0", display: "block" }}
+            />
+            <div style={{
+                fontFamily: 'Roboto',
+                fontSize: 20,
+                textAlign: 'center',
+                color: ' #003553',
+                marginTop: 8,
+                fontWeight: 400,
+                height: 46,
+                width: 105.5,
+                display: "flex",
+                justifyContent: "center",
+                whiteSpace: "normal",
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                direction: 'ltr'
+            }}>
+                {item.name}
+            </div>
+        </Col>
+    ));
+
     const [hospital, setHospital] = useState([]);
     useEffect(() => {
         const fetchApi = async () => {
@@ -58,8 +99,30 @@ function Home() {
         };
         fetchApi();
     }, []);
-
     console.log(hospital);
+
+    const [specialization, setSpecialization] = useState([]);
+    useEffect(() => {
+        const fetchApi = async () => {
+            const result = await getSpecializationList();
+            if (result) {
+                setSpecialization(result);
+            } else {
+                console.error("No hospital data found");
+            }
+        };
+        fetchApi();
+    }, []);
+    console.log(specialization);
+
+    const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
+
+    const handleShowMore = () => {
+        if (visibleCount >= specialization.length)
+            setVisibleCount(INITIAL_COUNT);
+        else
+            setVisibleCount(visibleCount + INITIAL_COUNT);
+    };
 
     const onSearch = (value, _e, info) =>
         console.log(info === null || info === void 0 ? void 0 : info.source, value);
@@ -73,7 +136,7 @@ function Home() {
                 marginBottom: 20, marginTop: 0
             }}>
                 <Row justify="center" >
-                    <Col className="gutter-row" span={12} style={{ textAlign: 'center', marginBottom: 20,marginTop: 20 }}>
+                    <Col className="gutter-row" span={12} style={{ textAlign: 'center', marginBottom: 20, marginTop: 20 }}>
                         <h1>Kết nối Người Dân với Cơ sở & Dịch vụ Y tế hàng đầu</h1>
                     </Col>
                 </Row>
@@ -171,53 +234,57 @@ function Home() {
                         <h1>Cơ sở y tế đặt khám</h1>
                     </Col>
                 </Row>
+
                 <Row justify="center">
-                    <Col span={20}>
+                    <Col span={20} >
                         <Slider {...settings}>
                             {hospital.map((item, idx) => (
-                                <Card className="facility-card" hoverable key={idx} style={{ margin: '0 10px' }} >
-                                    <div style={{
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        marginBottom: 20,
-                                        height: 140
-                                    }}>
-                                        <img
-                                            src={item.image || imgErrorHospital}
-                                            alt="img is loading..."
-                                            style={{ width: 120, height: 120, objectFit: 'cover' }}
-                                        />
-                                    </div>
-                                    <div>
-                                        <h3 style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', height: 50, overflow: 'hidden' }}>
-                                            {item.name || "Cơ sở y tế"}
-                                            <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 5 }} />
-                                        </h3>
-                                        <p style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', height: 80, overflow: 'hidden' }}>
-                                            <EnvironmentOutlined /> {item.address || "Địa chỉ không xác định"}
-                                        </p>
-                                        <div style={{ marginBottom: 10 }}>
-                                            <span>(5) </span>
-                                            <Rate defaultValue={5} disabled style={{ fontSize: 16 }} />
+                                <div key={idx}>
+                                    <Card className="facility-card" hoverable>
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            marginBottom: 20,
+                                            height: 140
+                                        }}>
+                                            <img
+                                                src={item.image || imgErrorHospital}
+                                                alt="img is loading..."
+                                                style={{ width: 120, height: 120, objectFit: 'cover' }}
+                                            />
                                         </div>
-                                        <Button type="primary" block>
-                                            Đặt khám ngay
-                                        </Button>
-                                    </div>
-                                </Card>
+                                        <div>
+                                            <h3 style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', height: 50, overflow: 'hidden' }}>
+                                                {item.name || "Cơ sở y tế"}
+                                                <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 5 }} />
+                                            </h3>
+                                            <p style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', height: 80, overflow: 'hidden' }}>
+                                                <EnvironmentOutlined /> {item.address || "Địa chỉ không xác định"}
+                                            </p>
+                                            <div style={{ marginBottom: 10 }}>
+                                                <span>(5) </span>
+                                                <Rate defaultValue={5} disabled style={{ fontSize: 16 }} />
+                                            </div>
+                                            <Button type="primary" block>
+                                                Đặt khám ngay
+                                            </Button>
+                                        </div>
+                                    </Card>
+                                </div>
                             ))}
+
 
                         </Slider>
                     </Col>
                 </Row>
-                <div style={{display:'flex', justifyContent: 'center', marginTop: 20, marginBottom: 30 }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20, marginBottom: 30 }}>
                     <Button
                         type="default"
                         className="see-all-btn"
                         onClick={() => navigate('/hospital-list')}
                     >
-                        Xem tất cả 
+                        Xem tất cả
                     </Button>
                 </div>
 
@@ -227,6 +294,29 @@ function Home() {
                     <h1>Chuyên khoa</h1>
                 </Col>
             </Row>
+            <Row gutter={[0, 30]} justify="center" style={{ width: '80%', margin: '0 auto' }}>
+                {specialization.slice(0, visibleCount).map((item, idx) => (
+                    <SpecializationItem key={idx} item={item} />
+                ))}
+            </Row>
+
+            <div style={{ marginTop: 24, justifyContent: 'center', display: 'flex', marginBottom: 100 }}>
+                <span
+                    style={{
+                        color: "#1890ff",
+                        cursor: "pointer",
+                        fontWeight: 500,
+                        fontSize: 18,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                    }}
+                    onClick={handleShowMore}
+                >
+                    {visibleCount < specialization.length ? "Xem thêm" : "Thu gọn"}
+                </span>
+            </div>
+
         </div >
     </>
 }

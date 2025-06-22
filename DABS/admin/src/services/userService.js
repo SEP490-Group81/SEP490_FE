@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_DOMAIN } from '../constants/api/api';
+import { getAuth, postAuth, putAuth, deleteAuth } from '../utils/request';
 
 // Token cho authorization
 const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWRlbnRpZmllciI6IjEiLCJlbWFpbCI6ImFkbWluQGhvc3RuYW1lLmNvbSIsImZ1bGxOYW1lIjoiU3VwZXIgVXNlciIsIm5hbWUiOiJTdXBlciIsInN1cm5hbWUiOiJVc2VyIiwiaXBBZGRyZXNzIjoiMC4wLjAuMSIsImF2YXRhclVybCI6IiIsIm1vYmlsZXBob25lIjoiIiwiZXhwIjoxNzgxMjcwNDgzLCJpc3MiOiJodHRwczovL0JFLlNFUDQ5MC5uZXQiLCJhdWQiOiJCRS5TRVA0OTAifQ.kQIX9uvjN9UOPiBitp9JsO2DlPlFyIU4VTP1ZyM4k3Y";
@@ -15,7 +16,7 @@ const api = axios.create({
 // Get all users with pagination and optional filters
 export const getAllUsers = async (params) => {
     try {
-        const response = await api.get(`https://localhost:8175/api/v1/user`, { params });
+        const response = await await getAuth(`/user`);;
         return response.data;
     } catch (error) {
         console.error('Error fetching users:', error);
@@ -24,42 +25,49 @@ export const getAllUsers = async (params) => {
 };
 
 // Get user by ID
+
 export const getUserById = async (id) => {
     try {
-        const response = await api.get(`https://localhost:8175/api/v1/user/${id}`);
-        return response.data;
+        const result = await getAuth(`/user/${id}`);
+        console.log(`User with ID ${id} fetched successfully:`, result.result);
+        if (!result || !result.result) {
+            throw new Error('User data is missing in the response.');
+        }
+
+        return result.result;
     } catch (error) {
-        console.error(`Error fetching user ${id}:`, error);
-        return null;
+        console.error(`Error fetching user with ID ${id}:`, error.message);
+        throw error;
     }
 };
 
 // Create new user
 export const createUser = async (userData) => {
-    try {
-        const response = await api.post(`https://localhost:8175/api/v1/user`, userData);
-        return response.data;
-    } catch (error) {
-        console.error('Error creating user:', error);
-        return null;
-    }
+  try {
+    const result = await postAuth(`/user/create`, userData);
+    console.log(`User updated successfully:`, result);
+    return result;
+  } catch (error) {
+    console.error(`Error updating user with ID ${userData.id}:`, error.message);
+    throw error;
+  }
 };
-
 // Update user
-export const updateUser = async (id, userData) => {
-    try {
-        const response = await api.put(`https://localhost:8175/api/v1/user/${id}`, userData);
-        return response.data;
-    } catch (error) {
-        console.error(`Error updating user ${id}:`, error);
-        return null;
-    }
+export const updateUser = async (userData) => {
+  try {
+    const result = await putAuth(`/user/update`, userData);
+    console.log(`User updated successfully:`, result);
+    return result;
+  } catch (error) {
+    console.error(`Error updating user with ID ${userData.id}:`, error.message);
+    throw error;
+  }
 };
 
 // Delete user
 export const deleteUser = async (id) => {
     try {
-        const response = await api.delete(`https://localhost:8175/api/v1/user/${id}`);
+        const response = await api.deleteAuth('/user',id);
         return response.data;
     } catch (error) {
         console.error(`Error deleting user ${id}:`, error);

@@ -1,4 +1,3 @@
-// store.js
 import { configureStore } from '@reduxjs/toolkit';
 import userReducer from './slices/userSlice';
 import messageReducer from './slices/messageSlice';

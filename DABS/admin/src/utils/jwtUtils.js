@@ -1,5 +1,4 @@
 import { jwtDecode } from 'jwt-decode';
-import store from '../redux/store';
 import { updateAccessToken } from '../redux/slices/userSlice';
 export const decodeToken = (token) => {
     try {
@@ -15,8 +14,8 @@ export const setCookieWithExpiryFromToken = (name, token, dispatch) => {
     try {
         const decoded = jwtDecode(token);
         console.log('Decoded token in setCookieWithExpiryFromToken:', decoded);
-        const exp = decoded.exp; 
-        const currentTime = Math.floor(Date.now() / 1000); 
+        const exp = decoded.exp;
+        const currentTime = Math.floor(Date.now() / 1000);
         const expiryTimeInSeconds = exp - currentTime;
 
         console.log('Decoded token:', decoded);
@@ -26,9 +25,11 @@ export const setCookieWithExpiryFromToken = (name, token, dispatch) => {
 
         if (expiryTimeInSeconds > 0) {
             const expiryDate = new Date();
-            expiryDate.setTime(expiryDate.getTime() + expiryTimeInSeconds * 1000); 
+            expiryDate.setTime(expiryDate.getTime() + expiryTimeInSeconds * 1000);
             document.cookie = `${name}=${token}; expires=${expiryDate.toUTCString()}; path=/; Secure; SameSite=Strict`;
-             dispatch(updateAccessToken(token));
+            if (dispatch) {
+                dispatch(updateAccessToken(token)); 
+            }
         } else {
             console.error('JWT has already expired, cannot set cookie.');
         }
@@ -40,12 +41,12 @@ export const setCookieWithExpiryFromToken = (name, token, dispatch) => {
 
 
 export const isTokenExpired = (token) => {
-  try {
-    const decoded = jwtDecode(token);
-    const currentTime = Math.floor(Date.now() / 1000); 
-    return decoded.exp < currentTime;
-  } catch (error) {
-    console.error('Invalid token in isTokenExpired:', error);
-    return true; 
-  }
+    try {
+        const decoded = jwtDecode(token);
+        const currentTime = Math.floor(Date.now() / 1000);
+        return decoded.exp < currentTime;
+    } catch (error) {
+        console.error('Invalid token in isTokenExpired:', error);
+        return true;
+    }
 };
