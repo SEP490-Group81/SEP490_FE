@@ -23,34 +23,34 @@ function Login() {
             dispatch(clearMessage());
         }
     }, [messageState, dispatch]);
- const onFinish = async (values) => {
-    try {
-        console.log("Received values: ", values);
+    const onFinish = async (values) => {
+        try {
+            console.log("Received values: ", values);
 
-        const resultAction = await dispatch(loginUser({ email: values.email, password: values.password }));
+            const resultAction = await dispatch(loginUser({ email: values.email, password: values.password }));
 
-        if (loginUser.fulfilled.match(resultAction)) {
-            const tokenData = resultAction.payload;
-             console.log("Token data in login: ", tokenData);
+            if (loginUser.fulfilled.match(resultAction)) {
+                const tokenData = resultAction.payload;
+                console.log("Token data in login: ", tokenData);
 
-            if (tokenData?.user) {
-               
-                dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
+                if (tokenData?.user) {
 
-                setTimeout(() => {
-                    navigate('/');
-                }, 800);
+                    dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
+
+                    setTimeout(() => {
+                        navigate('/');
+                    }, 800);
+                } else {
+                    throw new Error("Dữ liệu token không hợp lệ.");
+                }
             } else {
-                throw new Error("Dữ liệu token không hợp lệ.");
+                throw new Error(resultAction.payload || "Đăng nhập thất bại");
             }
-        } else {
-            throw new Error(resultAction.payload || "Đăng nhập thất bại");
+        } catch (error) {
+            console.error("Login failed: ", error);
+            dispatch(setMessage({ type: 'error', content: 'Đăng nhập thất bại. Vui lòng thử lại!' }));
         }
-    } catch (error) {
-        console.error("Login failed: ", error);
-        dispatch(setMessage({ type: 'error', content: 'Đăng nhập thất bại. Vui lòng thử lại!' }));
-    }
-};
+    };
 
     return (
         <>

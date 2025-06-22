@@ -24,9 +24,9 @@ export const register = async (options) => {
     const result = await post('users', options);
     return result;
 }
-export const refreshToken = async (refreshToken) => {
+export const refreshToken = async (token, refreshToken) => {
     const path = "/tokens/refresh";
-    const options = { refreshToken };
+    const options = { token, refreshToken };
 
     try {
         const data = await post(path, options);
@@ -41,4 +41,3 @@ export const refreshToken = async (refreshToken) => {
         throw error;
     }
 };
-

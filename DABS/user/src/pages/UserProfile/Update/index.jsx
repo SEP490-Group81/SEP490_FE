@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { getDistricts, getProvinces, getWards } from "../../../services/provinceService";
 import { useNavigate } from 'react-router-dom';
 import { updateUser } from "../../../services/userService";
-import { updateUserSlice } from "../../../redux/slices/userSlice";
+import { setUser, updateUserSlice } from "../../../redux/slices/userSlice";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
 dayjs.locale("vi");
 const { Text } = Typography;
@@ -155,6 +155,12 @@ function UpadteProfile() {
       setWards([]);
     }
   }, [selectedDistrict]);
+
+    const isInitializing = useSelector((state) => state.user.isInitializing);
+
+    if (isInitializing) {
+        return <div>Loading...</div>; 
+    }
   return (
     <>
       {contextHolder}
