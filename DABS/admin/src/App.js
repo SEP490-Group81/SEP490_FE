@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react';
 import { setAuthHandlers } from './constants/api/apiInterceptors';
 import { decodeToken, isTokenExpired } from './utils/jwtUtils';
 import { getUserById } from './services/userService';
-import { refreshToken, logout, setUser } from './redux/slices/userSlice';
+import { refreshToken, logout, setUser, updateAccessToken } from './redux/slices/userSlice';
 function App() {
     const dispatch = useDispatch();
     const accessToken = useSelector((state) => state.user.accessToken);
@@ -32,6 +32,7 @@ function App() {
       try {
         await dispatch(refreshToken()).unwrap();
         accessToken = localStorage.getItem('accessToken');
+        dispatch(updateAccessToken(accessToken))
       } catch {
         dispatch(logout());
         return;
