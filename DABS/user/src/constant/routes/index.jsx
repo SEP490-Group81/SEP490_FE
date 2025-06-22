@@ -58,6 +58,10 @@ export const routes = [
         element: <HospitalList />
       },
       {
+        path: "appointment",
+        element: <Appointment />
+      },
+      {
         path: "*",
         element: <Navigate to="/" />
       },

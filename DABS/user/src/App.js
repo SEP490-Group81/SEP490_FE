@@ -2,7 +2,7 @@
 import './App.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { setAuthHandlers } from './constant/api/apiInterceptors';
-import { refreshToken, logout, setUser } from './redux/slices/userSlice';
+import { refreshToken, logout, setUser, updateAccessToken } from './redux/slices/userSlice';
 import AllRouter from './components/AllRouter';
 import { useEffect, useRef } from 'react';
 import "slick-carousel/slick/slick.css";
@@ -35,12 +35,13 @@ useEffect(() => {
     try {
       await dispatch(refreshToken()).unwrap();
       accessToken = localStorage.getItem('accessToken');
+      dispatch(updateAccessToken(accessToken))
     } catch {
       dispatch(logout());
       return;
     }
   }
-
+  
   const decoded = decodeToken(accessToken);
   if (decoded) {
     const user = await getUserById(decoded.nameidentifier);
