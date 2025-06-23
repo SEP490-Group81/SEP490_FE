@@ -13,3 +13,11 @@
     padding: 16px;
   }
 }
+
+@media (max-width: 660px) {
+  .responsive-container {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+}

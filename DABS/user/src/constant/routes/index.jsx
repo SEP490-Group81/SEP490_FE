@@ -17,6 +17,7 @@ import UserNotification from "../../pages/UserProfile/HomeUser/Page/UserNotifica
 import UserMedicalForm from "../../pages/UserProfile/HomeUser/Page/UserMedicalForm";
 import UpadteProfile from "../../pages/UserProfile/Update";
 import HospitalList from "../../pages/Hospital/HospitalList";
+import HospitalDetail from "../../pages/Hospital/HospitalDetail";
 
 export const routes = [
   //public
@@ -48,9 +49,10 @@ export const routes = [
         element: <ChangePassword />
       },
       {
-        path: "hospital/:id",
+        //path: "hospital/:id",
+        path: "hospitalDetail",
         element: (
-          <Appointment />
+          <HospitalDetail />
         )
       },
       {
