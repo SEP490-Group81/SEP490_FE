@@ -8,7 +8,7 @@ const BlankLayout = () => {
             style={{
                 minHeight: "100vh",
                 width: "100vw",
-                background: `url(${loginBg}) center/cover no-repeat`,
+                background: `#E8F4FD`,
                 position: "relative",
                 display: "flex",
                 justifyContent: "center",
