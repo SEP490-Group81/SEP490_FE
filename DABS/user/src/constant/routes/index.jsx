@@ -17,11 +17,11 @@ import UserNotification from "../../pages/UserProfile/HomeUser/Page/UserNotifica
 import UserMedicalForm from "../../pages/UserProfile/HomeUser/Page/UserMedicalForm";
 import UpadteProfile from "../../pages/UserProfile/Update";
 import HospitalList from "../../pages/Hospital/HospitalList";
-<<<<<<< HEAD
+
 import HospitalDetail from "../../pages/Hospital/HospitalDetail";
-=======
+
 import PatientRecords from "../../pages/HealthRecords"; // Thêm import cho component mới
->>>>>>> cef83718b171677247f5229f07346d2f986dff8b
+
 
 export const routes = [
   //public
