@@ -18,6 +18,11 @@ import UserMedicalForm from "../../pages/UserProfile/HomeUser/Page/UserMedicalFo
 import UpadteProfile from "../../pages/UserProfile/Update";
 import HospitalList from "../../pages/Hospital/HospitalList";
 
+import HospitalDetail from "../../pages/Hospital/HospitalDetail";
+
+import PatientRecords from "../../pages/HealthRecords"; // Thêm import cho component mới
+
+
 export const routes = [
   //public
   {
@@ -48,9 +53,10 @@ export const routes = [
         element: <ChangePassword />
       },
       {
-        path: "hospital/:id",
+        //path: "hospital/:id",
+        path: "hospitalDetail",
         element: (
-          <Appointment />
+          <HospitalDetail />
         )
       },
       {
@@ -82,6 +88,10 @@ export const routes = [
             element: <UserMedicalForm />
           }
         ]
+      },
+      {
+        path: "health-records", // Thêm route mới cho hồ sơ bệnh nhân
+        element: <PatientRecords />
       },
     ]
 

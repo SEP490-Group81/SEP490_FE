@@ -78,7 +78,10 @@ function LayoutCommon() {
                                                 <Menu.Divider />
                                                 {user ? (
                                                     <>
-                                                        <Menu.Item key="profile" onClick={() => navigate('/profile')} >
+                                                        <Menu.Item key="profile" onClick={() => navigate('/profile')} icon={<UserOutlined />}>
+                                                            Thông tin cá nhân
+                                                        </Menu.Item>
+                                                        <Menu.Item key="health-records" icon={<FileTextOutlined />} onClick={() => navigate('/health-records')}>
                                                             Hồ sơ bệnh nhân
                                                         </Menu.Item>
                                                         <Menu.Item key="records" icon={<FileTextOutlined />} onClick={() => navigate('/records')}>
@@ -153,6 +156,10 @@ function LayoutCommon() {
                             <Menu.Item key="service-1">Dịch vụ 1</Menu.Item>
                             <Menu.Item key="service-2">Dịch vụ 2</Menu.Item>
                         </SubMenu>
+
+                        <Menu.Item key="patient-records" onClick={() => navigate('/health-records')}>
+                            Hồ sơ bệnh nhân
+                        </Menu.Item>
 
                         <Menu.Item key="enterprise-health">
                             <a href="/">Khám sức khoẻ doanh nghiệp</a>
