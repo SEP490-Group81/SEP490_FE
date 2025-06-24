@@ -8,6 +8,12 @@ const { Step } = Steps;
 const priceData = [
     { key: 1, service: 'Khám tổng quát', price: '300,000 VNĐ' },
     { key: 2, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
+    { key: 3, service: 'Khám tổng quát', price: '300,000 VNĐ' },
+    { key: 4, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
+    { key: 5, service: 'Khám tổng quát', price: '300,000 VNĐ' },
+    { key: 6, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
+    
+    
 ];
 
 const columns = [
@@ -79,46 +85,46 @@ function HospitalDetail() {
                         <p>Địa chỉ: 123 Đường Lớn, Quận 1, TP.HCM</p>
                         <p>Điện thoại: 0909 123 456</p>
                     </Card>
-                    <h2 style={{ margin: '16px 0 8px', fontSize: '16px' }}>Các khoa</h2>
-                     <Slider {...sliderSettings}>
-            {departments.map((item) => (
-                <div key={item.key} style={{ padding: 8 }}>
-                    <Card
-                        hoverable
-                        style={{
-                            borderRadius: 12,
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                            textAlign: 'center',
-                            padding: 16,
-                            minHeight: 220,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}
-                        bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                    >
-                        <img
-                            src={item.image || imgErrorHospital}
-                            alt={item.label}
-                            style={{
-                                width: 80,
-                                height: 80,
-                                objectFit: 'cover',
-                                borderRadius: '50%',
-                                marginBottom: 12,
-                                background: '#f5f5f5'
-                            }}
-                        />
-                        <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4, whiteSpace: 'normal', wordBreak: 'break-word', color: '#222' }}>
-                            {item.label}
-                            <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 6, fontSize: 16 }} />
-                        </div>
-                    </Card>
-                </div>
-            ))}
-        </Slider>
-                    <Card title="Quy trình đặt khám" style={{ marginBottom: 24 }}>
+                    <h2 style={{ margin: '15px 0 8px', fontSize: '16px' }}>Dịch vụ</h2>
+                    <Slider {...sliderSettings}>
+                        {departments.map((item) => (
+                            <div key={item.key} style={{ padding: 8 }}>
+                                <Card
+                                    hoverable
+                                    style={{
+                                        borderRadius: 12,
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                        textAlign: 'center',
+                                        padding: 16,
+                                        minHeight: 220,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                    bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                                >
+                                    <img
+                                        src={item.image || imgErrorHospital}
+                                        alt={item.label}
+                                        style={{
+                                            width: 80,
+                                            height: 80,
+                                            objectFit: 'cover',
+                                            borderRadius: '50%',
+                                            marginBottom: 12,
+                                            background: '#f5f5f5'
+                                        }}
+                                    />
+                                    <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4, whiteSpace: 'normal', wordBreak: 'break-word', color: '#222' }}>
+                                        {item.label}
+                                        <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 6, fontSize: 16 }} />
+                                    </div>
+                                </Card>
+                            </div>
+                        ))}
+                    </Slider>
+                    <Card title="Quy trình đặt khám" style={{ marginBottom: 24, marginTop: 20 }}>
                         <Steps direction="vertical" size="small" current={2}>
                             <Step title="Chọn dịch vụ" description="Chọn loại dịch vụ cần khám." />
                             <Step title="Chọn bác sĩ (Dành cho dịch vụ khám chuyên gia)" description="Chọn bác sĩ phù hợp." />
@@ -128,11 +134,13 @@ function HospitalDetail() {
                     </Card>
 
                     <Card title="Bảng giá dịch vụ">
+                        
                         <Table
                             columns={columns}
                             dataSource={priceData}
                             pagination={false}
                             size="small"
+                            scroll={{ y: 200 }}
                         />
                     </Card>
                 </Col>
