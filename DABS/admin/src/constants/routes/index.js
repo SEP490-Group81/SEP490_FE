@@ -4,11 +4,12 @@
 // import ListRoom from "../Pages/ListRoom";
 import BlankLayout from "../../components/BlankLayout";
 import LayoutCommon from "../../components/LayoutCommon";
-import Dashboard from "../../pages/Dashboard";
+import Dashboard from "../../pages/Admin/Dashboard";
 import ErrorPage from "../../pages/Error";
 import Login from "../../pages/Login";
-import UserManagement from "../../pages/UserManagement";
+import UserManagement from "../../pages/Admin/UserManagement";
 import ProtectedRoute from "./ProtectedRoute";
+import WorkSchedule from "../../pages/Doctor/WorkSchedule";
 
 export const routes = [
   {
@@ -32,6 +33,10 @@ export const routes = [
       {
         path: "unauthorized",
         element: <ErrorPage />
+      },
+      {
+        path: "work-schedule",
+        element: <WorkSchedule />
       },
       //   {
       //     path: "/book-room",
