@@ -3,7 +3,7 @@ import { Tabs, Button, Input, Row, Col, Card, Badge } from 'antd';
 import { PlusOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
 import UserTable from './UserTable';
 import AddUser from './AddUser';
-import { getAllUsers } from '../../services/userService';
+import { getAllUsers } from '../../../services/userService';
 import './styles.scss';
 
 const { TabPane } = Tabs;
