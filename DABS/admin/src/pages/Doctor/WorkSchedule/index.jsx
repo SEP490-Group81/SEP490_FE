@@ -81,7 +81,7 @@ const getEventStyle = (event) => {
             fontSize: 14,
             boxShadow: "0 2px 8px rgba(82,196,26,0.10)",
             padding: 8,
-            cursor: "pointer"
+            cursor: "pointer",
         }
     };
 };

@@ -7,9 +7,10 @@ import LayoutCommon from "../../components/LayoutCommon";
 import Dashboard from "../../pages/Admin/Dashboard";
 import ErrorPage from "../../pages/Error";
 import Login from "../../pages/Login";
-import UserManagement from "../../pages/Admin/UserManagement";
+import UserManagement from "../../pages/AdminHospital/UserManagement";
 import ProtectedRoute from "./ProtectedRoute";
 import WorkSchedule from "../../pages/Doctor/WorkSchedule";
+import DoctorProfile from "../../pages/Doctor/DoctorProfile";
 
 export const routes = [
   {
@@ -23,9 +24,9 @@ export const routes = [
       {
         path: "/admin/users",
         element:
-          <ProtectedRoute allowedRoles={['admin']}>
+        //  <ProtectedRoute allowedRoles={['admin']}>
             <UserManagement />
-          </ProtectedRoute>
+         // </ProtectedRoute>
         ,
         // requireAuth: true,
         roles: ['admin'],
@@ -37,6 +38,10 @@ export const routes = [
       {
         path: "work-schedule",
         element: <WorkSchedule />
+      },
+      {
+        path: "doctor-profile",
+        element: <DoctorProfile />
       },
       //   {
       //     path: "/book-room",
