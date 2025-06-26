@@ -37,10 +37,13 @@ export const routes = [
       },
       {
         path: "account",
-        element:
-          // <ProtectedRoute allowedRoles={['user']}>
-          <UserAccount />
-        // </ProtectedRoute>
+        element: <ProtectedRoute allowedRoles={['Patient']} />,
+        children: [
+          {
+            path: "",
+            element: <UserAccount />,
+          },
+        ],
       },
       {
         path: "change-password",

@@ -4,7 +4,7 @@
 // import ListRoom from "../Pages/ListRoom";
 import BlankLayout from "../../components/BlankLayout";
 import LayoutCommon from "../../components/LayoutCommon";
-import Dashboard from "../../pages/Admin/Dashboard";
+import Dashboard from "../../pages/AdminHospital/Dashboard";
 import ErrorPage from "../../pages/Error";
 import Login from "../../pages/Login";
 import UserManagement from "../../pages/AdminHospital/UserManagement";
