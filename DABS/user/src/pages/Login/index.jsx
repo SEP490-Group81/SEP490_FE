@@ -32,15 +32,19 @@ function Login() {
             if (loginUser.fulfilled.match(resultAction)) {
                 const tokenData = resultAction.payload;
                 console.log("Token data in login: ", tokenData);
-
-                if (tokenData?.user) {
+                console.log("Token data user in login: ", tokenData.user);
+                if (tokenData?.user && tokenData.user.role.name === 'Patient') {
 
                     dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
 
                     setTimeout(() => {
                         navigate('/');
                     }, 800);
-                } else {
+                } else if (tokenData.user.role.name !== 'Patient') {
+                    dispatch(setMessage({ type: 'error', content: 'Vui lòng dùng tài khoản bệnh nhân!' }));
+                }
+
+                else {
                     throw new Error("Dữ liệu token không hợp lệ.");
                 }
             } else {

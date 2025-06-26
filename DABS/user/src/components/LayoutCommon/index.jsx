@@ -203,7 +203,7 @@ function LayoutCommon() {
                     </Menu>
                 </div>
             </div>
-            <main>
+            <main style={{background:"#fff"}}>
 
                 <div className="layout-default-main">
                     <Outlet />
