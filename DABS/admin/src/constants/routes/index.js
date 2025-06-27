@@ -15,25 +15,49 @@ import DoctorProfile from "../../pages/Doctor/DoctorProfile";
 export const routes = [
   {
     path: "/",
-    element: <LayoutCommon />,
+    element: <BlankLayout />,
     children: [
       {
-        path: "/",
-        element: <Dashboard />
+        index: true, 
+        element: <Login />
       },
       {
-        path: "/admin/users",
-        element:
-        //  <ProtectedRoute allowedRoles={['admin']}>
-            <UserManagement />
-         // </ProtectedRoute>
-        ,
-        // requireAuth: true,
-        roles: ['admin'],
+        path: "login",
+        element: <Login />
       },
       {
         path: "unauthorized",
         element: <ErrorPage />
+      },
+    ],
+  },
+  {
+    path: "/admin",
+    element: <LayoutCommon />,
+    children: [
+      {
+        index: true,
+        element: <Dashboard />
+      },
+      {
+        path: "users",
+        element:
+          //  <ProtectedRoute allowedRoles={['admin']}>
+          <UserManagement />
+        // </ProtectedRoute>
+        ,
+        // requireAuth: true,
+
+      },
+    ]
+  },
+  {
+    path: "/doctor",
+    element: <LayoutCommon />,
+    children: [
+      {
+        index: true,
+        element: <Dashboard />
       },
       {
         path: "work-schedule",
@@ -43,32 +67,9 @@ export const routes = [
         path: "doctor-profile",
         element: <DoctorProfile />
       },
-      //   {
-      //     path: "/book-room",
-      //     element: <BookRoom />
-
-      //   }
-      //   ,
-      //   {
-      //     path: "/create-room",
-      //     element: <CreateRoom />
-      //   },
-      //   {
-      //     path: "/list-room",
-      //     element: <ListRoom />
-      //   }
     ]
   },
-  {
-    path: "/login",
-    element: <BlankLayout />,
-    children: [
-      {
-        index: true,
-        element: <Login />
-      }
-    ]
-  }
+
 ];
 
 

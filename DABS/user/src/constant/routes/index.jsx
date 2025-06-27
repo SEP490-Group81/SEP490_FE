@@ -1,13 +1,12 @@
 import { Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 
-import Login from "../../pages/Login";
+import Login from "../../pages/UserAccount/Login";
 import Home from "../../pages/Home";
-import Register from "../../pages/Register";
+import Register from "../../pages/UserAccount/Register";
 import Appointment from "../../pages/Appointment";
 import ErrorPage from "../../pages/Error";
 import ForgetPassword from "../../pages/ForgetPassword";
-import NewPassword from "../../pages/NewPassword";
 import UserAccount from "../../pages/UserAccount/Detail";
 import ChangePassword from "../../pages/UserAccount/ChangePassword";
 import UpadteProfile from "../../pages/UserProfile/Update";
@@ -17,6 +16,9 @@ import PatientRecords from "../../pages/HealthRecords"; // Thêm import cho comp
 
 import BlankLayout from "../../components/BlankLayout";
 import LayoutCommon from "../../components/LayoutCommon";
+import NewPassword from "../../pages/UserAccount/NewPassword";
+import VerifyEmailAuto from "../../pages/UserAccount/VerifyEmailAuto";
+import VerifyEmailNotice from "../../pages/UserAccount/VerifyEmailNotice";
 export const routes = [
   //public
   {
@@ -43,15 +45,16 @@ export const routes = [
             path: "",
             element: <UserAccount />,
           },
+          {
+            path: "change-password",
+            element: <ChangePassword />
+          },
         ],
       },
-      {
-        path: "change-password",
-        element: <ChangePassword />
-      },
+
       {
         //path: "hospital/:id",
-        path: "hospital-detail",
+        path: "hospital-detail/:hospitalId",
         element: (
           <HospitalDetail />
         )
@@ -94,6 +97,20 @@ export const routes = [
       {
         path: "new-password",
         element: <NewPassword />
+      },
+    ]
+  },
+  {
+    path: "/auth",
+    element: <BlankLayout />,
+    children: [
+      {
+        path: "verify-email",
+        element: <VerifyEmailAuto />
+      },
+      {
+        path: "verify-email-notice",
+        element: <VerifyEmailNotice />
       },
     ]
   }

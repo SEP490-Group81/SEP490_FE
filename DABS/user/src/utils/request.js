@@ -23,10 +23,16 @@ export const postAuth = async (path, data) => {
 export const post = async (path, data) => {
     try {
         const url = `${API_DOMAIN}${PATH}${path}`;
-        const response = await axios.post(url, data); 
+        const response = await axios.post(url, data, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
         return response.data;
     } catch (error) {
-        console.error(`Error in POST request to ${path}:`, error.message);
+        if (error.response && error.response.data) {
+            return error.response.data; 
+        }
         throw error;
     }
 };

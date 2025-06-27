@@ -11,6 +11,7 @@ function Login() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.user);
+    console.log("user in Login page : " +user?.role.name);
     const [messageApi, contextHolder] = message.useMessage();
     const messageState = useSelector((state) => state.message)
     useEffect(() => {
@@ -33,14 +34,18 @@ function Login() {
             const tokenData = resultAction.payload;
              console.log("Token data in login: ", tokenData);
 
-            if (tokenData?.user) {
+            if (tokenData?.user  && tokenData.user.role.name !== 'Patient') {
                
                 dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
 
                 setTimeout(() => {
                     //navigate('/');
                 }, 800);
-            } else {
+            } else if( tokenData?.user && tokenData.user.role.name === 'Patient') {
+                dispatch(setMessage({ type: 'error', content: 'Vui lòng dùng tài khoản nội bộ!' }));
+            }
+            else {
+                
                 throw new Error("Dữ liệu token không hợp lệ.");
             }
         } else {
@@ -119,7 +124,7 @@ function Login() {
                             size="large"
                             style={{ borderRadius: 6, background: "#1890ff", marginTop:20 }}
                         >   
-                            Đăng nhập {user ? (user.fullname?.trim() || user.email || 'khách') : 'khách'}
+                            Đăng nhập
                         </Button>
                     </Form.Item>
                     <div style={{ display: "flex", justifyContent: "space-between" , marginTop: 40}}>

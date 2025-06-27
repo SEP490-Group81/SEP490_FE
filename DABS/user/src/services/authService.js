@@ -41,3 +41,22 @@ export const refreshToken = async (token, refreshToken) => {
         throw error;
     }
 };
+
+
+
+export const verifyEmail = async (payload) => {
+  try {
+    const result = await post('/account/verify-email', payload);
+    if (result && result.success !== false) {
+      return { success: true, message: "Xác thực thành công!" };
+    } else {
+      return {
+        success: false,
+        message: result?.message || "Xác thực thất bại!",
+        title: result?.title
+      };
+    }
+  } catch (error) {
+    return { success: false, message: "Có lỗi xảy ra, vui lòng thử lại!" };
+  }
+};

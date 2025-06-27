@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { Button, Dropdown, Layout, message } from 'antd';
 import "./style.scss";
-import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined, MenuOutlined, ProfileOutlined, LoginOutlined, BellOutlined, FileTextOutlined, LogoutOutlined } from '@ant-design/icons';
+import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined, MenuOutlined, ProfileOutlined, LoginOutlined, BellOutlined, FileTextOutlined, LogoutOutlined, KeyOutlined } from '@ant-design/icons';
 import { Menu } from "antd";
 import logo from "../../assets/images/dabs-logo.png"
 import { useNavigate } from 'react-router-dom';
@@ -80,6 +80,9 @@ function LayoutCommon() {
                                                     <>
                                                         <Menu.Item key="profile" onClick={() => navigate('/profile')} icon={<UserOutlined />}>
                                                             Thông tin cá nhân
+                                                        </Menu.Item>
+                                                        <Menu.Item key="password" onClick={() => navigate('/account/change-password')} icon={<KeyOutlined />}>
+                                                            Đổi mật khẩu
                                                         </Menu.Item>
                                                         <Menu.Item key="health-records" icon={<FileTextOutlined />} onClick={() => navigate('/health-records')}>
                                                             Hồ sơ bệnh nhân

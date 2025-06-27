@@ -1,17 +1,39 @@
-import { Alert, Divider, Input, Typography, Form, Col, Row, Button, DatePicker, ConfigProvider, Select } from "antd";
+import { Divider, Input, Form, Col, Row, Button, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
-import viVN from "antd/lib/locale/vi_VN";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
+import { changePassword } from "../../../services/userService";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { setMessage } from "../../../redux/slices/messageSlice";
 dayjs.locale("vi");
-const { Text } = Typography;
 function ChangePassword() {
-  const { Option } = Select;
-  const handleFinish = (values) => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [messageApi, contextHolder] = message.useMessage();
+  const messageState = useSelector((state) => state.message)
+  const handleFinish = async (values) => {
     console.log("Form values:", values);
+    const payload = {
+      currentPassword: values.oldPassword,
+      newPassword: values.newPassword,
+      confirmNewPassword: values.confirm,
+    };
+    const messageText = await changePassword(payload);
+    console.log("Message text:", messageText);
+    if (messageText === "Đổi mật khẩu thành công!") {
+      console.log("Password changed successfully");
+      dispatch(setMessage({ type: 'success', content: messageText }));
+
+
+    } else {
+      dispatch(setMessage({ type: 'error', content: messageText }));
+    }
+    console.log("Received values: ", payload);
   };
   return (
     <>
+      {contextHolder}
       <div style={{ textAlign: "center", backgroundColor: "#fff", padding: "20px", borderRadius: "8px" }}>
         <h1
           style={{
@@ -22,7 +44,7 @@ function ChangePassword() {
             color: "#00b5f1",
           }}
         >
-          Tạo mới hồ sơ
+          Tài khoản của tôi
         </h1>
         <Divider size="large" />
       </div>
@@ -59,7 +81,7 @@ function ChangePassword() {
         </style>
         <div className="centered-alert">
 
-          <Divider  className="divider-text" style={{ fontSize: "30px" }} >Đổi mật khẩu</Divider>
+          <Divider className="divider-text" style={{ fontSize: "30px" }} >Đổi mật khẩu</Divider>
 
           <Form style={{ width: "100vh" }} name="createUserProfile" onFinish={handleFinish} layout="vertical">
             <Row gutter={16}>
