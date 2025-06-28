@@ -11,6 +11,12 @@ import UserManagement from "../../pages/AdminHospital/UserManagement";
 import ProtectedRoute from "./ProtectedRoute";
 import WorkSchedule from "../../pages/Doctor/WorkSchedule";
 import DoctorProfile from "../../pages/Doctor/DoctorProfile";
+import DoctorHome from "../../pages/Doctor/DoctorHome";
+import HospitalStaffHome from "../../pages/HospitalStaff/StaffHome";
+import NurseHome from "../../pages/Nurse/NurseHome";
+import AdminHospitalHome from "../../pages/AdminHospital/Dashboard";
+import AdminSystem from "../../pages/AdminSystem/DashBoard";
+import AdminSystemHeader from "../../components/LayoutCommon/admin-system-header";
 
 export const routes = [
   {
@@ -18,7 +24,7 @@ export const routes = [
     element: <BlankLayout />,
     children: [
       {
-        index: true, 
+        index: true,
         element: <Login />
       },
       {
@@ -32,12 +38,12 @@ export const routes = [
     ],
   },
   {
-    path: "/admin",
+    path: "/admin-hospital",
     element: <LayoutCommon />,
     children: [
       {
         index: true,
-        element: <Dashboard />
+        element: <AdminHospitalHome />
       },
       {
         path: "users",
@@ -57,7 +63,7 @@ export const routes = [
     children: [
       {
         index: true,
-        element: <Dashboard />
+        element: <DoctorHome />
       },
       {
         path: "work-schedule",
@@ -67,9 +73,42 @@ export const routes = [
         path: "doctor-profile",
         element: <DoctorProfile />
       },
+
     ]
   },
+  {
+    path: "/staff",
+    element: <LayoutCommon />,
+    children: [
+      {
+        index: true,
+        element: <HospitalStaffHome />
+      },
 
+    ]
+  },
+  {
+    path: "/nurse",
+    element: <LayoutCommon />,
+    children: [
+      {
+        index: true,
+        element: <NurseHome />
+      },
+
+    ]
+  },
+   {
+    path: "/admin-system",
+    element: <AdminSystemHeader />,
+    children: [
+      {
+        index: true,
+        element: <AdminSystem />
+      },
+
+    ]
+  },
 ];
 
 

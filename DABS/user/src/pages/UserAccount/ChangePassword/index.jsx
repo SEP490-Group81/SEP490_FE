@@ -83,9 +83,9 @@ function ChangePassword() {
 
           <Divider className="divider-text" style={{ fontSize: "30px" }} >Đổi mật khẩu</Divider>
 
-          <Form style={{ width: "100vh" }} name="createUserProfile" onFinish={handleFinish} layout="vertical">
-            <Row gutter={16}>
-              <Col span={24}>
+          <Form style={{ width: "100vh" }} name="createUserProfile" onFinish={handleFinish} layout="vertical" >
+            <Row gutter={16} justify="center">
+              <Col span={12}>
                 <Form.Item
                   name="oldPassword"
                   label="Mật khẩu cũ"
@@ -99,8 +99,8 @@ function ChangePassword() {
                 </Form.Item>
               </Col>
             </Row>
-            <Row gutter={16}>
-              <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
+            <Row gutter={16} justify="center">
+              <Col span={12}>
                 <Form.Item
                   name="newPassword"
                   label="Mật khẩu mới"
@@ -113,46 +113,48 @@ function ChangePassword() {
                   />
                 </Form.Item>
               </Col>
-              <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
-                <Form.Item
-                  name="confirm"
-                  label="Xác nhận mật khẩu"
-                  dependencies={['password']}
-                  hasFeedback
-                  rules={[
-                    { required: true, message: "Vui lòng xác nhận mật khẩu!" },
-                    ({ getFieldValue }) => ({
-                      validator(_, value) {
-                        if (!value || getFieldValue('newPassword') === value) {
-                          return Promise.resolve();
-                        }
-                        return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
-                      },
-                    }),
-                  ]}
-                >
-                  <Input.Password
-                    prefix={<LockOutlined />}
-                    placeholder="Nhập lại mật khẩu"
-                    size="large"
-                  />
-                </Form.Item>
-              </Col>
             </Row>
+            <Row gutter={16} justify="center">
+            <Col span={12}>
+              <Form.Item
+                name="confirm"
+                label="Xác nhận mật khẩu"
+                dependencies={['password']}
+                hasFeedback
+                rules={[
+                  { required: true, message: "Vui lòng xác nhận mật khẩu!" },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue('newPassword') === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                    },
+                  }),
+                ]}
+              >
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Nhập lại mật khẩu"
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item>
-                  <Button style={{ width: "100px", height: "40px", fontSize: "18px" }} type="primary" htmlType="submit" size="large">
-                    Cập nhật
-                  </Button>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
+          <Row gutter={16} justify="center">
+            <Col span={4}>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" size="large">
+                  Cập nhật
+                </Button>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
 
-        </div>
       </div>
+    </div >
     </>
   );
 }

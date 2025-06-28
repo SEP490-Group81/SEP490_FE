@@ -3,7 +3,7 @@ import { Button, Typography } from 'antd';
 
 const { Title, Paragraph } = Typography;
 
-const VerifyEmailNotice = () => {
+const VerifyEmailRegisterNotice = () => {
   const openGmail = () => {
     window.open('https://mail.google.com', '_blank');
   };
@@ -34,4 +34,4 @@ const VerifyEmailNotice = () => {
   );
 };
 
-export default VerifyEmailNotice;
+export default VerifyEmailRegisterNotice;

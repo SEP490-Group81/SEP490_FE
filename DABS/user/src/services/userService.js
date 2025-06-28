@@ -57,3 +57,22 @@ export const changePassword = async (payload) => {
      return 'Mật khẩu cũ không đúng!';
   }
 };
+
+export const forgotPassword = async (userData) => {
+  try {
+    const result = await post(`/account/forgot-password`, userData);
+    console.log('Forgotpassword data : ', result);
+    if (result.email) {
+      return 'Vui lòng kiểm tra email để đặt lại mật khẩu!';
+    } else {
+      const data = result.data || result;
+      if (data.title === 'USERNAME_ALREADY_EXISTS') {
+        return 'Email chưa đựợc đăng ký. Vui lòng đăng ký tài khoản!';
+      } else {
+        return data.message || 'Email chưa đựợc đăng ký. Vui lòng đăng ký tài khoản!';
+      }
+    }
+  } catch (error) {
+    return 'Có lỗi xảy ra, vui lòng thử lại!';
+  }
+};

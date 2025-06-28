@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@ant-design/charts": "^2.4.0",
+    "@ant-design/plots": "^2.5.0",
+    "@antv/g6": "^5.0.49",
     "@reduxjs/toolkit": "^2.8.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",

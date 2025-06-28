@@ -11,7 +11,7 @@ function Login() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.user);
-    console.log("user in Login page : " +user?.role.name);
+    console.log("user in Login page : " + user?.role.name);
     const [messageApi, contextHolder] = message.useMessage();
     const messageState = useSelector((state) => state.message)
     useEffect(() => {
@@ -24,38 +24,51 @@ function Login() {
             dispatch(clearMessage());
         }
     }, [messageState, dispatch]);
- const onFinish = async (values) => {
-    try {
-        console.log("Received values: ", values);
+    const onFinish = async (values) => {
+        try {
+            console.log("Received values: ", values);
 
-        const resultAction = await dispatch(loginUser({ email: values.email, password: values.password }));
+            const resultAction = await dispatch(loginUser({ email: values.email, password: values.password }));
 
-        if (loginUser.fulfilled.match(resultAction)) {
-            const tokenData = resultAction.payload;
-             console.log("Token data in login: ", tokenData);
+            if (loginUser.fulfilled.match(resultAction)) {
+                const tokenData = resultAction.payload;
+                console.log("Token data in login: ", tokenData.user.role);
 
-            if (tokenData?.user  && tokenData.user.role.name !== 'Patient') {
-               
-                dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
+                if (tokenData?.user && tokenData.user.role.name !== 'Patient') {
 
-                setTimeout(() => {
-                    //navigate('/');
-                }, 800);
-            } else if( tokenData?.user && tokenData.user.role.name === 'Patient') {
-                dispatch(setMessage({ type: 'error', content: 'Vui lòng dùng tài khoản nội bộ!' }));
+                    dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
+
+                    setTimeout(() => {
+                        dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
+                        if (tokenData.user.role.name === 'Nurse') {
+                            navigate('/nurse');
+                        } else if (tokenData.user.role.name === 'Hospital Admin') {
+                            navigate('/admin-hospital');
+                        } else if (tokenData.user.role.name === 'Doctor') {
+                            navigate('/doctor');
+                        } else if (tokenData.user.role.name === 'Hospital Staff') {
+                            navigate('/staff');
+                        } else if (tokenData.user.role.name === 'System Admin') {
+                            navigate('/admin-system');
+                        } else {
+                            dispatch(setMessage({ type: 'error', content: 'Vui lòng dùng tài khoản nội bộ!' }));
+                        }
+                    }, 800);
+                } else if (tokenData?.user && tokenData.user.role.name === 'Patient') {
+                    dispatch(setMessage({ type: 'error', content: 'Vui lòng dùng tài khoản nội bộ!' }));
+                }
+                else {
+
+                    throw new Error("Dữ liệu token không hợp lệ.");
+                }
+            } else {
+                throw new Error(resultAction.payload || "Đăng nhập thất bại");
             }
-            else {
-                
-                throw new Error("Dữ liệu token không hợp lệ.");
-            }
-        } else {
-            throw new Error(resultAction.payload || "Đăng nhập thất bại");
+        } catch (error) {
+            console.error("Login failed: ", error);
+            dispatch(setMessage({ type: 'error', content: 'Đăng nhập thất bại. Vui lòng thử lại!' }));
         }
-    } catch (error) {
-        console.error("Login failed: ", error);
-        dispatch(setMessage({ type: 'error', content: 'Đăng nhập thất bại. Vui lòng thử lại!' }));
-    }
-};
+    };
 
     return (
         <>
@@ -72,7 +85,7 @@ function Login() {
                 }}
             >
                 <div style={{ textAlign: "center", marginBottom: 24 }}>
-                    
+
                     <Title level={2} style={{ color: "#1890ff", margin: 0 }}>
                         Đăng nhập DABS
                     </Title>
@@ -103,12 +116,12 @@ function Login() {
                     >
                         <Input prefix={<MailOutlined />} placeholder="Nhập email" size="large" />
                     </Form.Item>
-                    
+
                     <Form.Item
                         name="password"
                         label="Mật khẩu"
                         rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
-                      
+
                     >
                         <Input.Password
                             prefix={<LockOutlined />}
@@ -122,18 +135,18 @@ function Login() {
                             htmlType="submit"
                             block
                             size="large"
-                            style={{ borderRadius: 6, background: "#1890ff", marginTop:20 }}
-                        >   
+                            style={{ borderRadius: 6, background: "#1890ff", marginTop: 20 }}
+                        >
                             Đăng nhập
                         </Button>
                     </Form.Item>
-                    <div style={{ display: "flex", justifyContent: "space-between" , marginTop: 40}}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 40 }}>
                         <Link to="/login/forget-password" style={{ color: "#1890ff" }}>Quên mật khẩu?</Link>
                         <Link to="/login/register" style={{ color: "#1890ff" }}>Đăng ký</Link>
 
                     </div>
                 </Form>
-          
+
             </Card></>
 
 
