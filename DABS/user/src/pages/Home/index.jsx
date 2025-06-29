@@ -12,6 +12,7 @@ import imgErrorHospital from "../../assets/images/errorImgHospital.jpg";
 import Slider from "react-slick";
 import { useNavigate } from "react-router-dom";
 import { getSpecializationList } from "../../services/specializationService";
+import ChatBot from "../../components/ChatBox/ChatBot";
 const { Search } = Input;
 
 function Home() {
@@ -318,6 +319,7 @@ function Home() {
             </div>
 
         </div >
+        <ChatBot />
     </>
 }
 export default Home;
