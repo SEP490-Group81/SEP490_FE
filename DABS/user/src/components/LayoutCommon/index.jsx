@@ -1,7 +1,7 @@
 import { Outlet, Link } from "react-router-dom";
 import { Button, Dropdown, Layout, message } from 'antd';
 import "./style.scss";
-import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined, MenuOutlined, ProfileOutlined, LoginOutlined, BellOutlined, FileTextOutlined, LogoutOutlined, KeyOutlined } from '@ant-design/icons';
+import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined, MenuOutlined, ProfileOutlined, LoginOutlined, BellOutlined, FileTextOutlined, LogoutOutlined, MessageOutlined, CalendarOutlined, KeyOutlined } from '@ant-design/icons';
 import { Menu } from "antd";
 import logo from "../../assets/images/dabs-logo.png"
 import { useNavigate } from 'react-router-dom';
