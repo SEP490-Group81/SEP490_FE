@@ -1,17 +1,39 @@
-import { Alert, Divider, Input, Typography, Form, Col, Row, Button, DatePicker, ConfigProvider, Select } from "antd";
+import { Divider, Input, Form, Col, Row, Button, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
-import viVN from "antd/lib/locale/vi_VN";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
+import { changePassword } from "../../../services/userService";
+import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { setMessage } from "../../../redux/slices/messageSlice";
 dayjs.locale("vi");
-const { Text } = Typography;
 function ChangePassword() {
-  const { Option } = Select;
-  const handleFinish = (values) => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [messageApi, contextHolder] = message.useMessage();
+  const messageState = useSelector((state) => state.message)
+  const handleFinish = async (values) => {
     console.log("Form values:", values);
+    const payload = {
+      currentPassword: values.oldPassword,
+      newPassword: values.newPassword,
+      confirmNewPassword: values.confirm,
+    };
+    const messageText = await changePassword(payload);
+    console.log("Message text:", messageText);
+    if (messageText === "Đổi mật khẩu thành công!") {
+      console.log("Password changed successfully");
+      dispatch(setMessage({ type: 'success', content: messageText }));
+
+
+    } else {
+      dispatch(setMessage({ type: 'error', content: messageText }));
+    }
+    console.log("Received values: ", payload);
   };
   return (
     <>
+      {contextHolder}
       <div style={{ textAlign: "center", backgroundColor: "#fff", padding: "20px", borderRadius: "8px" }}>
         <h1
           style={{
@@ -22,7 +44,7 @@ function ChangePassword() {
             color: "#00b5f1",
           }}
         >
-          Tạo mới hồ sơ
+          Tài khoản của tôi
         </h1>
         <Divider size="large" />
       </div>
@@ -59,11 +81,11 @@ function ChangePassword() {
         </style>
         <div className="centered-alert">
 
-          <Divider  className="divider-text" style={{ fontSize: "30px" }} >Đổi mật khẩu</Divider>
+          <Divider className="divider-text" style={{ fontSize: "30px" }} >Đổi mật khẩu</Divider>
 
-          <Form style={{ width: "100vh" }} name="createUserProfile" onFinish={handleFinish} layout="vertical">
-            <Row gutter={16}>
-              <Col span={24}>
+          <Form style={{ width: "100vh" }} name="createUserProfile" onFinish={handleFinish} layout="vertical" >
+            <Row gutter={16} justify="center">
+              <Col span={12}>
                 <Form.Item
                   name="oldPassword"
                   label="Mật khẩu cũ"
@@ -77,8 +99,8 @@ function ChangePassword() {
                 </Form.Item>
               </Col>
             </Row>
-            <Row gutter={16}>
-              <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
+            <Row gutter={16} justify="center">
+              <Col span={12}>
                 <Form.Item
                   name="newPassword"
                   label="Mật khẩu mới"
@@ -91,46 +113,48 @@ function ChangePassword() {
                   />
                 </Form.Item>
               </Col>
-              <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
-                <Form.Item
-                  name="confirm"
-                  label="Xác nhận mật khẩu"
-                  dependencies={['password']}
-                  hasFeedback
-                  rules={[
-                    { required: true, message: "Vui lòng xác nhận mật khẩu!" },
-                    ({ getFieldValue }) => ({
-                      validator(_, value) {
-                        if (!value || getFieldValue('newPassword') === value) {
-                          return Promise.resolve();
-                        }
-                        return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
-                      },
-                    }),
-                  ]}
-                >
-                  <Input.Password
-                    prefix={<LockOutlined />}
-                    placeholder="Nhập lại mật khẩu"
-                    size="large"
-                  />
-                </Form.Item>
-              </Col>
             </Row>
+            <Row gutter={16} justify="center">
+            <Col span={12}>
+              <Form.Item
+                name="confirm"
+                label="Xác nhận mật khẩu"
+                dependencies={['password']}
+                hasFeedback
+                rules={[
+                  { required: true, message: "Vui lòng xác nhận mật khẩu!" },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue('newPassword') === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
+                    },
+                  }),
+                ]}
+              >
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="Nhập lại mật khẩu"
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item>
-                  <Button style={{ width: "100px", height: "40px", fontSize: "18px" }} type="primary" htmlType="submit" size="large">
-                    Cập nhật
-                  </Button>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
+          <Row gutter={16} justify="center">
+            <Col span={4}>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" size="large">
+                  Cập nhật
+                </Button>
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
 
-        </div>
       </div>
+    </div >
     </>
   );
 }

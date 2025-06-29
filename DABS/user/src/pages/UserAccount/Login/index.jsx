@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
 import { Form, Input, Button, Typography, Card, Space, message } from "antd";
 import { LockOutlined, HomeOutlined, MailOutlined } from "@ant-design/icons";
-import logo from "../../assets/images/dabs-logo.png"
+import logo from "../../../assets/images/dabs-logo.png"
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
-import { clearMessage, setMessage } from "../../redux/slices/messageSlice";
-import { loginUser } from "../../redux/slices/userSlice";
+import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
+import { loginUser } from "../../../redux/slices/userSlice";
 const { Title } = Typography;
 
 function Login() {
