@@ -1,7 +1,7 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 import { Button, Dropdown, Layout, message } from 'antd';
 import "./style.scss";
-import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined, MenuOutlined, ProfileOutlined, LoginOutlined, BellOutlined, FileTextOutlined, LogoutOutlined } from '@ant-design/icons';
+import { UserOutlined, CaretDownOutlined, TikTokOutlined, FacebookOutlined, YoutubeOutlined, MenuOutlined, ProfileOutlined, LoginOutlined, BellOutlined, FileTextOutlined, LogoutOutlined, MessageOutlined, CalendarOutlined } from '@ant-design/icons';
 import { Menu } from "antd";
 import logo from "../../assets/images/dabs-logo.png"
 import { useNavigate } from 'react-router-dom';
@@ -67,6 +67,16 @@ function LayoutCommon() {
                         </div>
                         <div className="header__content__top__wrapper">
 
+                            <div className="header__content__top__wrapper__chat-button">
+                                <Button
+                                    type="primary"
+                                    icon={<MessageOutlined />}
+                                    onClick={() => navigate('/chat')}
+                                >
+                                    Trò chuyện với DABS Bot
+                                </Button>
+                            </div>
+
                             <div className="header__content__top__wrapper__account">
                                 {user ? (
                                     <Dropdown
@@ -78,6 +88,9 @@ function LayoutCommon() {
                                                 <Menu.Divider />
                                                 {user ? (
                                                     <>
+                                                        <Menu.Item key="booking-history" onClick={() => navigate('/booking-history')} icon={<CalendarOutlined />}>
+                                                            Lịch sử đặt khám
+                                                        </Menu.Item>
                                                         <Menu.Item key="profile" onClick={() => navigate('/profile')} icon={<UserOutlined />}>
                                                             Thông tin cá nhân
                                                         </Menu.Item>
@@ -203,7 +216,7 @@ function LayoutCommon() {
                     </Menu>
                 </div>
             </div>
-            <main style={{background:"#fff"}}>
+            <main style={{ background: "#fff" }}>
 
                 <div className="layout-default-main">
                     <Outlet />
