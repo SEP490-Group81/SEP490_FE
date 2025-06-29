@@ -47,6 +47,20 @@ export const routes = [
         element: <DoctorDetail />
       },
       {
+        path: "/chat",
+        element: <ChatPage />,
+      },
+      {
+        path: "booking-history",
+        element: <ProtectedRoute allowedRoles={['Patient']} />,
+        children: [
+          {
+            path: "",
+            element: <BookingHistoryPage />
+          }
+        ]
+      },
+      {
         path: "account",
         element: <ProtectedRoute allowedRoles={['Patient']} />,
         children: [
@@ -77,7 +91,7 @@ export const routes = [
         element: <Navigate to="/" />
       },
       {
-        path: "health-records", // Thêm route mới cho hồ sơ bệnh nhân
+        path: "health-records",
         element: <PatientRecords />
       },
     ]
