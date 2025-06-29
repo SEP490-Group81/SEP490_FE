@@ -1,13 +1,11 @@
 import { Navigate } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 
-import Login from "../../pages/Login";
+import Login from "../../pages/UserAccount/Login";
 import Home from "../../pages/Home";
-import Register from "../../pages/Register";
+import Register from "../../pages/UserAccount/Register";
 import Appointment from "../../pages/Appointment";
 import ErrorPage from "../../pages/Error";
-import ForgetPassword from "../../pages/ForgetPassword";
-import NewPassword from "../../pages/NewPassword";
 import UserAccount from "../../pages/UserAccount/Detail";
 import ChangePassword from "../../pages/UserAccount/ChangePassword";
 import UpadteProfile from "../../pages/UserProfile/Update";
@@ -17,8 +15,13 @@ import PatientRecords from "../../pages/HealthRecords"; // Thêm import cho comp
 
 import BlankLayout from "../../components/BlankLayout";
 import LayoutCommon from "../../components/LayoutCommon";
-import ChatPage from "../../components/ChatBox/ChatPage";
-import BookingHistoryPage from "../../pages/BookingHistory/BookingHistoryPage";
+import NewPassword from "../../pages/UserAccount/ForgetPassword/NewPassword";
+import ForgetPassword from "../../pages/UserAccount/ForgetPassword";
+import DoctorDetail from "../../pages/Doctor/doctorDetail";
+import VerifyEmailRegisterAuto from "../../pages/UserAccount/Register/VerifyEmailRegisterAuto";
+import VerifyEmailRegisterNotice from "../../pages/UserAccount/Register/VerifyEmailRegisterNotice";
+import VerifyEmailForgetAuto from "../../pages/UserAccount/ForgetPassword/VerifyEmailForgetAuto";
+import VerifyEmailForgetNotice from "../../pages/UserAccount/ForgetPassword/VerifyEmailForgetNotice";
 export const routes = [
   //public
   {
@@ -36,6 +39,10 @@ export const routes = [
       {
         path: "profile",
         element: <UpadteProfile />
+      },
+        {
+        path: "doctor-detail",
+        element: <DoctorDetail />
       },
       {
         path: "/chat",
@@ -59,15 +66,15 @@ export const routes = [
             path: "",
             element: <UserAccount />,
           },
+          {
+            path: "change-password",
+            element: <ChangePassword />
+          },
         ],
       },
+
       {
-        path: "change-password",
-        element: <ChangePassword />
-      },
-      {
-        //path: "hospital/:id",
-        path: "hospital-detail",
+        path: "hospital-detail/:hospitalId",
         element: (
           <HospitalDetail />
         )
@@ -104,13 +111,36 @@ export const routes = [
         element: <Register />
       },
       {
-        path: "forget-password",
-        element: <ForgetPassword />
-      },
-      {
         path: "new-password",
         element: <NewPassword />
       },
+      {
+        path: "forget-password",
+        element: <ForgetPassword />
+      },
+    ]
+  },
+  {
+    path: "/auth",
+    element: <BlankLayout />,
+    children: [
+      {
+        path: "verify-email",
+        element: <VerifyEmailRegisterAuto />
+      },
+      {
+        path: "verify-email-notice",
+        element: <VerifyEmailRegisterNotice />
+      },
+       {
+        path: "reset-password/verify-code",
+        element: <VerifyEmailForgetAuto />
+      },
+      {
+        path: "reset-password/verify-email-notice",
+        element: <VerifyEmailForgetNotice />
+      },
+
     ]
   }
   // bác sĩ hoặc quản lý nếu phải tách riêng

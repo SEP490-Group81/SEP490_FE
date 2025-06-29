@@ -1,18 +1,43 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Form, Input, Button, Typography, Card, Space, message } from "antd";
-import { UserOutlined, LockOutlined, HomeOutlined } from "@ant-design/icons";
-import logo from "../../assets/images/dabs-logo.png"
+import { UserOutlined, LockOutlined, HomeOutlined,MailOutlined } from "@ant-design/icons";
+import logo from "../../../assets/images/dabs-logo.png"
 import { Link, useNavigate } from 'react-router-dom';
+import { forgotPassword } from "../../../services/userService";
+import { useDispatch, useSelector } from "react-redux";
+import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
 const { Title } = Typography;
 
 function ForgetPassword() {
-    const [messageApi, contextHolder] = message.useMessage();
-
     const navigate = useNavigate();
-    const onFinish = (values) => {
-        // handle forget password logic here
-        console.log("Received values: ", values);
-        // You might want to call an API to send reset email here
+    const dispatch = useDispatch();
+    const [messageApi, contextHolder] = message.useMessage();
+    const messageState = useSelector((state) => state.message)
+    useEffect(() => {
+        if (messageState) {
+            messageApi.open({
+                type: messageState.type,
+                content: messageState.content,
+
+            });
+            dispatch(clearMessage());
+        }
+    }, [messageState, dispatch]);
+    const onFinish = async (values) => {
+         const payload = {
+                   emailAddress: values.email,
+                };
+                const messageText = await forgotPassword(payload);
+                if (messageText === "Vui lòng kiểm tra email để đặt lại mật khẩu!") {
+                    dispatch(setMessage({ type: 'success', content: messageText }));
+                    setTimeout(() => {
+                         navigate('/auth/reset-password/verify-email-notice');
+                    }, 1000);
+        
+                }  else {
+                    dispatch(setMessage({ type: 'error', content: messageText }));
+                }
+                console.log("Received values: ", payload);
     };
 
     return (
@@ -34,22 +59,18 @@ function ForgetPassword() {
                     <Title level={2} style={{ color: "#1890ff", margin: 0 }}>
                         Quên mật khẩu
                     </Title>
-                    <div style={{ color: "#888" }}>Nhập số điện thoại để lấy lại mật khẩu</div>
+                    <div style={{ color: "#888" }}>Nhập email để lấy lại mật khẩu</div>
                 </div>
                 <Form name="forget-password" onFinish={onFinish} layout="vertical">
-                    <Form.Item
-                        name="phoneNumber"
-                        label="Số điện thoại"
+                      <Form.Item
+                        name="email"
+                        label={<span>Địa chỉ Email</span>}
                         rules={[
-                            { required: true, message: "Vui lòng nhập số điện thoại!" },
-                            { pattern: /^0[0-9]{9}$/, message: "Số điện thoại không hợp lệ!" }
+                            { required: true, message: "Vui lòng nhập email!" },
+                            { type: "email", message: "Email không hợp lệ!" },
                         ]}
                     >
-                        <Input
-                            prefix={<UserOutlined />}
-                            placeholder="Nhập số điện thoại"
-                            size="large"
-                        />
+                        <Input prefix={<MailOutlined />} placeholder="Nhập email" size="large" />
                     </Form.Item>
                     <Form.Item>
                         <Button

@@ -162,7 +162,7 @@ function HospitalList() {
                                         <Button type="primary" block style={{ borderRadius: 8 }} size="small">
                                             Đặt khám ngay
                                         </Button>
-                                        <Button type="default" block style={{ borderRadius: 8 }} size="small">
+                                        <Button type="default" block style={{ borderRadius: 8 }} size="small"  onClick={() => navigate(`/hospital-detail/${item.id}`)}>
                                             Xem chi tiết
                                         </Button>
                                     </div>

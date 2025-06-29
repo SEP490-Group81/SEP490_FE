@@ -1,82 +1,63 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Row, Col, Card, Steps, Table, Menu, List, Avatar, Button } from 'antd';
 import imgErrorHospital from "../../../assets/images/errorImgHospital.jpg";
 import { CheckCircleFilled } from "@ant-design/icons";
 import Slider from "react-slick";
-const { Step } = Steps;
-
-const priceData = [
-    { key: 1, service: 'Khám tổng quát', price: '300,000 VNĐ' },
-    { key: 2, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
-    { key: 3, service: 'Khám tổng quát', price: '300,000 VNĐ' },
-    { key: 4, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
-    { key: 5, service: 'Khám tổng quát', price: '300,000 VNĐ' },
-    { key: 6, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
-    
-    
-];
-
-const columns = [
-    { title: 'Dịch vụ', dataIndex: 'service', key: 'service' },
-    { title: 'Giá', dataIndex: 'price', key: 'price' },
-];
-const departments = [
-    { key: '1', label: 'Nội soi' },
-    { key: '2', label: 'Tiêu hóa' },
-    { key: '3', label: 'Ung bướu' },
-    { key: '4', label: 'Hô hấp' },
-    { key: '5', label: 'Nhi khoa' },
-    { key: '6', label: 'Tim mạch' },
-    { key: '7', label: 'Thần kinh' },
-];
-
-const doctors = [
-    {
-        name: 'BSCKI Đặng Nguyên Nhật Thanh Thi',
-        position: 'Trưởng khoa nội soi',
-        avatar: '/path/to/avatar1.jpg',
-    },
-    {
-        name: 'ThS BSCKI Lưu Ngọc Mai',
-        position: 'Giảng viên trường Đại học Y Dược TP.HCM',
-        avatar: '/path/to/avatar2.jpg',
-    },
-    {
-        name: 'ThS BSCKI Lưu Ngọc Mai',
-        position: 'Giảng viên trường Đại học Y Dược TP.HCM',
-        avatar: '/path/to/avatar2.jpg',
-    },
-    {
-        name: 'ThS BSCKI Lưu Ngọc Mai',
-        position: 'Giảng viên trường Đại học Y Dược TP.HCM',
-        avatar: '/path/to/avatar2.jpg',
-    },
-    {
-        name: 'ThS BSCKI Lưu Ngọc Mai',
-        position: 'Giảng viên trường Đại học Y Dược TP.HCM',
-        avatar: '/path/to/avatar2.jpg',
-    },
-    {
-        name: 'ThS BSCKI Lưu Ngọc Mai',
-        position: 'Giảng viên trường Đại học Y Dược TP.HCM',
-        avatar: '/path/to/avatar2.jpg',
-    },
-];
-const sliderSettings = {
-    dots: false,
-    infinite: departments.length > 4,
-    speed: 400,
-    slidesToShow: 4,
-    slidesToScroll: 1,
-    autoplay: false,
-    responsive: [
-        { breakpoint: 1024, settings: { slidesToShow: 3 } },
-        { breakpoint: 600, settings: { slidesToShow: 2 } },
-        { breakpoint: 400, settings: { slidesToShow: 1 } }
-    ]
-};
-
+import { useParams } from "react-router-dom";
+import { getDoctorByHospitalId } from '../../../services/doctorService';
 function HospitalDetail() {
+    const { Step } = Steps;
+    const { hospitalId } = useParams();
+    const [doctors, setDoctors] = useState([]);
+        useEffect(() => {
+        const fetchApi = async () => {
+            const result = await getDoctorByHospitalId(hospitalId);
+                setDoctors(result);
+            }
+        fetchApi();
+    }, [hospitalId]);
+    console.log("Doctors:", doctors);
+    const priceData = [
+        { key: 1, service: 'Khám tổng quát', price: '300,000 VNĐ' },
+        { key: 2, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
+        { key: 3, service: 'Khám tổng quát', price: '300,000 VNĐ' },
+        { key: 4, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
+        { key: 5, service: 'Khám tổng quát', price: '300,000 VNĐ' },
+        { key: 6, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
+
+
+    ];
+
+    const columns = [
+        { title: 'Dịch vụ', dataIndex: 'service', key: 'service' },
+        { title: 'Giá', dataIndex: 'price', key: 'price' },
+    ];
+    const departments = [
+        { key: '1', label: 'Nội soi' },
+        { key: '2', label: 'Tiêu hóa' },
+        { key: '3', label: 'Ung bướu' },
+        { key: '4', label: 'Hô hấp' },
+        { key: '5', label: 'Nhi khoa' },
+        { key: '6', label: 'Tim mạch' },
+        { key: '7', label: 'Thần kinh' },
+    ];
+
+  
+    const sliderSettings = {
+        dots: false,
+        infinite: departments.length > 4,
+        speed: 400,
+        slidesToShow: 4,
+        slidesToScroll: 1,
+        autoplay: false,
+        responsive: [
+            { breakpoint: 1024, settings: { slidesToShow: 3 } },
+            { breakpoint: 600, settings: { slidesToShow: 2 } },
+            { breakpoint: 400, settings: { slidesToShow: 1 } }
+        ]
+    };
+
+
     return (
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
             <Row gutter={32} align="top">
@@ -134,7 +115,7 @@ function HospitalDetail() {
                     </Card>
 
                     <Card title="Bảng giá dịch vụ">
-                        
+
                         <Table
                             columns={columns}
                             dataSource={priceData}
@@ -154,9 +135,9 @@ function HospitalDetail() {
                                 renderItem={item => (
                                     <List.Item>
                                         <List.Item.Meta
-                                            avatar={<Avatar src={item.avatar} />}
-                                            title={item.name}
-                                            description={item.position}
+                                            avatar={<Avatar src={item.user.avatarUrl} />}
+                                            title={item.user.fullname}
+                                            description={item.description}
                                         />
                                     </List.Item>
                                 )}
