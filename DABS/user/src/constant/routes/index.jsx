@@ -24,6 +24,10 @@ import VerifyEmailForgetNotice from "../../pages/UserAccount/ForgetPassword/Veri
 import AppointmentSchedule from "../../pages/Appointment/Schedule";
 import AppointmentService from "../../pages/Appointment/Service";
 import AppointmentSpecialty from "../../pages/Appointment/Specialty";
+import ChatPage from "../../components/ChatBox/ChatPage";
+
+import BookingHistoryPage from "../../pages/BookingHistory/BookingHistoryPage";
+
 export const routes = [
   //public
   {
