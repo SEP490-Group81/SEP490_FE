@@ -8,7 +8,7 @@ import "./styles.scss";
 dayjs.locale('vi');
 
 
-function Appointment() {
+function AppointmentSchedule() {
 
     const items = [
         {
@@ -228,4 +228,4 @@ function Appointment() {
     </>
 }
 
-export default Appointment;
+export default AppointmentSchedule;

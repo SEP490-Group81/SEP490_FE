@@ -4,7 +4,6 @@ import ProtectedRoute from "./ProtectedRoute";
 import Login from "../../pages/UserAccount/Login";
 import Home from "../../pages/Home";
 import Register from "../../pages/UserAccount/Register";
-import Appointment from "../../pages/Appointment";
 import ErrorPage from "../../pages/Error";
 import UserAccount from "../../pages/UserAccount/Detail";
 import ChangePassword from "../../pages/UserAccount/ChangePassword";
@@ -22,6 +21,9 @@ import VerifyEmailRegisterAuto from "../../pages/UserAccount/Register/VerifyEmai
 import VerifyEmailRegisterNotice from "../../pages/UserAccount/Register/VerifyEmailRegisterNotice";
 import VerifyEmailForgetAuto from "../../pages/UserAccount/ForgetPassword/VerifyEmailForgetAuto";
 import VerifyEmailForgetNotice from "../../pages/UserAccount/ForgetPassword/VerifyEmailForgetNotice";
+import AppointmentSchedule from "../../pages/Appointment/Schedule";
+import AppointmentService from "../../pages/Appointment/Service";
+import AppointmentSpecialty from "../../pages/Appointment/Specialty";
 export const routes = [
   //public
   {
@@ -69,10 +71,7 @@ export const routes = [
         path: "hospital-list",
         element: <HospitalList />
       },
-      {
-        path: "appointment",
-        element: <Appointment />
-      },
+     
       {
         path: "*",
         element: <Navigate to="/" />
@@ -104,6 +103,24 @@ export const routes = [
         path: "forget-password",
         element: <ForgetPassword />
       },
+    ]
+  },
+  {
+    path: "/appointment",
+    element: <LayoutCommon />,
+    children: [
+      {
+        index: true,
+        element: <AppointmentService />
+      },
+      {
+        path: "schedule",
+        element: <AppointmentSchedule />
+      },
+      {
+        path: "specialty",
+        element: <AppointmentSpecialty />
+      }
     ]
   },
   {

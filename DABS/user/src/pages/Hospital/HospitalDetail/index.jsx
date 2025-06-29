@@ -9,11 +9,11 @@ function HospitalDetail() {
     const { Step } = Steps;
     const { hospitalId } = useParams();
     const [doctors, setDoctors] = useState([]);
-        useEffect(() => {
+    useEffect(() => {
         const fetchApi = async () => {
             const result = await getDoctorByHospitalId(hospitalId);
-                setDoctors(result);
-            }
+            setDoctors(result);
+        }
         fetchApi();
     }, [hospitalId]);
     console.log("Doctors:", doctors);
@@ -42,7 +42,7 @@ function HospitalDetail() {
         { key: '7', label: 'Thần kinh' },
     ];
 
-  
+
     const sliderSettings = {
         dots: false,
         infinite: departments.length > 4,
@@ -105,10 +105,18 @@ function HospitalDetail() {
                             </div>
                         ))}
                     </Slider>
+                    <Card title="Quy trình đặt khám tổng quát" style={{ marginBottom: 24, marginTop: 20 }}>
+                        <Steps direction="vertical" size="small" current={2}>
+                            <Step title="Chọn dịch vụ" description="Chọn loại dịch vụ cần khám." />
+                            <Step title="Đặt lịch" description="Chọn ngày giờ và xác nhận." />
+                            <Step title="Thanh toán" description="Thanh toán trực tuyến hoặc tại quầy." />
+                        </Steps>
+                    </Card>
                     <Card title="Quy trình đặt khám" style={{ marginBottom: 24, marginTop: 20 }}>
                         <Steps direction="vertical" size="small" current={2}>
                             <Step title="Chọn dịch vụ" description="Chọn loại dịch vụ cần khám." />
-                            <Step title="Chọn bác sĩ (Dành cho dịch vụ khám chuyên gia)" description="Chọn bác sĩ phù hợp." />
+                            <Step title="Chọn chuyên khoa (Dành cho dịch vụ khám chuyên gia)" description="Chọn bác sĩ phù hợp." />
+                            <Step title="Chọn bác sĩ (Dành cho dịch vụ chọn bác sĩ và khám chuyên gia)" description="Chọn bác sĩ phù hợp." />
                             <Step title="Đặt lịch" description="Chọn ngày giờ và xác nhận." />
                             <Step title="Thanh toán" description="Thanh toán trực tuyến hoặc tại quầy." />
                         </Steps>
