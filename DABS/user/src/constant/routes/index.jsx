@@ -17,6 +17,8 @@ import PatientRecords from "../../pages/HealthRecords"; // Thêm import cho comp
 
 import BlankLayout from "../../components/BlankLayout";
 import LayoutCommon from "../../components/LayoutCommon";
+import ChatPage from "../../components/ChatBox/ChatPage";
+import BookingHistoryPage from "../../pages/BookingHistory/BookingHistoryPage";
 export const routes = [
   //public
   {
@@ -34,6 +36,20 @@ export const routes = [
       {
         path: "profile",
         element: <UpadteProfile />
+      },
+      {
+        path: "/chat",
+        element: <ChatPage />,
+      },
+      {
+        path: "booking-history",
+        element: <ProtectedRoute allowedRoles={['Patient']} />,
+        children: [
+          {
+            path: "",
+            element: <BookingHistoryPage />
+          }
+        ]
       },
       {
         path: "account",
@@ -69,7 +85,7 @@ export const routes = [
         element: <Navigate to="/" />
       },
       {
-        path: "health-records", // Thêm route mới cho hồ sơ bệnh nhân
+        path: "health-records",
         element: <PatientRecords />
       },
     ]

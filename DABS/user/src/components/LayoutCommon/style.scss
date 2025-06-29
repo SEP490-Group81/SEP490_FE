@@ -28,6 +28,7 @@
         justify-content: center;
         align-items: center;
         cursor: pointer;
+
         img {
             width: 140px;
             height: auto;
@@ -51,6 +52,31 @@
             min-width: 0;
 
             &__wrapper {
+                display: flex;
+                align-items: center;
+
+                &__chat-button {
+                    margin-right: 15px;
+
+                    .ant-btn {
+                        border-radius: 20px;
+                        background: linear-gradient(83.63deg, #00b5f1 33.34%, #00e0ff 113.91%);
+                        border-color: #00e0ff;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+
+                        &:hover {
+                            opacity: 0.9;
+                        }
+
+                        .anticon {
+                            margin-right: 6px;
+                            font-size: 16px;
+                        }
+                    }
+                }
+
                 &__account {
                     padding: 5px 10px;
                     cursor: pointer;
@@ -71,6 +97,7 @@
                         line-height: 16px;
                         color: #00b5f1;
                         background: white;
+
                         .ant-btn-primary:hover {
                             background: linear-gradient(83.63deg, #00b5f1 33.34%, #00e0ff 113.91%);
                             border-color: #00e0ff;
