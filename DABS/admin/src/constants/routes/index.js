@@ -17,6 +17,8 @@ import NurseHome from "../../pages/Nurse/NurseHome";
 import AdminHospitalHome from "../../pages/AdminHospital/Dashboard";
 import AdminSystem from "../../pages/AdminSystem/DashBoard";
 import AdminSystemHeader from "../../components/LayoutCommon/admin-system-header";
+import DoctorRequestLeave from "../../pages/Doctor/DoctorRequestLeave";
+import AdminDoctorShiftManagement from "../../pages/AdminSystem/DoctorShiftManagement";
 
 export const routes = [
   {
@@ -55,6 +57,11 @@ export const routes = [
         // requireAuth: true,
 
       },
+      {
+        path: "doctor-shift-management",
+        element:
+          <AdminDoctorShiftManagement />
+      }
     ]
   },
   {
@@ -73,7 +80,10 @@ export const routes = [
         path: "doctor-profile",
         element: <DoctorProfile />
       },
-
+      {
+        path: "request-leave",
+        element: <DoctorRequestLeave/>,
+      }
     ]
   },
   {
