@@ -1,13 +1,23 @@
+// Replace BigCalendar with FullCalendar
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Form, Input, DatePicker, TimePicker, Select, Row, Col, Badge, ConfigProvider } from "antd";
-import { Calendar as BigCalendar, dayjsLocalizer } from "react-big-calendar";
-import dayjs from "dayjs";
-import viVN from "antd/es/locale/vi_VN";
-import "react-big-calendar/lib/css/react-big-calendar.css";
+import {
+    Table, Button, Modal, Form, Input, DatePicker, TimePicker, Select, Row, Col, Badge, ConfigProvider, Checkbox, message
+} from "antd";
 import { SearchOutlined } from '@ant-design/icons';
-const { Option } = Select;
-const localizer = dayjsLocalizer(dayjs);
+import viVN from "antd/es/locale/vi_VN";
+import dayjs from "dayjs";
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import axios from 'axios';
+
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 dayjs.locale("vi");
+
+const { Option } = Select;
+const { RangePicker } = DatePicker;
 
 const statusColors = {
     pending: "gold",
@@ -15,74 +25,45 @@ const statusColors = {
     canceled: "red",
 };
 
-
+const weekdayOptions = [
+    { label: "Thứ 2", value: 1 },
+    { label: "Thứ 3", value: 2 },
+    { label: "Thứ 4", value: 3 },
+    { label: "Thứ 5", value: 4 },
+    { label: "Thứ 6", value: 5 },
+    { label: "Thứ 7", value: 6 },
+    { label: "Chủ nhật", value: 0 },
+];
 
 const AdminDoctorShiftManagement = () => {
-
     const doctors = [
         { id: 10, name: "Nguyễn Văn A" },
         { id: 11, name: "Trần Thị B" },
         { id: 12, name: "Lê Văn C" },
     ];
 
-    const initialShifts = [
-        {
-            id: 1,
-            doctorId: 10,
-            doctorName: "Nguyễn Văn A",
-            workDate: "2025-07-01",
-            startTime: "08:00:00",
-            endTime: "12:00:00",
-            roomName: "Phòng khám 1",
-            departmentName: "Khoa Nội",
-            status: "approved",
-            reasonOfUnavailability: null,
-        },
-        {
-            id: 2,
-            doctorId: 10,
-            doctorName: "Nguyễn Văn A",
-            workDate: "2025-07-01",
-            startTime: "13:00:00",
-            endTime: "17:00:00",
-            roomName: "Phòng khám 2",
-            departmentName: "Khoa Ngoại",
-            status: "pending",
-            reasonOfUnavailability: null,
-        },
-        {
-            id: 3,
-            doctorId: 11,
-            doctorName: "Trần Thị B",
-            workDate: "2025-07-02",
-            startTime: "09:00:00",
-            endTime: "15:00:00",
-            roomName: "Phòng khám 3",
-            departmentName: "Khoa Sản",
-            status: "canceled",
-            reasonOfUnavailability: "Bác sĩ nghỉ ốm",
-        },
-        {
-            id: 4,
-            doctorId: 12,
-            doctorName: "Lê Văn C",
-            workDate: "2025-07-03",
-            startTime: "07:00:00",
-            endTime: "11:00:00",
-            roomName: "Phòng khám 1",
-            departmentName: "Khoa Tai Mũi Họng",
-            status: "approved",
-            reasonOfUnavailability: null,
-        },
-    ];
-
-    const [shifts, setShifts] = useState(initialShifts);
+    const [shifts, setShifts] = useState([]);
     const [searchText, setSearchText] = useState('');
-    const [filteredShifts, setFilteredShifts] = useState(initialShifts);
+    const [filteredShifts, setFilteredShifts] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [editingShift, setEditingShift] = useState(null);
-
     const [form] = Form.useForm();
+    const [bulkForm] = Form.useForm();
+
+    useEffect(() => {
+        fetchShifts();
+    }, []);
+
+    const fetchShifts = async () => {
+        try {
+            const response = await axios.get('/api/shifts');
+            setShifts(response.data);
+            setFilteredShifts(response.data);
+        } catch (error) {
+            console.error('Error fetching shifts:', error);
+        }
+    };
+
     useEffect(() => {
         if (!searchText) {
             setFilteredShifts(shifts);
@@ -98,47 +79,32 @@ const AdminDoctorShiftManagement = () => {
     const handleSearch = (value) => {
         setSearchText(value);
     };
+    const [selectedDoctors, setSelectedDoctors] = useState([]);
 
+    const handleDoctorChange = (value) => {
+        if (value.includes("all")) {
+            const allDoctorIds = doctors.map(doc => doc.id);
+            setSelectedDoctors(allDoctorIds);
+            bulkForm.setFieldValue("doctorIds", allDoctorIds);
+        } else {
+            setSelectedDoctors(value);
+            bulkForm.setFieldValue("doctorIds", value);
+        }
+    };
+    const events = filteredShifts.map(shift => ({
+        id: shift.id,
+        title: `${shift.doctorName} - ${shift.roomName}`,
+        start: `${shift.workDate}T${shift.startTime}`,
+        end: `${shift.workDate}T${shift.endTime}`,
+        extendedProps: { ...shift }
+    }));
 
-    const events = filteredShifts.map(shift => {
-        const start = new Date(`${shift.workDate}T${shift.startTime}`);
-        const end = new Date(`${shift.workDate}T${shift.endTime}`);
-        return {
-            id: shift.id,
-            title: `${shift.roomName} - ${shift.departmentName}`,
-            start,
-            end,
-            resource: shift,
-        };
-    });
-
-    const columns = [
-        { title: "Ngày", dataIndex: "workDate", key: "workDate" },
-        { title: "Bác sĩ", dataIndex: "doctorName", key: "doctorName" },
-        { title: "Phòng", dataIndex: "roomName", key: "roomName" },
-        { title: "Giờ bắt đầu", dataIndex: "startTime", key: "startTime" },
-        { title: "Giờ kết thúc", dataIndex: "endTime", key: "endTime" },
-        {
-            title: "Trạng thái",
-            dataIndex: "status",
-            key: "status",
-            render: status => <Badge color={statusColors[status]} text={status === "approved" ? "Đã duyệt" : status === "pending" ? "Chờ duyệt" : "Đã hủy"} />,
-        },
-        {
-            title: "Thao tác",
-            key: "action",
-            render: (_, record) => (
-                <>
-                    <Button type="link" onClick={() => onEditShift(record)}>Sửa</Button>
-                    <Button type="link" danger onClick={() => onDeleteShift(record.id)}>Xóa</Button>
-                </>
-            ),
-        },
-    ];
-
-    const onAddShift = () => {
+    const onAddShift = (dateStr = null) => {
         setEditingShift(null);
         form.resetFields();
+        if (dateStr) {
+            form.setFieldValue('workDate', dayjs(dateStr));
+        }
         setModalVisible(true);
     };
 
@@ -156,13 +122,14 @@ const AdminDoctorShiftManagement = () => {
     const onDeleteShift = (id) => {
         Modal.confirm({
             title: "Xác nhận xóa ca làm việc?",
-            onOk() {
-                setShifts(prev => prev.filter(s => s.id !== id));
+            onOk: async () => {
+                await axios.delete(`/api/shifts/${id}`);
+                fetchShifts();
             },
         });
     };
 
-    const onFinish = (values) => {
+    const onFinish = async (values) => {
         const newShift = {
             id: editingShift ? editingShift.id : Date.now(),
             doctorId: values.doctorId,
@@ -176,161 +143,144 @@ const AdminDoctorShiftManagement = () => {
         };
 
         if (editingShift) {
-            setShifts(prev => prev.map(s => (s.id === editingShift.id ? newShift : s)));
+            await axios.put(`/api/shifts/${editingShift.id}`, newShift);
         } else {
-            setShifts(prev => [...prev, newShift]);
+            await axios.post('/api/shifts', newShift);
         }
+        fetchShifts();
         setModalVisible(false);
     };
 
-    const eventStyleGetter = (event) => {
-        const color = statusColors[event.resource.status] || "#ccc";
-        return {
-            style: {
-                backgroundColor: color,
-                color: "#fff",
-                borderRadius: 8,
-                border: "none",
-                padding: 6,
-                fontWeight: "bold",
-                cursor: "pointer",
-            },
-        };
+    const onFinishBulk = async (values) => {
+        const { doctorId, weekdays, shift, dateRange } = values;
+        try {
+            await axios.post("/api/schedules/bulk", {
+                doctorId,
+                weekdays,
+                shift,
+                fromDate: dateRange[0].format("YYYY-MM-DD"),
+                toDate: dateRange[1].format("YYYY-MM-DD"),
+            });
+            message.success("Tạo lịch mẫu thành công!");
+            bulkForm.resetFields();
+            fetchShifts();
+        } catch (err) {
+            console.error(err);
+            message.error("Tạo lịch mẫu thất bại.");
+        }
     };
 
     return (
         <ConfigProvider locale={viVN}>
-            <div style={{ maxWidth: 1200, margin: "0 auto", padding: 24 }}>
+            <div style={{ margin: "0 auto", padding: 10 }}>
                 <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-                    <Col>
-                        <Input.Search
-                            placeholder="Tìm theo tên bác sĩ..."
-                            value={searchText}
-                            onChange={e => setSearchText(e.target.value)}
-                            onSearch={handleSearch}
-                            enterButton={<SearchOutlined />}
-                            allowClear
-                            style={{ width: 250 }}
-                        />
-                    </Col>
-
-                    <Col>
-                        <Button type="primary" onClick={onAddShift}>Thêm ca làm việc</Button>
+                    <Col style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button type="primary" onClick={() => onAddShift()}>Tạo sự kiện</Button>
                     </Col>
                 </Row>
 
                 <Row gutter={24}>
                     <Col span={12}>
-                        <Table
-                            columns={columns}
-                            dataSource={filteredShifts}
-                            rowKey="id"
-                            pagination={{ pageSize: 8 }}
-                            scroll={{ y: 500 }}
-                        />
+                        <Form layout="vertical" form={bulkForm} onFinish={onFinishBulk} style={{ marginBottom: 24 }}>
+                            <Row gutter={16}>
+                                <Col span={24}>
+                                    <Form.Item name="doctorIds" label="Bác sĩ" rules={[{ required: true }]}>
+                                        <Select
+                                            mode="multiple"
+                                            allowClear
+                                            showSearch
+                                            placeholder="Chọn bác sĩ"
+                                            value={selectedDoctors}
+                                            onChange={handleDoctorChange}
+                                            filterOption={(input, option) =>
+                                                option.children.toLowerCase().includes(input.toLowerCase())
+                                            }
+                                        >
+                                            <Option value="all">Tất cả</Option>
+                                            {doctors.map(doc => (
+                                                <Option key={doc.id} value={doc.id}>{doc.name}</Option>
+                                            ))}
+                                        </Select>
+                                    </Form.Item>
+                                </Col>
+                                <Col span={24}>
+                                    <Form.Item name="weekdays" label="Ngày trong tuần" rules={[{ required: true }]}>
+                                        <Checkbox.Group options={weekdayOptions} />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={24}>
+                                    <Form.Item name="shift" label="Ca làm" rules={[{ required: true }]}>
+                                        <Select>
+                                            <Option value="morning">Sáng</Option>
+                                            <Option value="afternoon">Chiều</Option>
+                                            <Option value="evening">Tối</Option>
+                                        </Select>
+                                    </Form.Item>
+                                </Col>
+                                <Col span={24}>
+                                    <Form.Item name="dateRange" label="Khoảng thời gian" rules={[{ required: true }]}>
+                                        <RangePicker style={{ width: "100%" }} />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={24}>
+                                    <Button type="primary" htmlType="submit">Tạo lịch mẫu</Button>
+                                </Col>
+                            </Row>
+                        </Form>
+
+
                     </Col>
                     <Col span={12}>
-                        <BigCalendar
-                            localizer={localizer}
+                        <FullCalendar
+                            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                            initialView="timeGridWeek"
+                            headerToolbar={{ start: 'prev,next today', center: 'title', end: 'dayGridMonth,timeGridWeek,timeGridDay' }}
+                            locale='vi'
                             events={events}
-                            startAccessor="start"
-                            endAccessor="end"
-                            style={{ height: 600, borderRadius: 12, backgroundColor: "#f6ffed", padding: 8 }}
-                            eventPropGetter={eventStyleGetter}
-                            views={["week", "day"]}
-                            defaultView="week"
-                            onSelectEvent={onEditShift}
-                            culture="vi"
+                            height={600}
+                            eventClick={(info) => onEditShift(info.event.extendedProps)}
+                            dateClick={(info) => onAddShift(info.dateStr)}
                         />
                     </Col>
                 </Row>
 
                 <Modal
-                    title={editingShift ? "Sửa ca làm việc" : "Thêm ca làm việc"}
                     visible={modalVisible}
                     onCancel={() => setModalVisible(false)}
-                    footer={null}
-                    destroyOnClose
-                    width={600}
+                    title={editingShift ? "Chỉnh sửa ca làm việc" : "Thêm ca làm việc"}
+                    onOk={() => form.submit()}
+                    okText="Lưu"
+                    cancelText="Hủy"
                 >
                     <Form form={form} layout="vertical" onFinish={onFinish}>
-                        <Form.Item
-                            label="Bác sĩ"
-                            name="doctorId"
-                            rules={[{ required: true, message: "Vui lòng chọn bác sĩ" }]}
-                        >
+                        <Form.Item name="doctorId" label="Bác sĩ" rules={[{ required: true }]}>
                             <Select placeholder="Chọn bác sĩ">
                                 {doctors.map(doc => (
                                     <Option key={doc.id} value={doc.id}>{doc.name}</Option>
                                 ))}
                             </Select>
                         </Form.Item>
-
-                        <Form.Item
-                            label="Phòng"
-                            name="roomName"
-                            rules={[{ required: true, message: "Vui lòng nhập phòng" }]}
-                        >
-                            <Input placeholder="Nhập tên phòng" />
+                        <Form.Item name="workDate" label="Ngày làm việc" rules={[{ required: true }]}>
+                            <DatePicker format="YYYY-MM-DD" style={{ width: "100%" }} />
                         </Form.Item>
-
-                        <Form.Item
-                            label="Phòng ban"
-                            name="departmentName"
-                            rules={[{ required: true, message: "Vui lòng nhập phòng ban" }]}
-                        >
-                            <Input placeholder="Nhập phòng ban" />
+                        <Form.Item name="startTime" label="Giờ bắt đầu" rules={[{ required: true }]}>
+                            <TimePicker format="HH:mm" style={{ width: "100%" }} />
                         </Form.Item>
-
-                        <Form.Item
-                            label="Ngày làm việc"
-                            name="workDate"
-                            rules={[{ required: true, message: "Vui lòng chọn ngày" }]}
-                        >
-                            <DatePicker style={{ width: "100%" }} />
+                        <Form.Item name="endTime" label="Giờ kết thúc" rules={[{ required: true }]}>
+                            <TimePicker format="HH:mm" style={{ width: "100%" }} />
                         </Form.Item>
-
-                        <Row gutter={16}>
-                            <Col span={12}>
-                                <Form.Item
-                                    label="Giờ bắt đầu"
-                                    name="startTime"
-                                    rules={[{ required: true, message: "Vui lòng chọn giờ bắt đầu" }]}
-                                >
-                                    <TimePicker style={{ width: "100%" }} format="HH:mm:ss" />
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    label="Giờ kết thúc"
-                                    name="endTime"
-                                    rules={[{ required: true, message: "Vui lòng chọn giờ kết thúc" }]}
-                                >
-                                    <TimePicker style={{ width: "100%" }} format="HH:mm:ss" />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-
-                        <Form.Item
-                            label="Trạng thái"
-                            name="status"
-                            initialValue="pending"
-                            rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
-                        >
+                        <Form.Item name="roomName" label="Phòng khám" rules={[{ required: true }]}>
+                            <Input />
+                        </Form.Item>
+                        <Form.Item name="departmentName" label="Khoa" rules={[{ required: true }]}>
+                            <Input />
+                        </Form.Item>
+                        <Form.Item name="status" label="Trạng thái">
                             <Select>
-                                <Option value="pending">Chờ duyệt</Option>
+                                <Option value="pending">Đang chờ</Option>
                                 <Option value="approved">Đã duyệt</Option>
                                 <Option value="canceled">Đã hủy</Option>
                             </Select>
-                        </Form.Item>
-
-                        <Form.Item style={{ textAlign: "right" }}>
-                            <Button onClick={() => setModalVisible(false)} style={{ marginRight: 8 }}>
-                                Hủy
-                            </Button>
-                            <Button type="primary" htmlType="submit">
-                                {editingShift ? "Cập nhật" : "Thêm"}
-                            </Button>
                         </Form.Item>
                     </Form>
                 </Modal>
