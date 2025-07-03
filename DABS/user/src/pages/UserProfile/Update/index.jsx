@@ -5,11 +5,12 @@ import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import { getDistricts, getProvinces, getWards } from "../../../services/provinceService";
+import { getProvinces } from "../../../services/provinceService";
 import { useNavigate } from 'react-router-dom';
 import { updateUser } from "../../../services/userService";
-import { setUser, updateUserSlice } from "../../../redux/slices/userSlice";
+import { updateUserSlice } from "../../../redux/slices/userSlice";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
+
 dayjs.locale("vi");
 const { Text } = Typography;
 
@@ -22,7 +23,7 @@ function UpadteProfile() {
   const dispatch = useDispatch();
   const [messageApi, contextHolder] = message.useMessage();
   const messageState = useSelector((state) => state.message);
-
+  const [form] = Form.useForm();
   useEffect(() => {
     if (messageState) {
       messageApi.open({
@@ -112,20 +113,15 @@ function UpadteProfile() {
   };
 
   const [provinces, setProvinces] = useState([]);
-  const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
+  const [selectedProvince, setSelectedProvince] = useState(null);
 
-  const [selectedProvince, setSelectedProvince] = useState(
-    userDefault && userDefault.province ? parseInt(userDefault.province) : null
-  );
-  const [selectedDistrict, setSelectedDistrict] = useState(
-    userDefault && userDefault.district ? parseInt(userDefault.district) : null
-  );
-  console.log("Selected Province default:", selectedProvince);
-  console.log("Selected District default:", selectedDistrict);
   useEffect(() => {
     getProvinces()
-      .then(data => setProvinces(data))
+      .then(data => {
+        console.log("Dữ liệu từ API getProvinces:", data.data);
+        setProvinces(data.data);
+      })
       .catch(err => {
         console.error("Error fetching provinces:", err);
       });
@@ -133,34 +129,22 @@ function UpadteProfile() {
 
   useEffect(() => {
     if (selectedProvince) {
-      getDistricts(selectedProvince)
-        .then(data => setDistricts(data))
-        .catch(err => {
-          console.error("Error fetching districts:", err);
-        });
-    } else {
-      setDistricts([]);
-      setWards([]);
-    }
-  }, [selectedProvince]);
-
-  useEffect(() => {
-    if (selectedDistrict) {
-      getWards(selectedDistrict)
-        .then(data => setWards(data))
-        .catch(err => {
-          console.error("Error fetching wards:", err);
-        });
+      const provinceObj = provinces.find(p => p.province === selectedProvince);
+      if (provinceObj && provinceObj.wards) {
+        setWards(provinceObj.wards);
+      } else {
+        setWards([]);
+      }
     } else {
       setWards([]);
     }
-  }, [selectedDistrict]);
+  }, [selectedProvince, provinces]);
 
-    const isInitializing = useSelector((state) => state.user.isInitializing);
+  const isInitializing = useSelector((state) => state.user.isInitializing);
 
-    if (isInitializing) {
-        return <div>Loading...</div>; 
-    }
+  if (isInitializing) {
+    return <div>Loading...</div>;
+  }
   return (
     <>
       {contextHolder}
@@ -222,6 +206,7 @@ function UpadteProfile() {
             <Divider orientation="left" className="divider-text" style={{ fontSize: "30px" }} >Thông tin chung</Divider>
             <ConfigProvider locale={viVN}>
               <Form style={{ width: "100%", maxWidth: 800, margin: "0 auto" }}
+                form={form}
                 name="createUserProfile" onFinish={handleFinish} layout="vertical"
                 initialValues={{
                   fullname: userDefault?.fullname?.trim() || "",
@@ -230,9 +215,8 @@ function UpadteProfile() {
                   email: userDefault?.email || "",
                   gender: userDefault?.gender !== undefined ? userDefault.gender.toString() : "",
                   job: userDefault?.job || "",
-                  province: userDefault?.province ? parseInt(userDefault.province) : null,
-                  district: userDefault?.district ? parseInt(userDefault.district) : null,
-                  ward: userDefault?.ward ? parseInt(userDefault.ward) : null,
+                  province: userDefault?.province || null, 
+                  ward: userDefault?.ward || null,
                   streetAddress: userDefault?.streetAddress || "",
                   cccd: userDefault?.cccd || "",
                 }}>
@@ -351,44 +335,41 @@ function UpadteProfile() {
                 </Row>
                 <Row gutter={16}>
                   <Col xs={24} sm={24} md={24} lg={8} xl={8} xxl={8}>
-                    <Form.Item label="Tỉnh/Thành phố" name="province" rules={[{ required: true, message: "Vui lòng chọn tỉnh/thành phố!" }]}>
+                    <Form.Item
+                      label="Tỉnh/Thành phố"
+                      name="province"
+                      rules={[{ required: true, message: "Vui lòng chọn tỉnh/thành phố!" }]}
+                    >
                       <Select
                         showSearch
-                        filterOption={(input, option) =>
-                          (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                        }
                         placeholder="Chọn tỉnh/thành phố"
-                        options={provinces.map(p => ({ label: p.name, value: p.code }))}
-                        onChange={value => setSelectedProvince(value)}
+                        filterOption={(input, option) =>
+                          (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                        }
+                        options={provinces.map(p => ({ label: p.province, value: p.province }))}
+                        onChange={(value) => {
+                          setSelectedProvince(value);
+                          form.setFieldsValue({ ward: undefined });
+                        }}
                         allowClear
                       />
                     </Form.Item>
                   </Col>
+
                   <Col xs={24} sm={24} md={24} lg={8} xl={8} xxl={8}>
-                    <Form.Item label="Quận/Huyện" name="district" rules={[{ required: true, message: "Vui lòng chọn quận/huyện!" }]}>
+                    <Form.Item
+                      label="Phường/Xã"
+                      name="ward"
+                      rules={[{ required: true, message: "Vui lòng chọn phường/xã!" }]}
+                    >
                       <Select
                         showSearch
-                        filterOption={(input, option) =>
-                          (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                        }
-                        placeholder="Chọn quận/huyện"
-                        options={districts.map(d => ({ label: d.name, value: d.code }))}
-                        onChange={value => setSelectedDistrict(value)}
-                        disabled={!selectedProvince}
-                        allowClear
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col xs={24} sm={24} md={24} lg={8} xl={8} xxl={8}>
-                    <Form.Item label="Phường/Xã" name="ward" rules={[{ required: true, message: "Vui lòng chọn phường/xã!" }]}>
-                      <Select
-                        showSearch
-                        filterOption={(input, option) =>
-                          (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                        }
                         placeholder="Chọn phường/xã"
-                        options={wards.map(w => ({ label: w.name, value: w.code }))}
-                        disabled={!selectedDistrict}
+                        disabled={!selectedProvince}
+                        options={wards.map(w => ({ label: w.name, value: w.name }))}
+                        filterOption={(input, option) =>
+                          (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                        }
                         allowClear
                       />
                     </Form.Item>

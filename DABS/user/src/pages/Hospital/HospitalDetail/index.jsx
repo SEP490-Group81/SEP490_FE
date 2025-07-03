@@ -56,7 +56,11 @@ function HospitalDetail() {
             { breakpoint: 400, settings: { slidesToShow: 1 } }
         ]
     };
-
+    const steps = [
+        { title: 'Chọn dịch vụ', description: 'Chọn loại dịch vụ cần khám.' },
+        { title: 'Đặt lịch', description: 'Chọn ngày giờ và xác nhận.' },
+        { title: 'Thanh toán', description: 'Thanh toán trực tuyến hoặc tại quầy.' },
+    ];
 
     return (
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>

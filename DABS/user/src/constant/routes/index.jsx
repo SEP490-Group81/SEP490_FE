@@ -36,19 +36,19 @@ export const routes = [
     children: [
       {
         index: true,
-        element: <Home />
+        element: <Home /> // đã vẽ report 3
       },
       {
         path: "unauthorized",
-        element: <ErrorPage />
+        element: <ErrorPage /> // đã vẽ report 3
       },
       {
         path: "profile",
-        element: <UpadteProfile />
-      },
+        element: <UpadteProfile /> // đã vẽ report 3
+      }, 
         {
         path: "doctor-detail",
-        element: <DoctorDetail />
+        element: <DoctorDetail /> // đã vẽ report 3
       },
       {
         path: "/chat",
@@ -60,7 +60,7 @@ export const routes = [
         children: [
           {
             path: "",
-            element: <BookingHistoryPage />
+            element: <BookingHistoryPage /> // đã vẽ report 3
           }
         ]
       },
@@ -74,7 +74,7 @@ export const routes = [
           },
           {
             path: "change-password",
-            element: <ChangePassword />
+            element: <ChangePassword /> // đã vẽ report 3
           },
         ],
       },
@@ -82,21 +82,21 @@ export const routes = [
       {
         path: "hospital-detail/:hospitalId",
         element: (
-          <HospitalDetail />
+          <HospitalDetail />// đã vẽ report 3
         )
       },
       {
         path: "hospital-list",
-        element: <HospitalList />
+        element: <HospitalList />// đã vẽ report 3
       },
      
       {
         path: "*",
-        element: <Navigate to="/" />
+        element: <Navigate to="/" /> // bỏ qua
       },
       {
         path: "health-records",
-        element: <PatientRecords />
+        element: <PatientRecords /> // đã vẽ report 3
       },
     ]
 
@@ -107,11 +107,11 @@ export const routes = [
     children: [
       {
         index: true,
-        element: <Login />
+        element: <Login /> // đã vẽ report 3 
       },
       {
         path: "register",
-        element: <Register />
+        element: <Register /> // đã vẽ report 3
       },
       {
         path: "new-password",
@@ -119,7 +119,7 @@ export const routes = [
       },
       {
         path: "forget-password",
-        element: <ForgetPassword />
+        element: <ForgetPassword /> // đã vẽ report 3
       },
     ]
   },
@@ -129,11 +129,11 @@ export const routes = [
     children: [
       {
         index: true,
-        element: <AppointmentService />
+        element: <AppointmentService /> // đã vẽ report 3
       },
       {
         path: "schedule",
-        element: <AppointmentSchedule />
+        element: <AppointmentSchedule /> // đã vẽ report 3
       },
       {
         path: "specialty",
