@@ -19,6 +19,9 @@ import UpadteProfile from "../../pages/UserProfile/Update";
 import HospitalList from "../../pages/Hospital/HospitalList";
 import HospitalDetail from "../../pages/Hospital/HospitalDetail";
 import PatientRecords from "../../pages/HealthRecords"; // Thêm import cho component mới
+import PatientPortal from "../../pages/PatientPortal/PatientPortal";
+import PaymentPage from "../../pages/PatientPortal/PaymentPage";
+import RatingPage from "../../pages/PatientPortal/RatingPage";
 
 export const routes = [
   //public
@@ -44,6 +47,18 @@ export const routes = [
           // <ProtectedRoute allowedRoles={['user']}>
           <UserAccount />
         // </ProtectedRoute>
+      },
+      {
+        path: '/patient',
+        element: <PatientPortal />,
+      },
+      {
+        path: '/patient/payment',
+        element: <PaymentPage />,
+      },
+      {
+        path: '/patient/rating',
+        element: <RatingPage />,
       },
       {
         path: "change-password",
