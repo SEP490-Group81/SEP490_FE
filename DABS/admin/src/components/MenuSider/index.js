@@ -1,5 +1,5 @@
 import { Menu } from "antd";
-import { OrderedListOutlined, UserAddOutlined, RadarChartOutlined, HeatMapOutlined, AndroidOutlined, UserOutlined, HomeOutlined, DashboardOutlined, BankOutlined } from '@ant-design/icons';
+import { OrderedListOutlined, UserAddOutlined, RadarChartOutlined, HeatMapOutlined, AndroidOutlined, UserOutlined, HomeOutlined, DashboardOutlined, BankOutlined, MedicineBoxOutlined } from '@ant-design/icons';
 import { Link } from "react-router-dom";
 function MenuSider() {
     const items = [
@@ -59,6 +59,11 @@ function MenuSider() {
             key: "department-management",
             label: <Link to="/departments">Department Management</Link>,
             icon: <BankOutlined />
+        },
+        {
+            key: "hospital-management",
+            label: <Link to="/admin/hospitals">Hospital Management</Link>,
+            icon: <MedicineBoxOutlined />
         },
     ];
     return (

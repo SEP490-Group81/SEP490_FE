@@ -7,6 +7,8 @@ import LayoutCommon from "../../components/LayoutCommon";
 import Dashboard from "../../pages/Dashboard";
 import DepartmentManagement from "../../pages/DepartmentManagement/DepartmentManagement";
 import ErrorPage from "../../pages/Error";
+import HospitalDetail from "../../pages/HospitalManagement/HospitalDetail";
+import HospitalManagement from "../../pages/HospitalManagement/HospitalManagement";
 import Login from "../../pages/Login";
 import UserManagement from "../../pages/UserManagement";
 import ProtectedRoute from "./ProtectedRoute";
@@ -38,6 +40,18 @@ export const routes = [
         path: "unauthorized",
         element: <ErrorPage />
       },
+      {
+        path: '/admin/hospitals',
+        element: <HospitalManagement />,
+        // requireAuth: true,
+        // roles: ['admin', 'systemAdmin'],
+      },
+      {
+        path: '/hospital-detail/:id',
+        element: <HospitalDetail />,
+        // requireAuth: true,
+        // roles: ['admin', 'systemAdmin', 'hospitalAdmin'], 
+      }
       //   {
       //     path: "/book-room",
       //     element: <BookRoom />
