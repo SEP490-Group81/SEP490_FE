@@ -5,6 +5,7 @@
 import BlankLayout from "../../components/BlankLayout";
 import LayoutCommon from "../../components/LayoutCommon";
 import Dashboard from "../../pages/Dashboard";
+import DepartmentManagement from "../../pages/DepartmentManagement/DepartmentManagement";
 import ErrorPage from "../../pages/Error";
 import Login from "../../pages/Login";
 import UserManagement from "../../pages/UserManagement";
@@ -28,6 +29,10 @@ export const routes = [
         ,
         // requireAuth: true,
         roles: ['admin'],
+      },
+      {
+        path: '/departments',
+        element: <DepartmentManagement />,
       },
       {
         path: "unauthorized",

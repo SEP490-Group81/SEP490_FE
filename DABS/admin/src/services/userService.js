@@ -7,38 +7,39 @@ const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWRlbnRpZmllciI
 
 // Cấu hình axios với headers mặc định
 const api = axios.create({
-    headers: {
-        'Authorization': `Bearer ${AUTH_TOKEN}`,
-        'Content-Type': 'application/json'
-    }
+  baseURL: 'https://localhost:8175/api/v1',
+  headers: {
+    'Authorization': `Bearer ${AUTH_TOKEN}`,
+    'Content-Type': 'application/json'
+  }
 });
 
 // Get all users with pagination and optional filters
 export const getAllUsers = async (params) => {
-    try {
-        const response = await await getAuth(`/user`);;
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching users:', error);
-        return null;
-    }
+  try {
+    const response = await api.get(`/user`);;
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return null;
+  }
 };
 
 // Get user by ID
 
 export const getUserById = async (id) => {
-    try {
-        const result = await getAuth(`/user/${id}`);
-        console.log(`User with ID ${id} fetched successfully:`, result.result);
-        if (!result || !result.result) {
-            throw new Error('User data is missing in the response.');
-        }
-
-        return result.result;
-    } catch (error) {
-        console.error(`Error fetching user with ID ${id}:`, error.message);
-        throw error;
+  try {
+    const result = await getAuth(`/user/${id}`);
+    console.log(`User with ID ${id} fetched successfully:`, result.result);
+    if (!result || !result.result) {
+      throw new Error('User data is missing in the response.');
     }
+
+    return result.result;
+  } catch (error) {
+    console.error(`Error fetching user with ID ${id}:`, error.message);
+    throw error;
+  }
 };
 
 // Create new user
@@ -66,11 +67,11 @@ export const updateUser = async (userData) => {
 
 // Delete user
 export const deleteUser = async (id) => {
-    try {
-        const response = await api.deleteAuth('/user',id);
-        return response.data;
-    } catch (error) {
-        console.error(`Error deleting user ${id}:`, error);
-        return null;
-    }
+  try {
+    const response = await api.deleteAuth('/user', id);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting user ${id}:`, error);
+    return null;
+  }
 };

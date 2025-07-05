@@ -3,12 +3,15 @@ import { Table, Button, Space, Tag, Tooltip, Avatar } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined, UserOutlined } from '@ant-design/icons';
 import EditUser from './EditUser';
 import DeleteUser from './DeleteUser';
-
+import ViewUser from './ViewUser';
 const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
     const [editingUser, setEditingUser] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
+
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [viewingUser, setViewingUser] = useState(null);
 
     const handleEdit = (record) => {
         setEditingUser(record);
@@ -23,6 +26,11 @@ const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
     const handleEditSuccess = () => {
         setShowEditModal(false);
         onReload();
+    };
+
+    const handleView = (record) => {
+        setViewingUser(record);
+        setShowViewModal(true);
     };
 
     const handleDeleteSuccess = () => {
@@ -139,7 +147,7 @@ const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
                         <Button
                             type="text"
                             icon={<EyeOutlined />}
-                            onClick={() => console.log('View details', record.id)}
+                            onClick={() => handleView(record)}
                         />
                     </Tooltip>
                     <Tooltip title="Edit">
@@ -190,6 +198,14 @@ const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
                     record={userToDelete}
                     onCancel={() => setShowDeleteModal(false)}
                     onSuccess={handleDeleteSuccess}
+                />
+            )}
+
+            {showViewModal && (
+                <ViewUser
+                    visible={showViewModal}
+                    record={viewingUser}
+                    onCancel={() => setShowViewModal(false)}
                 />
             )}
         </div>
