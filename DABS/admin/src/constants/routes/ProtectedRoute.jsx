@@ -5,23 +5,28 @@ const ProtectedRoute = (
     { allowedRoles }
 ) => {
     const { token, isInitializing, user } = useSelector((state) => state.auth);
+    try {
+        if (isInitializing) {
+            return <div>...Loading</div>;  // sau dùng skeleton
+        }
+        // console.log("in priavate Route : " + token);
+        // if (!token) {
+        //     return <Navigate to="/login" replace />;
+        // }
+        console.log("allowRoles : " + allowedRoles);
+        console.log("user role : " + user.role);
 
-    if (isInitializing) {
-        return <div>...Loading</div>;  // sau dùng skeleton
+        if (allowedRoles && !allowedRoles.includes(user?.role)) {
+
+            return <Navigate to="/unauthorized" replace />;
+        }
+
+        return <Outlet />;
     }
-    console.log("in priavate Route : " + token);
-    if (!token) {
+    catch (error) {
         return <Navigate to="/login" replace />;
-    }
-    console.log("allowRoles : " + allowedRoles);
-    console.log("user role : " + user.role);
+    };
 
-    if (allowedRoles && !allowedRoles.includes(user?.role)) {
-
-        return <Navigate to="/unauthorized" replace />;
-    }
-
-    return <Outlet />;
 };
 
 export default ProtectedRoute;

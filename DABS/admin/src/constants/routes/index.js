@@ -21,6 +21,8 @@ import DoctorRequestLeave from "../../pages/Doctor/DoctorRequestLeave";
 import AdminDoctorShiftManagement from "../../pages/AdminHospital/DoctorShiftManagement";
 import NurseShiftManagement from "../../pages/AdminHospital/NurseShiftManagement";
 import StaffShiftManagement from "../../pages/AdminHospital/StaffShiftManagement";
+import ManageRoomDepartment from "../../pages/AdminHospital/RoomDepartmentManagement";
+import ManageSpecialist from "../../pages/AdminHospital/SpecialistManagement";
 
 export const routes = [
   {
@@ -73,6 +75,16 @@ export const routes = [
         path: "staff-shift-management",
         element:
           <StaffShiftManagement />
+      },
+      {
+        path: "room-depart-management",
+        element:
+          <ManageRoomDepartment />
+      },
+      {
+        path: "specialist-management",
+        element:
+          <ManageSpecialist />
       }
     ]
   },
