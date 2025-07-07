@@ -4,7 +4,6 @@
 // import ListRoom from "../Pages/ListRoom";
 import BlankLayout from "../../components/BlankLayout";
 import LayoutCommon from "../../components/LayoutCommon";
-import Dashboard from "../../pages/AdminHospital/Dashboard";
 import ErrorPage from "../../pages/Error";
 import Login from "../../pages/Login";
 import UserManagement from "../../pages/AdminHospital/UserManagement";
@@ -14,7 +13,7 @@ import DoctorProfile from "../../pages/Doctor/DoctorProfile";
 import DoctorHome from "../../pages/Doctor/DoctorHome";
 import HospitalStaffHome from "../../pages/HospitalStaff/StaffHome";
 import NurseHome from "../../pages/Nurse/NurseHome";
-import AdminHospitalHome from "../../pages/AdminHospital/Dashboard";
+import AdminHospitalHome from "../../pages/AdminHospital/AdminHospitalHome";
 import AdminSystem from "../../pages/AdminSystem/DashBoard";
 import AdminSystemHeader from "../../components/LayoutCommon/admin-system-header";
 import DoctorRequestLeave from "../../pages/Doctor/DoctorRequestLeave";

@@ -49,8 +49,9 @@ const ManageSpecialist = () => {
     const showEditModal = (record) => {
         setEditing(record);
         form.setFieldsValue({
-             id: record.id,
+            id: record.id,
             name: record.name,
+            description: record.description,
             status: record.status,
             image: record.image
         });
@@ -73,11 +74,11 @@ const ManageSpecialist = () => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            const { id, name, status, image } = values;
-            console.log("Updating attribute specialist:", id, name, status, image);
+            const { id, name,description, status, image } = values;
+            console.log("Updating attribute specialist:", id, name,description, status, image);
             if (id) {
                 // Update case
-                const updated = { id, name, image };
+                const updated = { id, name,description, image };
                 console.log("Updating specialist:", updated);
                  await updateSpecialization(updated);
 
@@ -90,6 +91,7 @@ const ManageSpecialist = () => {
                 const newSpecialist = {
                     id: Date.now(), // temporary local ID
                     name,
+                    description,
                     status,
                     image
                 };
@@ -183,7 +185,11 @@ const ManageSpecialist = () => {
             dataIndex: "name",
             key: "name"
         },
-
+{
+            title: "Mô tả",
+            dataIndex: "description",
+            key: "description"
+        },
         {
             title: "Ảnh",
             dataIndex: "image",
@@ -300,6 +306,12 @@ const ManageSpecialist = () => {
                             name="name"
                             label="Tên chuyên khoa"
                             rules={[{ required: true, message: "Vui lòng nhập tên chuyên khoa" }]}
+                        >
+                            <Input />
+                        </Form.Item>
+                         <Form.Item
+                            name="description"
+                            label="Mô tả"
                         >
                             <Input />
                         </Form.Item>

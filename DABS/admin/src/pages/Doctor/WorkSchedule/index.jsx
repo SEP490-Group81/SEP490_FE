@@ -13,7 +13,7 @@ dayjs.locale("vi");
 const workShiftsTest = [
   {
     id: "shift-1",
-    title: "Xlàm việc",
+    title: "Ca làm việc",
     start: "2025-07-03T08:00:00",
     end: "2025-07-03T12:00:00",
     extendedProps: {
@@ -51,7 +51,30 @@ const workShiftsTest = [
   },
 ];
 
-
+const LegendColor = () => (
+  <div style={{ marginBottom: 24, display: "flex", justifyContent:"center", gap: 8 }}>
+    <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+      {[
+        { color: "#4caf50", border: "#388e3c", label: "Đang khám" },
+        { color: "#ffd54f", border: "#ffa000", label: "Chưa bắt đầu" },
+        { color: "#ffb3b3", border: "#ff7875", label: "Ca đặt lịch (booking)" },
+        { color: "#64b5f6", border: "#1976d2", label: "Ca làm việc khác" },
+      ].map(({ color, border, label }) => (
+        <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{
+            width: 16,
+            height: 16,
+            backgroundColor: color,
+            border: `1px solid ${border}`,
+            borderRadius: 4,
+           
+          }} />
+          <span>{label}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 const WorkSchedule = () => {
   const [events, setEvents] = useState([]);
@@ -111,9 +134,9 @@ const WorkSchedule = () => {
     <ConfigProvider locale={viVN}>
       <div
         style={{
-          maxWidth: 1000,
+          maxWidth: 1200,
           margin: "0 auto",
-          padding: 32,
+          padding: 5,
           background: "#f9fafb",
           borderRadius: 16,
           boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
@@ -132,14 +155,14 @@ const WorkSchedule = () => {
         >
           Lịch làm việc của tôi
         </h2>
-
+  <LegendColor />
         <FullCalendar
           plugins={[timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           locale={viLocale}
           events={events}
           height={600}
-         // eventContent={eventContent}
+          // eventContent={eventContent}
           eventClick={handleEventClick}
           eventDidMount={(info) => {
             Object.assign(info.el.style, eventColor(info));
@@ -154,89 +177,60 @@ const WorkSchedule = () => {
           slotMinTime="06:00:00"
           slotMaxTime="20:00:00"
         />
+      
 
         <Modal
           open={modalOpen}
           onCancel={() => setModalOpen(false)}
           footer={null}
-          title={
-            selectedEvent && (
-              <div>
-                <span
-                  style={{ fontWeight: 700, fontSize: 20, userSelect: "none" }}
-                >
-                  {selectedEvent.title}
+          centered
+          title={selectedEvent ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ fontWeight: 700, fontSize: 20 }}>
+                {selectedEvent.title}
+              </span>
+              {selectedEvent.extendedProps?.department && (
+                <span style={{ fontSize: 15, color: "#1a73e8" }}>
+                  {selectedEvent.extendedProps.department} - {selectedEvent.extendedProps.room}
                 </span>
-                {selectedEvent.extendedProps.department && (
-                  <div
-                    style={{
-                      fontSize: 15,
-                      color: "#1976d2",
-                      marginTop: 4,
-                      userSelect: "none",
-                    }}
-                  >
-                    {selectedEvent.extendedProps.department} - Phòng{" "}
-                    {selectedEvent.extendedProps.room}
-                  </div>
-                )}
-              </div>
-            )
-          }
+              )}
+            </div>
+          ) : null}
           width={600}
-          style={{
-            borderRadius: 16,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
-          }}
-          bodyStyle={{ fontSize: 16 }}
         >
-          {selectedEvent &&
-            (selectedEvent.extendedProps.type === "booking" ? (
-              <>
-                <div style={{ marginBottom: 12, userSelect: "none" }}>
-                  <b>Thời gian:</b>{" "}
-                  {dayjs(selectedEvent.start).format("HH:mm")} -{" "}
-                  {dayjs(selectedEvent.end).format("HH:mm")}
-                  <br />
-                  <b>Bệnh nhân:</b> {selectedEvent.extendedProps.patientName}
-                  <br />
-                  <b>Ghi chú:</b>{" "}
-                  {selectedEvent.extendedProps.note || "Không có"}
-                </div>
-              </>
+          {selectedEvent ? (
+            selectedEvent.extendedProps?.type === "booking" ? (
+              <div>
+                <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
+                <p><b>👤 Bệnh nhân:</b> {selectedEvent.extendedProps.patientName}</p>
+                <p><b>📝 Ghi chú:</b> {selectedEvent.extendedProps.note || "Không có"}</p>
+              </div>
             ) : (
               <>
-                <div style={{ marginBottom: 12, userSelect: "none" }}>
-                  <b>Thời gian:</b>{" "}
-                  {dayjs(selectedEvent.start).format("HH:mm")} -{" "}
-                  {dayjs(selectedEvent.end).format("HH:mm")}
-                  <br />
-                  <b>Số bệnh nhân:</b>{" "}
-                  {selectedEvent.extendedProps.patients
-                    ? selectedEvent.extendedProps.patients.length
-                    : 0}
-                  <br />
-                  <b>Trạng thái:</b> {selectedEvent.extendedProps.status || "Không rõ"}
-                </div>
+                <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
+                <p><b>👥 Số bệnh nhân:</b> {selectedEvent.extendedProps?.patients?.length || 0}</p>
+                <p><b>📌 Trạng thái:</b> {selectedEvent.extendedProps?.status || "Không rõ"}</p>
+
                 <List
-                  dataSource={
-                    selectedEvent.extendedProps.patients || []
-                  }
+                  dataSource={selectedEvent.extendedProps?.patients || []}
                   renderItem={(p) => (
                     <List.Item key={p.id}>
                       <List.Item.Meta
                         title={<b>{p.name}</b>}
-                        description={`Tuổi: ${p.age} | Ghi chú: ${
-                          p.note || "Không có"
-                        }`}
+                        description={`Tuổi: ${p.age} | Ghi chú: ${p.note || "Không có"}`}
                       />
                     </List.Item>
                   )}
-                  locale={{ emptyText: "Chưa có bệnh nhân nào trong Xnày." }}
+                  locale={{ emptyText: "Chưa có bệnh nhân nào." }}
+                  style={{ marginTop: 16 }}
                 />
               </>
-            ))}
+            )
+          ) : (
+            <div>Không có dữ liệu lịch làm việc.</div>
+          )}
         </Modal>
+
       </div>
     </ConfigProvider>
   );

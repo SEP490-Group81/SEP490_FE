@@ -24,8 +24,6 @@ function HospitalDetail() {
         { key: 4, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
         { key: 5, service: 'Khám tổng quát', price: '300,000 VNĐ' },
         { key: 6, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
-
-
     ];
 
     const columns = [
