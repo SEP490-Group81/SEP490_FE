@@ -52,12 +52,12 @@ export const loginUser = createAsyncThunk(
                     storeTokens(tokenData.refreshToken, tokenData.refreshTokenExpiryTime);
                     console.log("access token in login : " + tokenData.token);
                     localStorage.setItem('accessToken', tokenData.token);
-                    dispatch(updateAccessToken(tokenData.token));
+                   // dispatch(updateAccessToken(tokenData.token));
                     const user = await getUserById(decoded.nameidentifier);
                     console.log("user in login sucess : " + user);
                     console.log('User fetched:', user);
 
-                    return { accessToken: tokenData.toke, user };
+                    return { accessToken: tokenData.token, user };
                 }
                 throw new Error('Token decoding failed');
             }

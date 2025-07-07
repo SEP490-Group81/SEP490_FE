@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import { Layout, Menu } from "antd";
-import { NavLink, Outlet,useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import Sider from "antd/es/layout/Sider";
-import {DashboardOutlined,UserOutlined} from '@ant-design/icons';
+import { DashboardOutlined, UserOutlined } from '@ant-design/icons';
 import { Content, Header } from "antd/es/layout/layout";
 import Title from "antd/es/skeleton/Title";
+import { DOCTOR, HOSPITALADMIN, HOSPITALSTAFF, NURSE, SYSTEMADMIN } from "../../constants/roles/role";
+import { useSelector } from "react-redux";
 
 const AdminSystemHeader = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const user = useSelector((state) => state.user.user);
+  console.log("user in AdminSystemHeader : " + user);
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -19,12 +23,9 @@ const AdminSystemHeader = () => {
           mode="inline"
           selectedKeys={[location.pathname]}
         >
-          <Menu.Item key="/admin/dashboard" icon={<DashboardOutlined />}>
-            <NavLink to="/admin/dashboard">Dashboard</NavLink>
-          </Menu.Item>
-          <Menu.Item key="/admin/users" icon={<UserOutlined />}>
-            <NavLink to="/admin/users">Quản lý người dùng</NavLink>
-          </Menu.Item>
+          <Menu.Item key="/admin-system" icon={<DashboardOutlined />}>
+            <NavLink to="/admin-system">Dashboard</NavLink>
+          </Menu.Item>,
         </Menu>
       </Sider>
       <Layout>
