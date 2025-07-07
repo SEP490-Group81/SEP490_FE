@@ -4,7 +4,9 @@
 // import ListRoom from "../Pages/ListRoom";
 import BlankLayout from "../../components/BlankLayout";
 import LayoutCommon from "../../components/LayoutCommon";
+import DepartmentManagement from "../../pages/AdminHospital/DepartmentManagement/DepartmentManagement";
 import ErrorPage from "../../pages/Error";
+import HospitalDetail from "../../pages/AdminHospital/HospitalManagement/HospitalDetail";
 import Login from "../../pages/Login";
 import UserManagement from "../../pages/AdminHospital/UserManagement";
 import ProtectedRoute from "./ProtectedRoute";
@@ -22,6 +24,8 @@ import NurseShiftManagement from "../../pages/AdminHospital/NurseShiftManagement
 import StaffShiftManagement from "../../pages/AdminHospital/StaffShiftManagement";
 import ManageRoomDepartment from "../../pages/AdminHospital/RoomDepartmentManagement";
 import ManageSpecialist from "../../pages/AdminHospital/SpecialistManagement";
+import HospitalManagement from "../../pages/AdminHospital/HospitalManagement/HospitalManagement";
+
 
 export const routes = [
   {
@@ -84,7 +88,21 @@ export const routes = [
         path: "specialist-management",
         element:
           <ManageSpecialist />
-      }
+      },
+        {
+        path: 'hospital-detail/:id',
+        element: <HospitalDetail />,
+        // requireAuth: true,
+        // roles: ['admin', 'systemAdmin', 'hospitalAdmin'], 
+      },
+       {
+        path: 'departments',
+        element: <DepartmentManagement />,
+      },
+       {
+        path: 'hospitals',
+        element: <HospitalManagement />,
+      },
     ]
   },
   {

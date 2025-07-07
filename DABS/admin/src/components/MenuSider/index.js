@@ -1,7 +1,8 @@
 import { Menu } from "antd";
+
 import {
-    OrderedListOutlined,
-    UserAddOutlined,
+    BankOutlined,
+    MedicineBoxOutlined,
     RadarChartOutlined,
     HeatMapOutlined,
     AndroidOutlined,
@@ -17,6 +18,9 @@ import {
     CalendarOutlined,
     FormOutlined,
 } from "@ant-design/icons";
+
+
+
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { DOCTOR, HOSPITALADMIN, HOSPITALSTAFF, NURSE } from "../../constants/roles/role";
@@ -32,7 +36,7 @@ function MenuSider() {
             key: "home",
             label: <Link to="/">Dashboard</Link>,
             icon: <DashboardOutlined />,
-        },
+        }
     ];
 
 
@@ -49,7 +53,7 @@ function MenuSider() {
         },
         {
             key: "department-room",
-            label: <Link to="/admin-hospital/room-depart-management">Khoa/Phòng ban</Link>,
+            label: <Link to="/admin-hospital/room-depart-management">Phòng khám</Link>,
             icon: <ApartmentOutlined />,
         },
         {
@@ -72,18 +76,28 @@ function MenuSider() {
             label: <Link to="/admin-hospital/nurse-shift-management">Ca làm y tá</Link>,
             icon: <ScheduleOutlined />,
         },
+        {
+            key: "department-management",
+            label: <Link to="/admin-hospital/departments">Department Management</Link>,
+            icon: <BankOutlined />
+        },
+        {
+            key: "hospital-management",
+            label: <Link to="/admin-hospital/hospitals">Hospital Management</Link>,
+            icon: <MedicineBoxOutlined />
+        },
     ];
 
     const doctorItems = [
         {
             key: "home",
             label: <Link to="/doctor">Dashboard</Link>,
-            icon: <DashboardOutlined />, 
+            icon: <DashboardOutlined />,
         },
         {
             key: "profile",
             label: <Link to="/doctor/doctor-profile">Hồ sơ</Link>,
-            icon: <IdcardOutlined />, 
+            icon: <IdcardOutlined />,
         },
         {
             key: "schedule",
@@ -93,25 +107,25 @@ function MenuSider() {
         {
             key: "request-leave",
             label: <Link to="/doctor/request-leave">Xin nghỉ</Link>,
-            icon: <FormOutlined />, 
+            icon: <FormOutlined />,
         },
     ];
 
-        const nurseItems = [
+    const nurseItems = [
         {
             key: "home",
             label: <Link to="/nurse">Dashboard</Link>,
-            icon: <DashboardOutlined />, 
+            icon: <DashboardOutlined />,
         },
     ];
 
-     const staffItems = [
+    const staffItems = [
         {
             key: "home",
             label: <Link to="/staff">Dashboard</Link>,
-            icon: <DashboardOutlined />, 
+            icon: <DashboardOutlined />,
         },
-    
+
     ];
     const getMenuItems = (role) => {
         switch (role) {
