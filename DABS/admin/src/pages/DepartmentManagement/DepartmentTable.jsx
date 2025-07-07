@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Table, Button, Space, Tag, Tooltip, Avatar } from 'antd';
-import { EditOutlined, DeleteOutlined, EyeOutlined, BankOutlined, UserOutlined, PhoneOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, EyeOutlined, BankOutlined, UserOutlined, PhoneOutlined, TeamOutlined } from '@ant-design/icons';
 import EditDepartment from './EditDepartment';
 import DeleteDepartment from './DeleteDepartment';
 import ViewDepartment from './ViewDepartmentDetail';
+import DoctorManagement from './DoctorManage';
 
 
 const DepartmentTable = ({ departments, loading, pagination, onChange, onReload }) => {
@@ -13,6 +14,8 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
     const [departmentToDelete, setDepartmentToDelete] = useState(null);
     const [showViewModal, setShowViewModal] = useState(false);
     const [viewingDepartment, setViewingDepartment] = useState(null);
+    const [showDoctorModal, setShowDoctorModal] = useState(false);
+    const [managingDepartment, setManagingDepartment] = useState(null);
 
     const handleEdit = (record) => {
         setEditingDepartment(record);
@@ -29,6 +32,11 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
         setShowViewModal(true);
     };
 
+    const handleManageDoctors = (record) => {
+        setManagingDepartment(record);
+        setShowDoctorModal(true);
+    };
+
     const handleEditSuccess = () => {
         setShowEditModal(false);
         onReload();
@@ -37,6 +45,10 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
     const handleDeleteSuccess = () => {
         setShowDeleteModal(false);
         onReload();
+    };
+
+    const handleDoctorManagementSuccess = () => {
+        onReload(); // Refresh department data
     };
 
     const getStatusColor = (status) => {
@@ -74,24 +86,17 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
         },
         {
             title: 'Head of Department',
-            key: 'headOfDepartment',
-            render: (_, record) => (
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <UserOutlined style={{ marginRight: 8, color: '#1890ff' }} />
-                    {record.headOfDepartment}
-                </div>
-            ),
-        },
-        {
-            title: 'Contact',
-            key: 'contact',
+            key: 'head',
             render: (_, record) => (
                 <div>
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                        <PhoneOutlined style={{ marginRight: 8, color: '#52c41a' }} />
-                        <span style={{ fontSize: '12px' }}>{record.phoneNumber}</span>
+                        <UserOutlined style={{ marginRight: 4, color: '#1890ff' }} />
+                        <span style={{ fontSize: '12px' }}>{record.headOfDepartment || 'N/A'}</span>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#8c8c8c' }}>{record.email}</div>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <PhoneOutlined style={{ marginRight: 4, color: '#52c41a' }} />
+                        <span style={{ fontSize: '12px' }}>{record.phoneNumber || 'N/A'}</span>
+                    </div>
                 </div>
             ),
         },
@@ -99,16 +104,7 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
             title: 'Location',
             dataIndex: 'location',
             key: 'location',
-        },
-        {
-            title: 'Staff/Beds',
-            key: 'staffBeds',
-            render: (_, record) => (
-                <div>
-                    <div style={{ fontSize: '12px' }}>Staff: <strong>{record.totalStaff}</strong></div>
-                    <div style={{ fontSize: '12px' }}>Beds: <strong>{record.totalBeds}</strong></div>
-                </div>
-            ),
+            render: (location) => location || 'N/A',
         },
         {
             title: 'Status',
@@ -121,6 +117,16 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
             ),
         },
         {
+            title: 'Statistics',
+            key: 'statistics',
+            render: (_, record) => (
+                <div>
+                    <div style={{ fontSize: '12px' }}>Staff: <strong>{record.totalStaff || 0}</strong></div>
+                    <div style={{ fontSize: '12px' }}>Beds: <strong>{record.totalBeds || 0}</strong></div>
+                </div>
+            ),
+        },
+        {
             title: 'Created Date',
             dataIndex: 'createdAt',
             key: 'createdAt',
@@ -129,7 +135,7 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
         {
             title: 'Actions',
             key: 'actions',
-            width: 150,
+            width: 200,
             render: (_, record) => (
                 <Space size="small">
                     <Tooltip title="View Details">
@@ -137,6 +143,14 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
                             type="text"
                             icon={<EyeOutlined />}
                             onClick={() => handleView(record)}
+                        />
+                    </Tooltip>
+                    <Tooltip title="Manage Doctors">
+                        <Button
+                            type="text"
+                            icon={<TeamOutlined />}
+                            onClick={() => handleManageDoctors(record)}
+                            style={{ color: '#52c41a' }}
                         />
                     </Tooltip>
                     <Tooltip title="Edit">
@@ -195,6 +209,15 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
                     visible={showViewModal}
                     record={viewingDepartment}
                     onCancel={() => setShowViewModal(false)}
+                />
+            )}
+
+            {showDoctorModal && (
+                <DoctorManagement
+                    visible={showDoctorModal}
+                    department={managingDepartment}
+                    onCancel={() => setShowDoctorModal(false)}
+                    onSuccess={handleDoctorManagementSuccess}
                 />
             )}
         </div>
