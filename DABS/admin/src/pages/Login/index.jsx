@@ -11,7 +11,6 @@ function Login() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.user);
-    console.log("user in Login page : " + user?.role.name);
     const [messageApi, contextHolder] = message.useMessage();
     const messageState = useSelector((state) => state.message)
     useEffect(() => {

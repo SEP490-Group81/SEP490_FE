@@ -1,253 +1,236 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, dayjsLocalizer } from "react-big-calendar";
-import dayjs from "dayjs";
-import "dayjs/locale/vi";
-import "react-big-calendar/lib/css/react-big-calendar.css";
+import FullCalendar from "@fullcalendar/react";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import viLocale from "@fullcalendar/core/locales/vi";
 import { Modal, List, ConfigProvider } from "antd";
 import viVN from "antd/es/locale/vi_VN";
-
-const localizer = dayjsLocalizer(dayjs);
+import dayjs from "dayjs";
+import "dayjs/locale/vi";
+import "./style.scss";
 dayjs.locale("vi");
 
-const apiData = {
-  result: [
-    {
-      id: 25,
-      doctorProfileId: 10,
-      workDate: "2025-06-12T11:53:31.065",
-      startTime: "05:00:00",
-      endTime: "12:00:00",
-      isAvailable: true,
-      reasonOfUnavailability: null,
-      room: {
-        id: 10,
-        name: "Room 10",
-        roomCode: "R-010",
-        description: "Room 10",
-        department: {
-          id: 15,
-          name: "Khoa Khám bệnh",
-          description:
-            "Khám và tiếp nhận bệnh nhân ngoại trú, sàng lọc, chỉ định xét nghiệm và chẩn đoán ban đầu",
-        },
-        specialization: {
-          id: 11,
-          name: "Nội Tiêu Hoá",
-          description: "Nội Tiêu Hoá",
-          image:
-            "https://medpro.vn/_next/image?url=https%3A%2F%2Fcdn-pkh.longvan.net%2Fmedpro-production%2Fdefault%2Favatar%2Fsubjects%2Ftieu_hoa.png&w=256&q=75",
-        },
-      },
-      appointment: [],
+const workShiftsTest = [
+  {
+    id: "shift-1",
+    title: "Ca làm việc",
+    start: "2025-07-03T08:00:00",
+    end: "2025-07-03T12:00:00",
+    extendedProps: {
+      type: "shift",
+      department: "Khoa Nội",
+      room: "Phòng 101",
+      status: "Đang khám",
+      patients: [
+        { id: 1, name: "Nguyễn Văn A", age: 30, note: "Khám tổng quát" },
+        { id: 2, name: "Trần Thị B", age: 25, note: "Khám tim mạch" },
+      ],
     },
-    {
-      id: 26,
-      doctorProfileId: 10,
-      workDate: "2025-06-12T11:53:31.065",
-      startTime: "13:00:00",
-      endTime: "18:00:00",
-      isAvailable: true,
-      reasonOfUnavailability: null,
-      room: {
-        id: 10,
-        name: "Room 10",
-        roomCode: "R-010",
-        description: "Room 10",
-        department: {
-          id: 15,
-          name: "Khoa Khám bệnh",
-          description:
-            "Khám và tiếp nhận bệnh nhân ngoại trú, sàng lọc, chỉ định xét nghiệm và chẩn đoán ban đầu",
-        },
-        specialization: {
-          id: 11,
-          name: "Nội Tiêu Hoá",
-          description: "Nội Tiêu Hoá",
-          image:
-            "https://medpro.vn/_next/image?url=https%3A%2F%2Fcdn-pkh.longvan.net%2Fmedpro-production%2Fdefault%2Favatar%2Fsubjects%2Ftieu_hoa.png&w=256&q=75",
-        },
-      },
-      appointment: [],
+  },
+  {
+    id: "shift-2",
+    title: "Ca làm việc",
+    start: "2025-07-04T08:00:00",
+    end: "2025-07-04T12:00:00",
+  },
+  {
+    id: "shift-3",
+    title: "Ca làm việc",
+    start: "2025-07-05T08:00:00",
+    end: "2025-07-05T12:00:00",
+    extendedProps: {
+      type: "shift",
+      department: "Khoa Nội",
+      room: "Phòng 101",
+      status: "Chưa bắt đầu",
+      patients: [
+        { id: 1, name: "Nguyễn Văn A", age: 30, note: "Khám tổng quát" },
+        { id: 2, name: "Trần Thị B", age: 25, note: "Khám tim mạch" },
+      ],
     },
-  ],
-  success: true,
-  message: "Get data successfully",
-};
+  },
+];
 
-const generateFakePatients = (count) => {
-  const samplePatients = [
-    { id: 1, name: "Nguyễn Văn A", age: 30, note: "Khám tổng quát" },
-    { id: 2, name: "Trần Thị B", age: 25, note: "Khám tim mạch" },
-    { id: 3, name: "Lê Văn C", age: 40, note: "Tái khám" },
-    { id: 4, name: "Phạm Thị D", age: 29, note: "" },
-  ];
-  let patients = [];
-  for (let i = 0; i < count; i++) {
-    patients.push(samplePatients[i % samplePatients.length]);
-  }
-  return patients;
-};
-
-const mapApiDataToEvents = (data) => {
-  return data.result.map((item) => {
-    const dateStr = item.workDate.split("T")[0];
-    const start = new Date(`${dateStr}T${item.startTime}`);
-    const end = new Date(`${dateStr}T${item.endTime}`);
-
-    const now = new Date();
-    let status = "Chưa bắt đầu";
-    if (now >= start && now <= end) status = "Đang khám";
-    else if (now > end) status = "Đã kết thúc";
-
-    const patientCount = Math.floor(Math.random() * 10);
-    const patients = generateFakePatients(patientCount);
-
-    return {
-      id: item.id,
-      title: `${item.room.specialization.name} - Phòng ${item.room.name}`,
-      start,
-      end,
-      resource: {
-        room: item.room.name,
-        department: item.room.department.name,
-        patientCount,
-        status,
-        patients,
-      },
-    };
-  });
-};
-
-const getEventStyle = (event) => {
-  let bgColor = "#bfbfbf";
- if (event.resource.status === "Đang khám") bgColor = "#52c41a"; // xanh lá đậm
-else if (event.resource.status === "Chưa bắt đầu") bgColor = "#faad14"; // vàng cam
-else if (event.resource.status === "Đã kết thúc") bgColor = "#69c0ff"; // xanh dương nhạt 
-  return {
-    style: {
-      backgroundColor: bgColor,
-      color: "#fff",
-      borderRadius: 8,
-      border: "none",
-      fontWeight: 600,
-      fontSize: 14,
-      boxShadow: "0 2px 8px rgba(82,196,26,0.10)",
-      padding: 8,
-      cursor: "pointer",
-    },
-  };
-};
+const LegendColor = () => (
+  <div style={{ marginBottom: 24, display: "flex", justifyContent:"center", gap: 8 }}>
+    <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+      {[
+        { color: "#4caf50", border: "#388e3c", label: "Đang khám" },
+        { color: "#ffd54f", border: "#ffa000", label: "Chưa bắt đầu" },
+        { color: "#ffb3b3", border: "#ff7875", label: "Ca đặt lịch (booking)" },
+        { color: "#64b5f6", border: "#1976d2", label: "Ca làm việc khác" },
+      ].map(({ color, border, label }) => (
+        <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{
+            width: 16,
+            height: 16,
+            backgroundColor: color,
+            border: `1px solid ${border}`,
+            borderRadius: 4,
+           
+          }} />
+          <span>{label}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 const WorkSchedule = () => {
+  const [events, setEvents] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [events, setEvents] = useState([]);
 
   useEffect(() => {
-    // Giả lập gọi API và map dữ liệu
-    const mappedEvents = mapApiDataToEvents(apiData);
-    setEvents(mappedEvents);
+    setEvents([...workShiftsTest]);
   }, []);
 
-  const handleSelectEvent = (event) => {
+  const handleEventClick = ({ event }) => {
     setSelectedEvent(event);
     setModalOpen(true);
   };
 
+
+
+  const eventColor = (info) => {
+    const { type, status } = info.event.extendedProps;
+    if (type === "booking") {
+      return {
+        backgroundColor: "#ffb3b3",
+        color: "black",
+        borderRadius: "8px",
+        border: "1px solid #ff7875",
+        boxShadow: "0 2px 8px rgba(255,120,117,0.12)",
+      };
+    }
+    if (status === "Đang khám") {
+      return {
+        backgroundColor: "#4caf50",
+        color: "black",
+        borderRadius: "8px",
+        border: "1px solid #388e3c",
+        boxShadow: "0 2px 8px rgba(76,175,80,0.12)",
+      };
+    }
+    if (status === "Chưa bắt đầu") {
+      return {
+        backgroundColor: "#ffd54f",
+        color: "black",
+        borderRadius: "8px",
+        border: "1px solid #ffa000",
+        boxShadow: "0 2px 8px rgba(255,213,79,0.12)",
+      };
+    }
+    return {
+      backgroundColor: "#64b5f6",
+      color: "black",
+      borderRadius: "8px",
+      border: "1px solid #1976d2",
+      boxShadow: "0 2px 8px rgba(100,181,246,0.12)",
+    };
+  };
+
   return (
     <ConfigProvider locale={viVN}>
-      <div style={{ maxWidth: 1000, margin: "0 auto", padding: 24 }}>
-        <div
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: 5,
+          background: "#f9fafb",
+          borderRadius: 16,
+          boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+        }}
+      >
+        <h2
           style={{
-            background: "#E8F2F7",
-            padding: "16px 0",
             textAlign: "center",
-            borderBottom: "2px solid #E8F2F7",
-            borderRadius: 8,
-            marginBottom: 24,
+            marginBottom: 32,
+            fontWeight: 700,
+            fontSize: 28,
+            letterSpacing: 1,
+            color: "#1a237e",
+            userSelect: "none",
           }}
         >
-          <h2
-            style={{
-              fontWeight: 700,
-              fontSize: 28,
-              margin: 0,
-            }}
-          >
-            Lịch làm việc của tôi
-          </h2>
-        </div>
-        <Calendar
-          localizer={localizer}
+          Lịch làm việc của tôi
+        </h2>
+  <LegendColor />
+        <FullCalendar
+          plugins={[timeGridPlugin, interactionPlugin]}
+          initialView="timeGridWeek"
+          locale={viLocale}
           events={events}
-          defaultView="week"
-          views={["week", "day"]}
-          startAccessor="start"
-          endAccessor="end"
-          style={{ height: 600, background: "#f6ffed", borderRadius: 12, padding: 8 }}
-          messages={{
-            week: "Tuần",
-            day: "Ngày",
-            today: "Hôm nay",
-            previous: "Trước",
-            next: "Sau",
-            date: "Ngày",
-            time: "Giờ",
-            event: "Ca làm việc",
-            noEventsInRange: "Không có ca làm việc trong tuần này.",
+          height={600}
+          // eventContent={eventContent}
+          eventClick={handleEventClick}
+          eventDidMount={(info) => {
+            Object.assign(info.el.style, eventColor(info));
           }}
-          eventPropGetter={getEventStyle}
-          onSelectEvent={handleSelectEvent}
-          popup
-          culture="vi"
+          nowIndicator={true}
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "timeGridWeek,timeGridDay",
+          }}
+          allDaySlot={false}
+          slotMinTime="06:00:00"
+          slotMaxTime="20:00:00"
         />
+      
 
         <Modal
           open={modalOpen}
           onCancel={() => setModalOpen(false)}
-          title={
-            selectedEvent && (
-              <span>
-                {selectedEvent.title} <br />
-                <span style={{ fontSize: 14, color: "#52c41a" }}>
-                  {selectedEvent.resource.department} - Phòng {selectedEvent.resource.room}
-                </span>
-              </span>
-            )
-          }
           footer={null}
+          centered
+          title={selectedEvent ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ fontWeight: 700, fontSize: 20 }}>
+                {selectedEvent.title}
+              </span>
+              {selectedEvent.extendedProps?.department && (
+                <span style={{ fontSize: 15, color: "#1a73e8" }}>
+                  {selectedEvent.extendedProps.department} - {selectedEvent.extendedProps.room}
+                </span>
+              )}
+            </div>
+          ) : null}
           width={600}
         >
-          {selectedEvent && (
-            <>
-              <div style={{ marginBottom: 12 }}>
-                <b>Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} -{" "}
-                {dayjs(selectedEvent.end).format("HH:mm")}
-                <br />
-                <b>Số bệnh nhân:</b> {selectedEvent.resource.patientCount}
-                <br />
-                <b>Trạng thái:</b> {selectedEvent.resource.status}
+          {selectedEvent ? (
+            selectedEvent.extendedProps?.type === "booking" ? (
+              <div>
+                <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
+                <p><b>👤 Bệnh nhân:</b> {selectedEvent.extendedProps.patientName}</p>
+                <p><b>📝 Ghi chú:</b> {selectedEvent.extendedProps.note || "Không có"}</p>
               </div>
-              <List
-                style={{ maxHeight: 300, overflowY: "auto" }}
-                dataSource={selectedEvent.resource.patients || []}
-                renderItem={(patient) => (
-                  <List.Item key={patient.id}>
-                    <List.Item.Meta
-                      title={<span style={{ fontWeight: 500 }}>{patient.name}</span>}
-                      description={
-                        <span>
-                          Tuổi: {patient.age} | Ghi chú: {patient.note || "Không có"}
-                        </span>
-                      }
-                    />
-                  </List.Item>
-                )}
-                locale={{ emptyText: "Chưa có bệnh nhân nào trong ca này." }}
-              />
-            </>
+            ) : (
+              <>
+                <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
+                <p><b>👥 Số bệnh nhân:</b> {selectedEvent.extendedProps?.patients?.length || 0}</p>
+                <p><b>📌 Trạng thái:</b> {selectedEvent.extendedProps?.status || "Không rõ"}</p>
+
+                <List
+                  dataSource={selectedEvent.extendedProps?.patients || []}
+                  renderItem={(p) => (
+                    <List.Item key={p.id}>
+                      <List.Item.Meta
+                        title={<b>{p.name}</b>}
+                        description={`Tuổi: ${p.age} | Ghi chú: ${p.note || "Không có"}`}
+                      />
+                    </List.Item>
+                  )}
+                  locale={{ emptyText: "Chưa có bệnh nhân nào." }}
+                  style={{ marginTop: 16 }}
+                />
+              </>
+            )
+          ) : (
+            <div>Không có dữ liệu lịch làm việc.</div>
           )}
         </Modal>
+
       </div>
     </ConfigProvider>
   );
