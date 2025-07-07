@@ -85,13 +85,25 @@ export const routes = [
       },
 
       {
-        path: '/patient/payment',
-        element: <PaymentPage />,
+        path: "/patient",
+        element: <BlankLayout />,
+        children: [
+          {
+            index: true,
+            element: <PatientPortal />
+          },
+          {
+            path: "payment",
+            element: <PaymentPage />
+          },
+          {
+            path: "rating",
+            element: <RatingPage />
+          },
+
+        ]
       },
-      {
-        path: '/patient/rating',
-        element: <RatingPage />,
-      },
+
       {
         path: "change-password",
         element: <ChangePassword />
@@ -107,7 +119,7 @@ export const routes = [
         path: "hospital-list",
         element: <HospitalList />
       },
-   
+
 
       {
         path: "*",
