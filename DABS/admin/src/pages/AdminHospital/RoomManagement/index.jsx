@@ -10,13 +10,22 @@ import viVN from "antd/es/locale/vi_VN";
 
 const { Option } = Select;
 
-const ManageRoomDepartment = () => {
-  const [departments, setDepartments] = useState([
-    { id: 1, name: "Khoa Nội", status: "active" },
-    { id: 2, name: "Khoa Ngoại", status: "inactive" },
-    { id: 3, name: "Khoa Nhi", status: "active" },
-    { id: 4, name: "Phòng Cấp cứu", status: "active" }
+const ManageRoom = () => {
+  const [specialties] = useState([
+    "Nội tổng quát",
+    "Ngoại tổng quát",
+    "Nhi khoa",
+    "Da liễu",
+    "Tai Mũi Họng",
+    "Tim mạch"
   ]);
+
+  const [departments, setDepartments] = useState([
+    { id: 1, name: "Phòng Nội 1", specialty: "Nội tổng quát", status: "active" },
+    { id: 2, name: "Phòng Ngoại A", specialty: "Ngoại tổng quát", status: "inactive" },
+    { id: 3, name: "Phòng Nhi 2", specialty: "Nhi khoa", status: "active" }
+  ]);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
@@ -31,13 +40,17 @@ const ManageRoomDepartment = () => {
 
   const showEditModal = (record) => {
     setEditing(record);
-    form.setFieldsValue({ name: record.name, status: record.status });
+    form.setFieldsValue({
+      name: record.name,
+      specialty: record.specialty,
+      status: record.status
+    });
     setModalVisible(true);
   };
 
   const showDeleteModal = (record) => {
     Modal.confirm({
-      title: "Xác nhận xóa khoa/phòng?",
+      title: "Xác nhận xóa phòng?",
       content: `Bạn có chắc muốn xóa "${record.name}"?`,
       okText: "Xóa",
       cancelText: "Hủy",
@@ -51,11 +64,11 @@ const ManageRoomDepartment = () => {
 
   const handleSubmit = () => {
     form.validateFields().then(values => {
-      const { name, status } = values;
+      const { name, status, specialty } = values;
       if (editing) {
         setDepartments(prev =>
           prev.map(dep =>
-            dep.id === editing.id ? { ...dep, name, status } : dep
+            dep.id === editing.id ? { ...dep, name, status, specialty } : dep
           )
         );
         message.success("Cập nhật thành công");
@@ -63,6 +76,7 @@ const ManageRoomDepartment = () => {
         const newDepartment = {
           id: Date.now(),
           name,
+          specialty,
           status
         };
         setDepartments(prev => [...prev, newDepartment]);
@@ -100,10 +114,10 @@ const ManageRoomDepartment = () => {
     {
       title: (
         <div>
-          Tên khoa/phòng
-          <Input
+          Tên phòng khám
+          <Input.Search
             placeholder="Tìm kiếm..."
-            prefix={<SearchOutlined />}
+            enterButton={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             style={{ marginTop: 8 }}
@@ -113,6 +127,11 @@ const ManageRoomDepartment = () => {
       ),
       dataIndex: "name",
       key: "name"
+    },
+    {
+      title: "Chuyên khoa",
+      dataIndex: "specialty",
+      key: "specialty"
     },
     {
       title: (
@@ -165,7 +184,7 @@ const ManageRoomDepartment = () => {
           <Col span={24}>
             <Row justify="space-between" align="middle">
               <Col>
-                <h2><ApartmentOutlined style={{ marginRight: 8 }} />Quản lý khoa/phòng</h2>
+                <h2><ApartmentOutlined style={{ marginRight: 8 }} />Quản lý phòng khám</h2>
               </Col>
               <Col>
                 <Button
@@ -174,7 +193,7 @@ const ManageRoomDepartment = () => {
                   onClick={showAddModal}
                   size="large"
                 >
-                  Thêm khoa/phòng
+                  Thêm phòng khám
                 </Button>
               </Col>
             </Row>
@@ -193,7 +212,7 @@ const ManageRoomDepartment = () => {
         </Row>
 
         <Modal
-          title={editing ? "Chỉnh sửa khoa/phòng" : "Thêm khoa/phòng mới"}
+          title={editing ? "Chỉnh sửa phòng khám" : "Thêm phòng khám mới"}
           open={modalVisible}
           onCancel={() => setModalVisible(false)}
           onOk={handleSubmit}
@@ -203,11 +222,24 @@ const ManageRoomDepartment = () => {
           <Form form={form} layout="vertical">
             <Form.Item
               name="name"
-              label="Tên khoa/phòng"
-              rules={[{ required: true, message: "Vui lòng nhập tên khoa/phòng" }]}
+              label="Tên phòng khám"
+              rules={[{ required: true, message: "Vui lòng nhập tên phòng khám" }]}
             >
               <Input />
             </Form.Item>
+
+            <Form.Item
+              name="specialty"
+              label="Chuyên khoa"
+              rules={[{ required: true, message: "Vui lòng chọn chuyên khoa" }]}
+            >
+              <Select placeholder="Chọn chuyên khoa">
+                {specialties.map(spe => (
+                  <Option key={spe} value={spe}>{spe}</Option>
+                ))}
+              </Select>
+            </Form.Item>
+
             <Form.Item
               name="status"
               label="Trạng thái"
@@ -225,4 +257,4 @@ const ManageRoomDepartment = () => {
   );
 };
 
-export default ManageRoomDepartment;
+export default ManageRoom;

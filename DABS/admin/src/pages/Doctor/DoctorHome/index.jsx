@@ -31,7 +31,7 @@ const fakeNews = [
 const DoctorHome = () => {
   return (
     <div style={{ maxWidth: 960, margin: "0 auto", padding: 24 }}>
-      <Title style={{display:"flex", textAlign:"center"}} level={2}>Chào bác sĩ Nguyễn Văn A</Title>
+      <Title style={{ display: "flex", textAlign: "center" }} level={2}>Chào bác sĩ Nguyễn Văn A</Title>
 
       <Row gutter={16}>
         <Col span={16}>

@@ -22,9 +22,16 @@ import DoctorRequestLeave from "../../pages/Doctor/DoctorRequestLeave";
 import AdminDoctorShiftManagement from "../../pages/AdminHospital/DoctorShiftManagement";
 import NurseShiftManagement from "../../pages/AdminHospital/NurseShiftManagement";
 import StaffShiftManagement from "../../pages/AdminHospital/StaffShiftManagement";
-import ManageRoomDepartment from "../../pages/AdminHospital/RoomDepartmentManagement";
+import ManageRoom from "../../pages/AdminHospital/RoomManagement";
 import ManageSpecialist from "../../pages/AdminHospital/SpecialistManagement";
 import HospitalManagement from "../../pages/AdminHospital/HospitalManagement/HospitalManagement";
+import MedicalServiceManagement from "../../pages/AdminHospital/MedicalServiceManagement";
+import LeaveRequestManagement from "../../pages/AdminHospital/LeaveRequestManagement";
+import HospitalStatisticPage from "../../pages/AdminHospital/HospitalStatisticPage";
+import NurseProfile from "../../pages/Nurse/NurseProfile";
+import WorkScheduleNurse from "../../pages/Nurse/WorkSchedule";
+import StaffProfile from "../../pages/HospitalStaff/StaffProfile";
+import AdjustBookingSchedule from "../../pages/Nurse/AdjustAppointmentSchedule";
 
 
 export const routes = [
@@ -82,26 +89,41 @@ export const routes = [
       {
         path: "room-depart-management",
         element:
-          <ManageRoomDepartment />
+          <ManageRoom />
       },
       {
         path: "specialist-management",
         element:
           <ManageSpecialist />
       },
-        {
+      {
         path: 'hospital-detail/:id',
         element: <HospitalDetail />,
         // requireAuth: true,
         // roles: ['admin', 'systemAdmin', 'hospitalAdmin'], 
       },
-       {
+      {
         path: 'departments',
         element: <DepartmentManagement />,
       },
-       {
+      {
         path: 'hospitals',
         element: <HospitalManagement />,
+      },
+      {
+        path: "medical-service-management",
+        element:
+          <MedicalServiceManagement />
+      },
+      {
+        path: "leave-request-management",
+        element:
+          <LeaveRequestManagement />
+      },
+      {
+        path: "hospital-statistic",
+        element:
+          <HospitalStatisticPage />
       },
     ]
   },
@@ -123,7 +145,7 @@ export const routes = [
       },
       {
         path: "request-leave",
-        element: <DoctorRequestLeave/>,
+        element: <DoctorRequestLeave />,
       }
     ]
   },
@@ -135,7 +157,10 @@ export const routes = [
         index: true,
         element: <HospitalStaffHome />
       },
-
+      {
+        path: "staff-profile",
+        element: <StaffProfile />
+      },
     ]
   },
   {
@@ -146,10 +171,21 @@ export const routes = [
         index: true,
         element: <NurseHome />
       },
-
+      {
+        path: "nurse-profile",
+        element: <NurseProfile />
+      },
+      {
+        path: "work-schedule",
+        element: <WorkScheduleNurse />
+      },
+      {
+        path: "adjust-appointment-schedule",
+        element: <AdjustBookingSchedule />
+      },
     ]
   },
-   {
+  {
     path: "/admin-system",
     element: <AdminSystemHeader />,
     children: [

@@ -3,10 +3,11 @@ import { Menu } from "antd";
 import {
     BankOutlined,
     MedicineBoxOutlined,
-    RadarChartOutlined,
+    InboxOutlined,
     HeatMapOutlined,
     AndroidOutlined,
-    UserOutlined,
+    LineChartOutlined ,
+    ExperimentOutlined,
     DashboardOutlined,
     ReadOutlined,
     UserSwitchOutlined,
@@ -45,6 +46,11 @@ function MenuSider() {
             key: "home",
             label: <Link to="/admin-hospital">Dashboard</Link>,
             icon: <DashboardOutlined />,
+        },
+        {
+            key: "hospital-statistic",
+            label: <Link to="/admin-hospital/hospital-statistic">Thống kê</Link>,
+            icon: <LineChartOutlined  />,
         },
         {
             key: "users",
@@ -86,6 +92,17 @@ function MenuSider() {
             label: <Link to="/admin-hospital/hospitals">Hospital Management</Link>,
             icon: <MedicineBoxOutlined />
         },
+        {
+            key: "medical-services",
+            label: <Link to="/admin-hospital/medical-service-management">Dịch vụ y tế</Link>,
+            icon: <ExperimentOutlined />,
+        },
+        {
+            key: "leave-request",
+            label: <Link to="/admin-hospital/leave-request-management">Đơn xin nghỉ phép</Link>,
+            icon: <InboxOutlined />,
+        },
+
     ];
 
     const doctorItems = [

@@ -87,7 +87,6 @@ const ManageSpecialist = () => {
                 );
                 message.success("Cập nhật thành công");
             } else {
-                // Add new case
                 const newSpecialist = {
                     id: Date.now(), // temporary local ID
                     name,
@@ -165,6 +164,7 @@ const ManageSpecialist = () => {
             title: "#",
             dataIndex: "id",
             key: "id",
+            width: 80,
             render: (id) =>
                 id ? <span style={{ color: "gray" }}>{id}</span> : <span style={{ color: "gray" }}>Không có ID</span>
         },
@@ -172,9 +172,9 @@ const ManageSpecialist = () => {
             title: (
                 <div>
                     Tên chuyên khoa
-                    <Input
+                    <Input.Search
                         placeholder="Tìm kiếm..."
-                        prefix={<SearchOutlined />}
+                        enterButton={<SearchOutlined />}
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
                         style={{ marginTop: 8 }}
@@ -182,11 +182,13 @@ const ManageSpecialist = () => {
                     />
                 </div>
             ),
+            width: 380,
             dataIndex: "name",
             key: "name"
         },
 {
             title: "Mô tả",
+            width: 300,
             dataIndex: "description",
             key: "description"
         },
