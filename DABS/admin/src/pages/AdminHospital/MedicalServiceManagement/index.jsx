@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table, Button, Modal, Form, Input, Select,
   Space, message, ConfigProvider, Row, Col, Card
@@ -7,22 +7,45 @@ import {
   PlusOutlined, SearchOutlined, DeleteOutlined, EditOutlined, MedicineBoxOutlined
 } from "@ant-design/icons";
 import viVN from "antd/es/locale/vi_VN";
+import ServiceFlowModal from "./ServiceFlowModal";
+import { createService, getServices, getSteps } from "../../../services/medicalServiceService";
 
 const { Option } = Select;
 
 const MedicalServiceManagement = () => {
-  const [services, setServices] = useState([
-    { id: 1, name: "Khám tổng quát", price: 300000, status: "active" },
-    { id: 2, name: "Xét nghiệm máu", price: 150000, status: "inactive" },
-    { id: 3, name: "Siêu âm bụng", price: 250000, status: "active" }
-  ]);
-
+  const [services, setServices] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [flowModalVisible, setFlowModalVisible] = useState(false);
+  const [editingFlow, setEditingFlow] = useState(null);
+  const [steps, setSteps] = useState([]);
+  const [flag, setFlag] = useState(false);
+  useEffect(() => {
+    const fetchApi = async () => {
+      const result = await getServices();
+      console.log("result in medical service : " + result);
+      if (result) {
+        setServices(result);
+      } else {
+        console.error("No step data found");
+      }
+    };
+    fetchApi();
+  }, [flag]);
 
+  useEffect(() => {
+    const fetchApi = async () => {
+      const result = await getSteps();
+      if (result) {
+        setSteps(result);
+      } else {
+        console.error("No step data found");
+      }
+    };
+    fetchApi();
+  }, []);
   const showAddModal = () => {
     setEditing(null);
     form.resetFields();
@@ -33,8 +56,8 @@ const MedicalServiceManagement = () => {
     setEditing(record);
     form.setFieldsValue({
       name: record.name,
-      price: record.price,
-      status: record.status
+      description: record.description,
+      price: record.price
     });
     setModalVisible(true);
   };
@@ -54,32 +77,35 @@ const MedicalServiceManagement = () => {
   };
 
   const handleSubmit = () => {
-    form.validateFields().then(values => {
-      const { name, price, status } = values;
+    form.validateFields().then(async (values) => {
+      const { name, price, description } = values;
+
       if (editing) {
         setServices(prev =>
           prev.map(s =>
-            s.id === editing.id ? { ...s, name, price, status } : s
+            s.id === editing.id ? { ...s, name, price } : s
           )
         );
         message.success("Cập nhật dịch vụ thành công");
       } else {
         const newService = {
-          id: Date.now(),
           name,
+          description,
           price: parseInt(price, 10),
-          status
         };
-        setServices(prev => [...prev, newService]);
-        message.success("Thêm dịch vụ thành công");
+        try {
+          await createService(newService);
+          setFlag(prev => !prev);
+          message.success("Thêm dịch vụ thành công");
+        } catch (error) {
+          setModalVisible(false);
+        }
       }
-      setModalVisible(false);
     });
   };
 
   const filteredData = services.filter(s =>
-    s.name.toLowerCase().includes(searchText.toLowerCase()) &&
-    (statusFilter === "" || s.status === statusFilter)
+    s.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const columns = [
@@ -101,35 +127,18 @@ const MedicalServiceManagement = () => {
       key: "name"
     },
     {
+      title: "Mô tả",
+      width: 300,
+      dataIndex: "description",
+      key: "description"
+    },
+    {
       title: "Giá tiền",
       dataIndex: "price",
       key: "price",
       render: (price) => `${price.toLocaleString()} đ`
     },
-    {
-      title: (
-        <div>
-          Trạng thái
-          <Select
-            style={{ width: "100%", marginTop: 8 }}
-            value={statusFilter}
-            onChange={setStatusFilter}
-            allowClear
-            placeholder="Lọc theo trạng thái"
-          >
-            <Option value="">Tất cả</Option>
-            <Option value="active">Đang hoạt động</Option>
-            <Option value="inactive">Ngưng hoạt động</Option>
-          </Select>
-        </div>
-      ),
-      key: "status",
-      render: (_, record) => (
-        <span style={{ color: record.status === "active" ? "green" : "red" }}>
-          {record.status === "active" ? "Đang hoạt động" : "Ngưng hoạt động"}
-        </span>
-      )
-    },
+
     {
       title: "Hành động",
       key: "actions",
@@ -138,6 +147,16 @@ const MedicalServiceManagement = () => {
         <Space>
           <Button icon={<EditOutlined />} onClick={() => showEditModal(record)}>
             Sửa
+          </Button>
+          <Button icon={<EditOutlined />} onClick={() => {
+            setEditingFlow({
+              id: record.id,
+              name: record.name,
+              flow: steps,
+            });
+            setFlowModalVisible(true);
+          }}>
+            Luồng
           </Button>
           <Button icon={<DeleteOutlined />} danger onClick={() => showDeleteModal(record)}>
             Xóa
@@ -197,7 +216,12 @@ const MedicalServiceManagement = () => {
             >
               <Input />
             </Form.Item>
-
+            <Form.Item
+              name="description"
+              label="Mô tả"
+            >
+              <Input placeholder="Mô tả" />
+            </Form.Item>
             <Form.Item
               name="price"
               label="Giá tiền (VND)"
@@ -209,18 +233,24 @@ const MedicalServiceManagement = () => {
               <Input />
             </Form.Item>
 
-            <Form.Item
-              name="status"
-              label="Trạng thái"
-              rules={[{ required: true, message: "Chọn trạng thái" }]}
-            >
-              <Select placeholder="Chọn trạng thái">
-                <Option value="active">Đang hoạt động</Option>
-                <Option value="inactive">Ngưng hoạt động</Option>
-              </Select>
-            </Form.Item>
           </Form>
         </Modal>
+
+        <ServiceFlowModal
+          open={flowModalVisible}
+          onCancel={() => setFlowModalVisible(false)}
+          flowData={editingFlow}
+          onSave={(updatedFlow) => {
+            setServices(prev =>
+              prev.map(s =>
+                s.id === updatedFlow.id ? { ...s, ...updatedFlow } : s
+              )
+            );
+            setFlowModalVisible(false);
+            message.success("Cập nhật luồng thành công");
+          }}
+        />
+
       </div>
     </ConfigProvider>
   );

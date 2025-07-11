@@ -21,16 +21,15 @@ const ManageRoom = () => {
   ]);
 
   const [departments, setDepartments] = useState([
-    { id: 1, name: "Phòng Nội 1", specialty: "Nội tổng quát", status: "active" },
-    { id: 2, name: "Phòng Ngoại A", specialty: "Ngoại tổng quát", status: "inactive" },
-    { id: 3, name: "Phòng Nhi 2", specialty: "Nhi khoa", status: "active" }
+    { id: 1, name: "Phòng Nội 1", specialty: "Nội tổng quát" },
+    { id: 2, name: "Phòng Ngoại A", specialty: "Ngoại tổng quát" },
+    { id: 3, name: "Phòng Nhi 2", specialty: "Nhi khoa" }
   ]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
 
   const showAddModal = () => {
     setEditing(null);
@@ -43,7 +42,6 @@ const ManageRoom = () => {
     form.setFieldsValue({
       name: record.name,
       specialty: record.specialty,
-      status: record.status
     });
     setModalVisible(true);
   };
@@ -64,11 +62,11 @@ const ManageRoom = () => {
 
   const handleSubmit = () => {
     form.validateFields().then(values => {
-      const { name, status, specialty } = values;
+      const { name, specialty } = values;
       if (editing) {
         setDepartments(prev =>
           prev.map(dep =>
-            dep.id === editing.id ? { ...dep, name, status, specialty } : dep
+            dep.id === editing.id ? { ...dep, name, specialty } : dep
           )
         );
         message.success("Cập nhật thành công");
@@ -77,7 +75,6 @@ const ManageRoom = () => {
           id: Date.now(),
           name,
           specialty,
-          status
         };
         setDepartments(prev => [...prev, newDepartment]);
         message.success("Thêm mới thành công");
@@ -86,31 +83,21 @@ const ManageRoom = () => {
     });
   };
 
-  const handleToggleStatus = (checked, record) => {
-    Modal.confirm({
-      title: `Xác nhận ${checked ? "kích hoạt" : "ngưng hoạt động"}?`,
-      content: `Bạn có chắc muốn chuyển trạng thái của "${record.name}"?`,
-      okText: "Xác nhận",
-      cancelText: "Hủy",
-      onOk: () => {
-        setDepartments(prev =>
-          prev.map(dep =>
-            dep.id === record.id
-              ? { ...dep, status: checked ? "active" : "inactive" }
-              : dep
-          )
-        );
-        message.success("Cập nhật trạng thái thành công");
-      }
-    });
-  };
 
   const filteredData = departments.filter(dep =>
-    dep.name.toLowerCase().includes(searchText.toLowerCase()) &&
-    (statusFilter === "" || dep.status === statusFilter)
+    dep.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const columns = [
+    {
+      title: "#",
+      dataIndex: "id",
+      key: "id",
+      width: 80,
+      render: (id) =>
+        id ? <span style={{ color: "gray" }}>{id}</span> : <span style={{ color: "gray" }}>Không có ID</span>,
+      sorter: (a, b) => a.id - b.id
+    },
     {
       title: (
         <div>
@@ -126,40 +113,21 @@ const ManageRoom = () => {
         </div>
       ),
       dataIndex: "name",
+      width: 450,
       key: "name"
+    },
+    {
+      title: "Mô tả",
+      width: 300,
+      dataIndex: "description",
+      key: "description"
     },
     {
       title: "Chuyên khoa",
       dataIndex: "specialty",
       key: "specialty"
     },
-    {
-      title: (
-        <div>
-          Trạng thái
-          <Select
-            style={{ width: "100%", marginTop: 8 }}
-            value={statusFilter}
-            onChange={setStatusFilter}
-            allowClear
-            placeholder="Lọc theo trạng thái"
-          >
-            <Option value="">Tất cả</Option>
-            <Option value="active">Đang hoạt động</Option>
-            <Option value="inactive">Ngưng hoạt động</Option>
-          </Select>
-        </div>
-      ),
-      key: "status",
-      render: (_, record) => (
-        <Switch
-          checked={record.status === "active"}
-          checkedChildren="Hoạt động"
-          unCheckedChildren="Ngưng"
-          onChange={(checked) => handleToggleStatus(checked, record)}
-        />
-      )
-    },
+
     {
       title: "Hành động",
       key: "actions",
@@ -225,10 +193,10 @@ const ManageRoom = () => {
               label="Tên phòng khám"
               rules={[{ required: true, message: "Vui lòng nhập tên phòng khám" }]}
             >
-              <Input />
+              <Input placeholder="Tên phòng khám" />
             </Form.Item>
 
-            <Form.Item
+            <Form.Item 
               name="specialty"
               label="Chuyên khoa"
               rules={[{ required: true, message: "Vui lòng chọn chuyên khoa" }]}
@@ -239,16 +207,11 @@ const ManageRoom = () => {
                 ))}
               </Select>
             </Form.Item>
-
             <Form.Item
-              name="status"
-              label="Trạng thái"
-              rules={[{ required: true, message: "Chọn trạng thái" }]}
+              name="description"
+              label="Mô tả"
             >
-              <Select placeholder="Chọn trạng thái">
-                <Option value="active">Đang hoạt động</Option>
-                <Option value="inactive">Ngưng hoạt động</Option>
-              </Select>
+              <Input  placeholder="Mô tả"/>
             </Form.Item>
           </Form>
         </Modal>
