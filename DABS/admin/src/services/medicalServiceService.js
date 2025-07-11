@@ -27,20 +27,20 @@ export const getServices = async () => {
     }
 };
 
-export const updateService = async (specializationData) => {
+export const updateService = async (serviceData) => {
   try {
-    const result = await putAuth(`/service`, specializationData);
+    const result = await putAuth(`/service/update`, serviceData);
     console.log(`User updated successfully:`, result);
     return result;
   } catch (error) {
-    console.error(`Error updating user with ID ${specializationData.id}:`, error.message);
+    console.error(`Error updating user with ID ${serviceData.id}:`, error.message);
     throw error;
   }
 };
 
 export const createService= async (service) => {
   try {
-    const result = await postAuth(`/service`, service);
+    const result = await postAuth(`/service/create`, service);
     console.log(`service created successfully:`, result);
     return result;
   } catch (error) {
@@ -49,13 +49,54 @@ export const createService= async (service) => {
   }
 };
 
-export const deleteSpecialization = async (specializationId) => {
+
+export const getHospitalServices = async (hospitalId) => {
   try {
-    const result = await deleteAuth(`/specialization`, specializationId);
-    console.log(`User created successfully:`, result);
+    const result = await getAuth(`/hospitals/${hospitalId}/services`);
+    console.log(`Fetched services for hospital ${hospitalId}:`, result);
+    return result.result;
+  } catch (error) {
+    console.error(`Error fetching services for hospital ID ${hospitalId}:`, error.message);
+    throw error;
+  }
+};
+
+export const getStepByServiceId = async (serviceId ) => {
+  try {
+    const result = await getAuth(`/service/${serviceId}/servicesteps`);
+    console.log(`Fetched services step for hospital ${serviceId}:`, result);
     return result;
   } catch (error) {
-    console.error(`Error delete user with ID ${specializationId}:`, error.message);
+    console.error(`Error fetching services for hospital ID ${serviceId}:`, error.message);
+    throw error;
+  }
+};
+
+export const updateServiceSteps = async (serviceId, steps) => {
+  const payload = steps.map((step, index) => ({
+    id: step.id,
+    stepOrder: index + 1, 
+    isRequired: step.isRequired ?? false,
+    status: step.status,
+    stepId: step.steps.id,
+  }));
+
+  try {
+    const result = await putAuth(`/service/${serviceId}/servicesteps`, payload);
+    return result;
+  } catch (error) {
+    console.error(`Error updating service steps for ID ${serviceId}:`, error.message);
+    throw error;
+  }
+};
+
+export const deleteService = async (serviceId) => {
+  try {
+    const result = await deleteAuth(`/service`, serviceId);
+    console.log(`service created successfully:`, result);
+    return result;
+  } catch (error) {
+    console.error(`Error delete service with ID ${serviceId}:`, error.message);
     throw error;
   }
 };

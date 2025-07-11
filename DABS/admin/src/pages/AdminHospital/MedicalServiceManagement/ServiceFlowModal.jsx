@@ -15,6 +15,9 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DragOutlined } from "@ant-design/icons";
+import { updateServiceSteps } from "../../../services/medicalServiceService";
+import { useDispatch } from "react-redux";
+import { setMessage } from "../../../redux/slices/messageSlice";
 
 const { Text } = Typography;
 
@@ -38,21 +41,24 @@ function SortableStepItem({ step, onToggle }) {
         <div ref={setNodeRef} style={style} {...attributes}>
             <Space>
                 <DragOutlined {...listeners} style={{ cursor: "grab", color: "#999" }} />
-                <Text>{step.name}</Text>
+                <Text>{step?.steps?.name || "Chưa có tên bước"}</Text>
             </Space>
-            <Switch checked={step.enabled} onChange={() => onToggle(step.id)} />
+            <Switch checked={step.status} onChange={() => onToggle(step.id)} />
         </div>
     );
 }
 
 export default function ServiceFlowModal({ open, onCancel, onSave, flowData }) {
+    const dispatch = useDispatch();
     const [form] = Form.useForm();
     const [steps, setSteps] = useState(flowData?.flow || []);
     const sensors = useSensors(useSensor(PointerSensor));
 
     useEffect(() => {
         form.setFieldsValue({ name: flowData?.name });
-        setSteps(flowData?.flow || []);
+
+        const sortedSteps = [...(flowData?.flow || [])].sort((a, b) => a.stepOrder - b.stepOrder);
+        setSteps(sortedSteps);
     }, [flowData]);
 
     const handleDragEnd = (event) => {
@@ -62,8 +68,9 @@ export default function ServiceFlowModal({ open, onCancel, onSave, flowData }) {
         const activeStep = steps.find((s) => s.id === active.id);
         const overIndex = steps.findIndex((s) => s.id === over.id);
 
-        if (activeStep.name === "Chọn Phương Thức Thanh Toán" && overIndex === 0) {
-            message.warning("Không thể đặt bước 'Thanh toán' lên đầu quy trình.");
+        if (activeStep.steps.name === "Chọn Phương Thức Thanh Toán" && overIndex === 0) {
+            dispatch(setMessage({ type: 'error', content: `Không thể đặt bước 'Thanh toán' lên đầu quy trình.` }));
+
             return;
         }
 
@@ -74,21 +81,27 @@ export default function ServiceFlowModal({ open, onCancel, onSave, flowData }) {
 
     const handleToggleStep = (id) => {
         setSteps((prev) =>
-            prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
+            prev.map((s) => (s.id === id ? { ...s, status: !s.status } : s))
         );
     };
 
-    const handleSubmit = () => {
-        form.validateFields().then((values) => {
-            const payload = {
-                ...flowData,
-                name: values.name,
-                flow: steps,
-            };
-            onSave(payload);
-        });
-    };
+    const handleSubmit = async () => {
+        try {
+            await form.validateFields();
+            await updateServiceSteps(flowData.id, steps);
 
+            message.success("Cập nhật luồng dịch vụ thành công");
+
+            onSave({
+                id: flowData.id,
+                name: form.getFieldValue("name"),
+                flow: steps,
+            });
+        } catch (error) {
+            message.error("Cập nhật luồng thất bại");
+            console.error("Update flow error:", error);
+        }
+    };
     return (
         <Modal
             open={open}
