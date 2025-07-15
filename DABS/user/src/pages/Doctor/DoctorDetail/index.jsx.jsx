@@ -85,7 +85,7 @@ const doctorsSameFacility = [
           </Col>
         </Row>
 
-        <Title level={4} style={{ margin: "32px 0 16px", textAlign: "center", color: "#00a3e0" }}>
+        {/* <Title level={4} style={{ margin: "32px 0 16px", textAlign: "center", color: "#00a3e0" }}>
           Bác sĩ cùng cơ sở y tế
         </Title>
         <Row gutter={[24, 24]} justify="center">
@@ -106,7 +106,7 @@ const doctorsSameFacility = [
               </Card>
             </Col>
           ))}
-        </Row>
+        </Row> */}
       </div>
     </div>
   );
