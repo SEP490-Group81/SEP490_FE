@@ -17,7 +17,7 @@ import BlankLayout from "../../components/BlankLayout";
 import LayoutCommon from "../../components/LayoutCommon";
 import NewPassword from "../../pages/UserAccount/ForgetPassword/NewPassword";
 import ForgetPassword from "../../pages/UserAccount/ForgetPassword";
-import DoctorDetail from "../../pages/Doctor/doctorDetail";
+import DoctorDetail from "../../pages/Doctor/DoctorDetail/index.jsx";
 import VerifyEmailRegisterAuto from "../../pages/UserAccount/Register/VerifyEmailRegisterAuto";
 import VerifyEmailRegisterNotice from "../../pages/UserAccount/Register/VerifyEmailRegisterNotice";
 import VerifyEmailForgetAuto from "../../pages/UserAccount/ForgetPassword/VerifyEmailForgetAuto";
@@ -31,6 +31,10 @@ import BookingHistoryPage from "../../pages/BookingHistory/BookingHistoryPage";
 import PatientPortal from "../../pages/PatientPortal/PatientPortal";
 import PaymentPage from "../../pages/PatientPortal/PaymentPage";
 import RatingPage from "../../pages/PatientPortal/RatingPage";
+import DoctorList from "../../pages/Doctor/DoctorList/index.jsx";
+import AppointmentDoctor from "../../pages/Appointment/Doctor/index.jsx";
+import UserBookingFlow from "../../pages/Appointment/Flow/index.jsx";
+import AppointmentReviewPage from "../../pages/Appointment/Accept/index.jsx";
 
 
 export const routes = [
@@ -54,6 +58,10 @@ export const routes = [
       {
         path: "doctor-detail",
         element: <DoctorDetail /> // đã vẽ report 3
+      },
+      {
+        path: "doctor-list",
+        element: <DoctorList />
       },
       {
         path: "/chat",
@@ -108,18 +116,6 @@ export const routes = [
         path: "change-password",
         element: <ChangePassword />
       },
-      {
-        //path: "hospital/:id",
-        path: "hospitalDetail",
-        element: (
-          <HospitalDetail />
-        )
-      },
-      {
-        path: "hospital-list",
-        element: <HospitalList />
-      },
-
 
       {
         path: "*",
@@ -193,12 +189,25 @@ export const routes = [
         element: <AppointmentService /> // đã vẽ report 3
       },
       {
+        path: "booking",
+        element: <UserBookingFlow />
+
+      },
+      {
         path: "schedule",
         element: <AppointmentSchedule /> // đã vẽ report 3
       },
       {
+        path: "doctor",
+        element: <AppointmentDoctor />
+      },
+      {
         path: "specialty",
         element: <AppointmentSpecialty />
+      },
+      {
+        path: "accept-infomation",
+        element: <AppointmentReviewPage />
       }
     ]
   },

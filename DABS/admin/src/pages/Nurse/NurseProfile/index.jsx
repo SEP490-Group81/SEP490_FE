@@ -16,7 +16,7 @@ import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
 dayjs.locale("vi");
 const { Text } = Typography;
 
-function DoctorProfile() {
+function NurseProfile() {
     const userDefault = useSelector((state) => state.user.user || null);
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -150,7 +150,7 @@ function DoctorProfile() {
                                 gender: userDefault?.gender !== undefined ? userDefault.gender.toString() : "true",
                                 dob: userDefault?.dob ? dayjs(userDefault.dob, "YYYY-MM-DD") : null,
                                 cccd: userDefault?.cccd || "",
-                                function: "Thạc sĩ",
+                                function: "Điều dưỡng",
                                 specialty: "Bác sĩ gia đình",
                                 hospitalName: "Bệnh viện Hà Đông"
                             }}
@@ -228,19 +228,7 @@ function DoctorProfile() {
 
                             <Row gutter={[24, 16]}>
                                 <Col xs={24} md={12}>
-                                    <Form.Item name="function" label="Hàm vị">
-                                        <Input
-                                            readOnly
-                                            size="large"
-                                            style={{
-                                                background: "#f5f5f5",
-                                                color: "#999",
-                                            }}
-                                        />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} md={12}>
-                                    <Form.Item name="specialty" label="Chuyên khoa">
+                                    <Form.Item name="function" label="Chức vụ">
                                         <Input
                                             readOnly
                                             size="large"
@@ -279,4 +267,4 @@ function DoctorProfile() {
     );
 }
 
-export default DoctorProfile;
+export default NurseProfile;
