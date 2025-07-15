@@ -25,6 +25,8 @@ import StaffShiftManagement from "../../pages/AdminHospital/StaffShiftManagement
 import ManageRoomDepartment from "../../pages/AdminHospital/RoomDepartmentManagement";
 import ManageSpecialist from "../../pages/AdminHospital/SpecialistManagement";
 import HospitalManagement from "../../pages/AdminHospital/HospitalManagement/HospitalManagement";
+import AppointmentOverview from "../../pages/Nurse/NurseHome/AppointmentOverview/AppointmentOverview";
+import ReviewFeedback from "../../pages/HospitalStaff/ReviewFeedback/ReviewFeedback";
 
 
 export const routes = [
@@ -135,6 +137,10 @@ export const routes = [
         index: true,
         element: <HospitalStaffHome />
       },
+      {
+      path: 'review-feedback',
+      element: <ReviewFeedback />,
+    },
 
     ]
   },
@@ -146,6 +152,11 @@ export const routes = [
         index: true,
         element: <NurseHome />
       },
+      {
+        path: 'appointment',
+        element: <AppointmentOverview />,
+      },
+
 
     ]
   },
