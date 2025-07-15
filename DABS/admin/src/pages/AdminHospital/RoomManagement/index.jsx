@@ -10,18 +10,26 @@ import viVN from "antd/es/locale/vi_VN";
 
 const { Option } = Select;
 
-const ManageRoomDepartment = () => {
-  const [departments, setDepartments] = useState([
-    { id: 1, name: "Khoa Nội", status: "active" },
-    { id: 2, name: "Khoa Ngoại", status: "inactive" },
-    { id: 3, name: "Khoa Nhi", status: "active" },
-    { id: 4, name: "Phòng Cấp cứu", status: "active" }
+const ManageRoom = () => {
+  const [specialties] = useState([
+    "Nội tổng quát",
+    "Ngoại tổng quát",
+    "Nhi khoa",
+    "Da liễu",
+    "Tai Mũi Họng",
+    "Tim mạch"
   ]);
+
+  const [departments, setDepartments] = useState([
+    { id: 1, name: "Phòng Nội 1", specialty: "Nội tổng quát" },
+    { id: 2, name: "Phòng Ngoại A", specialty: "Ngoại tổng quát" },
+    { id: 3, name: "Phòng Nhi 2", specialty: "Nhi khoa" }
+  ]);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
 
   const showAddModal = () => {
     setEditing(null);
@@ -31,13 +39,16 @@ const ManageRoomDepartment = () => {
 
   const showEditModal = (record) => {
     setEditing(record);
-    form.setFieldsValue({ name: record.name, status: record.status });
+    form.setFieldsValue({
+      name: record.name,
+      specialty: record.specialty,
+    });
     setModalVisible(true);
   };
 
   const showDeleteModal = (record) => {
     Modal.confirm({
-      title: "Xác nhận xóa khoa/phòng?",
+      title: "Xác nhận xóa phòng?",
       content: `Bạn có chắc muốn xóa "${record.name}"?`,
       okText: "Xóa",
       cancelText: "Hủy",
@@ -51,11 +62,11 @@ const ManageRoomDepartment = () => {
 
   const handleSubmit = () => {
     form.validateFields().then(values => {
-      const { name, status } = values;
+      const { name, specialty } = values;
       if (editing) {
         setDepartments(prev =>
           prev.map(dep =>
-            dep.id === editing.id ? { ...dep, name, status } : dep
+            dep.id === editing.id ? { ...dep, name, specialty } : dep
           )
         );
         message.success("Cập nhật thành công");
@@ -63,7 +74,7 @@ const ManageRoomDepartment = () => {
         const newDepartment = {
           id: Date.now(),
           name,
-          status
+          specialty,
         };
         setDepartments(prev => [...prev, newDepartment]);
         message.success("Thêm mới thành công");
@@ -72,38 +83,28 @@ const ManageRoomDepartment = () => {
     });
   };
 
-  const handleToggleStatus = (checked, record) => {
-    Modal.confirm({
-      title: `Xác nhận ${checked ? "kích hoạt" : "ngưng hoạt động"}?`,
-      content: `Bạn có chắc muốn chuyển trạng thái của "${record.name}"?`,
-      okText: "Xác nhận",
-      cancelText: "Hủy",
-      onOk: () => {
-        setDepartments(prev =>
-          prev.map(dep =>
-            dep.id === record.id
-              ? { ...dep, status: checked ? "active" : "inactive" }
-              : dep
-          )
-        );
-        message.success("Cập nhật trạng thái thành công");
-      }
-    });
-  };
 
   const filteredData = departments.filter(dep =>
-    dep.name.toLowerCase().includes(searchText.toLowerCase()) &&
-    (statusFilter === "" || dep.status === statusFilter)
+    dep.name.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const columns = [
     {
+      title: "#",
+      dataIndex: "id",
+      key: "id",
+      width: 80,
+      render: (id) =>
+        id ? <span style={{ color: "gray" }}>{id}</span> : <span style={{ color: "gray" }}>Không có ID</span>,
+      sorter: (a, b) => a.id - b.id
+    },
+    {
       title: (
         <div>
-          Tên khoa/phòng
-          <Input
+          Tên phòng khám
+          <Input.Search
             placeholder="Tìm kiếm..."
-            prefix={<SearchOutlined />}
+            enterButton={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             style={{ marginTop: 8 }}
@@ -112,35 +113,21 @@ const ManageRoomDepartment = () => {
         </div>
       ),
       dataIndex: "name",
+      width: 450,
       key: "name"
     },
     {
-      title: (
-        <div>
-          Trạng thái
-          <Select
-            style={{ width: "100%", marginTop: 8 }}
-            value={statusFilter}
-            onChange={setStatusFilter}
-            allowClear
-            placeholder="Lọc theo trạng thái"
-          >
-            <Option value="">Tất cả</Option>
-            <Option value="active">Đang hoạt động</Option>
-            <Option value="inactive">Ngưng hoạt động</Option>
-          </Select>
-        </div>
-      ),
-      key: "status",
-      render: (_, record) => (
-        <Switch
-          checked={record.status === "active"}
-          checkedChildren="Hoạt động"
-          unCheckedChildren="Ngưng"
-          onChange={(checked) => handleToggleStatus(checked, record)}
-        />
-      )
+      title: "Mô tả",
+      width: 300,
+      dataIndex: "description",
+      key: "description"
     },
+    {
+      title: "Chuyên khoa",
+      dataIndex: "specialty",
+      key: "specialty"
+    },
+
     {
       title: "Hành động",
       key: "actions",
@@ -165,7 +152,7 @@ const ManageRoomDepartment = () => {
           <Col span={24}>
             <Row justify="space-between" align="middle">
               <Col>
-                <h2><ApartmentOutlined style={{ marginRight: 8 }} />Quản lý khoa/phòng</h2>
+                <h2><ApartmentOutlined style={{ marginRight: 8 }} />Quản lý phòng khám</h2>
               </Col>
               <Col>
                 <Button
@@ -174,7 +161,7 @@ const ManageRoomDepartment = () => {
                   onClick={showAddModal}
                   size="large"
                 >
-                  Thêm khoa/phòng
+                  Thêm phòng khám
                 </Button>
               </Col>
             </Row>
@@ -193,7 +180,7 @@ const ManageRoomDepartment = () => {
         </Row>
 
         <Modal
-          title={editing ? "Chỉnh sửa khoa/phòng" : "Thêm khoa/phòng mới"}
+          title={editing ? "Chỉnh sửa phòng khám" : "Thêm phòng khám mới"}
           open={modalVisible}
           onCancel={() => setModalVisible(false)}
           onOk={handleSubmit}
@@ -203,20 +190,28 @@ const ManageRoomDepartment = () => {
           <Form form={form} layout="vertical">
             <Form.Item
               name="name"
-              label="Tên khoa/phòng"
-              rules={[{ required: true, message: "Vui lòng nhập tên khoa/phòng" }]}
+              label="Tên phòng khám"
+              rules={[{ required: true, message: "Vui lòng nhập tên phòng khám" }]}
             >
-              <Input />
+              <Input placeholder="Tên phòng khám" />
+            </Form.Item>
+
+            <Form.Item 
+              name="specialty"
+              label="Chuyên khoa"
+              rules={[{ required: true, message: "Vui lòng chọn chuyên khoa" }]}
+            >
+              <Select placeholder="Chọn chuyên khoa">
+                {specialties.map(spe => (
+                  <Option key={spe} value={spe}>{spe}</Option>
+                ))}
+              </Select>
             </Form.Item>
             <Form.Item
-              name="status"
-              label="Trạng thái"
-              rules={[{ required: true, message: "Chọn trạng thái" }]}
+              name="description"
+              label="Mô tả"
             >
-              <Select placeholder="Chọn trạng thái">
-                <Option value="active">Đang hoạt động</Option>
-                <Option value="inactive">Ngưng hoạt động</Option>
-              </Select>
+              <Input  placeholder="Mô tả"/>
             </Form.Item>
           </Form>
         </Modal>
@@ -225,4 +220,4 @@ const ManageRoomDepartment = () => {
   );
 };
 
-export default ManageRoomDepartment;
+export default ManageRoom;

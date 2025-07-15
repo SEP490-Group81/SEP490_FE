@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Card, Steps, Table, Menu, List, Avatar, Button } from 'antd';
+import { Row, Col, Card, Steps, Table, Menu, List, Avatar, Button, Spin, Typography, Skeleton } from 'antd';
 import imgErrorHospital from "../../../assets/images/errorImgHospital.jpg";
 import { CheckCircleFilled } from "@ant-design/icons";
 import Slider from "react-slick";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getDoctorByHospitalId } from '../../../services/doctorService';
+import { getHospitalDetail } from '../../../services/hospitalService';
+import Title from 'antd/es/skeleton/Title';
 function HospitalDetail() {
     const { Step } = Steps;
     const { hospitalId } = useParams();
     const [doctors, setDoctors] = useState([]);
+    const [hospital, setHospital] = useState();
+    const [loadingHospital, setLoadingHospital] = useState(true);
+    const navigate = useNavigate();
     useEffect(() => {
         const fetchApi = async () => {
             const result = await getDoctorByHospitalId(hospitalId);
@@ -17,33 +22,32 @@ function HospitalDetail() {
         fetchApi();
     }, [hospitalId]);
     console.log("Doctors:", doctors);
-    const priceData = [
-        { key: 1, service: 'Khám tổng quát', price: '300,000 VNĐ' },
-        { key: 2, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
-        { key: 3, service: 'Khám tổng quát', price: '300,000 VNĐ' },
-        { key: 4, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
-        { key: 5, service: 'Khám tổng quát', price: '300,000 VNĐ' },
-        { key: 6, service: 'Xét nghiệm máu', price: '150,000 VNĐ' },
-    ];
+
+
+    useEffect(() => {
+        const fetchApi = async () => {
+            const result = await getHospitalDetail(hospitalId);
+            setHospital(result);
+            setLoadingHospital(false);
+        };
+        fetchApi();
+    }, [hospitalId]);
+    console.log("hospital:", hospital);
 
     const columns = [
-        { title: 'Dịch vụ', dataIndex: 'service', key: 'service' },
-        { title: 'Giá', dataIndex: 'price', key: 'price' },
-    ];
-    const departments = [
-        { key: '1', label: 'Nội soi' },
-        { key: '2', label: 'Tiêu hóa' },
-        { key: '3', label: 'Ung bướu' },
-        { key: '4', label: 'Hô hấp' },
-        { key: '5', label: 'Nhi khoa' },
-        { key: '6', label: 'Tim mạch' },
-        { key: '7', label: 'Thần kinh' },
+        { title: 'Dịch vụ', dataIndex: 'name', key: 'name' },
+        {
+            title: 'Giá',
+            dataIndex: 'price',
+            key: 'price',
+            render: (price) => price?.toLocaleString('vi-VN') + ' VNĐ',
+        },
     ];
 
 
     const sliderSettings = {
         dots: false,
-        infinite: departments.length > 4,
+        infinite: hospital?.services.length > 4,
         speed: 400,
         slidesToShow: 4,
         slidesToScroll: 1,
@@ -54,86 +58,114 @@ function HospitalDetail() {
             { breakpoint: 400, settings: { slidesToShow: 1 } }
         ]
     };
-    const steps = [
-        { title: 'Chọn dịch vụ', description: 'Chọn loại dịch vụ cần khám.' },
-        { title: 'Đặt lịch', description: 'Chọn ngày giờ và xác nhận.' },
-        { title: 'Thanh toán', description: 'Thanh toán trực tuyến hoặc tại quầy.' },
-    ];
+
 
     return (
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
             <Row gutter={32} align="top">
                 <Col xs={24} md={16}>
-                    <Card title="Thông tin cơ sở y tế" style={{ marginBottom: 24 }}>
-                        <p>Địa chỉ: 123 Đường Lớn, Quận 1, TP.HCM</p>
-                        <p>Điện thoại: 0909 123 456</p>
-                    </Card>
-                    <h2 style={{ margin: '15px 0 8px', fontSize: '16px' }}>Dịch vụ</h2>
-                    <Slider {...sliderSettings}>
-                        {departments.map((item) => (
-                            <div key={item.key} style={{ padding: 8 }}>
-                                <Card
-                                    hoverable
-                                    style={{
-                                        borderRadius: 12,
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                                        textAlign: 'center',
-                                        padding: 16,
-                                        minHeight: 220,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                    }}
-                                    bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                                >
-                                    <img
-                                        src={item.image || imgErrorHospital}
-                                        alt={item.label}
-                                        style={{
-                                            width: 80,
-                                            height: 80,
-                                            objectFit: 'cover',
-                                            borderRadius: '50%',
-                                            marginBottom: 12,
-                                            background: '#f5f5f5'
-                                        }}
-                                    />
-                                    <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4, whiteSpace: 'normal', wordBreak: 'break-word', color: '#222' }}>
-                                        {item.label}
-                                        <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 6, fontSize: 16 }} />
+                    <Spin spinning={loadingHospital}>
+                        {hospital ? (
+                            <Card
+                                title={
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+                                        {hospital.image && (
+                                            <img
+                                                src={hospital.image}
+                                                alt="Logo bệnh viện"
+                                                style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover' }}
+                                            />
+                                        )}
+                                        <Typography.Title level={4} style={{ margin: 0, color: "#00bfff", }}>
+                                            {hospital?.name || "Chưa có thông tin"}
+                                        </Typography.Title>
                                     </div>
-                                </Card>
-                            </div>
-                        ))}
-                    </Slider>
-                    <Card title="Quy trình đặt khám tổng quát" style={{ marginBottom: 24, marginTop: 20 }}>
-                        <Steps direction="vertical" size="small" current={2}>
-                            <Step title="Chọn dịch vụ" description="Chọn loại dịch vụ cần khám." />
-                            <Step title="Đặt lịch" description="Chọn ngày giờ và xác nhận." />
-                            <Step title="Thanh toán" description="Thanh toán trực tuyến hoặc tại quầy." />
-                        </Steps>
-                    </Card>
-                    <Card title="Quy trình đặt khám" style={{ marginBottom: 24, marginTop: 20 }}>
-                        <Steps direction="vertical" size="small" current={2}>
-                            <Step title="Chọn dịch vụ" description="Chọn loại dịch vụ cần khám." />
-                            <Step title="Chọn chuyên khoa (Dành cho dịch vụ khám chuyên gia)" description="Chọn bác sĩ phù hợp." />
-                            <Step title="Chọn bác sĩ (Dành cho dịch vụ chọn bác sĩ và khám chuyên gia)" description="Chọn bác sĩ phù hợp." />
-                            <Step title="Đặt lịch" description="Chọn ngày giờ và xác nhận." />
-                            <Step title="Thanh toán" description="Thanh toán trực tuyến hoặc tại quầy." />
-                        </Steps>
-                    </Card>
+                                }
+                                style={{ borderRadius: 12, boxShadow: '0 2px 8px #e6f4ff' }}
+                            >
+                                <p><strong>Địa chỉ:</strong> {hospital?.address || "Chưa có thông tin"}</p>
+                                <p><strong>Giờ mở cửa:</strong> {hospital?.openTime ? new Date(hospital.openTime).toLocaleTimeString() : "Chưa có"}</p>
+                                <p><strong>Giờ đóng cửa:</strong> {hospital?.closeTime ? new Date(hospital.closeTime).toLocaleTimeString() : "Chưa có"}</p>
+                                <p><strong>Email:</strong> {hospital?.email || "Chưa có thông tin"}</p>
+                                <p><strong>Số điện thoại:</strong> {hospital?.phoneNumber || "Chưa có thông tin"}</p>
 
-                    <Card title="Bảng giá dịch vụ">
+                                <div style={{ textAlign: 'center', marginTop: 16 }}>
+                                    <Button
+                                        type="primary"
+                                        size="large"
+                                        shape="round"
+                                        style={{
+                                            padding: '6px 24px',
+                                            fontSize: 16,
+                                            boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                                        }}
+                                   
 
+                                          onClick={() =>   navigate(`/appointment?hospitalId=${hospital.id}`)}
+                                    >
+                                        Đặt khám ngay
+                                    </Button>
+                                </div>
+                            </Card>
+
+
+                        ) : (
+                            <Card title="Thông tin cơ sở y tế">
+                                <Skeleton active paragraph={{ rows: 4 }} />
+                            </Card>
+                        )}
+                    </Spin>
+                    {/* <div style={{ marginBottom: 50 }}>
+                        <h2 style={{ margin: '15px 0 20px', fontSize: '16px' }}>Dịch vụ</h2>
+                        <Slider {...sliderSettings}>
+                            {hospital?.services.map((item) => (
+                                <div key={item.key} style={{ padding: 8 }}>
+                                    <Card
+                                        hoverable
+                                        style={{
+                                            borderRadius: 12,
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                                            textAlign: 'center',
+                                            padding: 16,
+                                            minHeight: 200,
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                        }}
+                                        bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                                    >
+                                        <img
+                                            src={item.image || imgErrorHospital}
+                                            alt={item.label}
+                                            style={{
+                                                width: 80,
+                                                height: 80,
+                                                objectFit: 'cover',
+                                                borderRadius: '50%',
+                                                marginBottom: 12,
+                                                background: '#f5f5f5'
+                                            }}
+                                        />
+                                        <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4, whiteSpace: 'normal', wordBreak: 'break-word', color: '#222' }}>
+                                            {item.name}
+                                            <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 6, fontSize: 16 }} />
+                                        </div>
+                                    </Card>
+                                </div>
+                            ))}
+                        </Slider>
+                    </div> */}
+
+
+                    <Card title="Bảng giá dịch vụ" style={{marginTop: 50, marginBottom:40}}>
                         <Table
                             columns={columns}
-                            dataSource={priceData}
+                            dataSource={hospital?.services?.map((s) => ({ ...s, key: s.id })) || []}
                             pagination={false}
                             size="small"
                             scroll={{ y: 200 }}
                         />
                     </Card>
+
                 </Col>
 
                 <Col xs={24} md={8}>
@@ -168,7 +200,7 @@ function HospitalDetail() {
                                 height="300"
                                 frameBorder="0"
                                 style={{ border: 0 }}
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.502519360122!2d106.70042431533454!3d10.77688989232259!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f3c1f6a5b3b%3A0x7d6f4d7c9c9b0f2c!2zMTIzIMSQxrDhu51uZyBM4bujaSwgUGjGsOG7nW5nIDEsIFF14bqtbiAxLCBUaOG7pyBC4bqvYywgSOG7kyBDaMOidSwgVmlldG5hbQ!5e0!3m2!1svi!2s!4v1622471123456!5m2!1svi!2s"
+                                src={hospital?.googleMapUri || ""}
                                 allowFullScreen=""
                                 aria-hidden="false"
                                 tabIndex="0"

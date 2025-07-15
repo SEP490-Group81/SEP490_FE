@@ -98,38 +98,46 @@ function DoctorProfile() {
     };
 
     const isInitializing = useSelector((state) => state.user.isInitializing);
-    if (isInitializing) return <div>Loading...</div>;
+      if (isInitializing) return <div>Loading...</div>;
 
     return (
         <>
             {contextHolder}
-            <div style={{
-                minHeight: "100vh",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "flex-start",
-                paddingBottom: "60px",
-                backgroundColor: "#fff"
-            }}>
-                <div style={{ width: "100%", maxWidth: 850, padding: "0 20px" }}>
-                    <Divider orientation="center" style={{ fontSize: "26px" }}>
-                        Hồ sơ bác sĩ
-                    </Divider>
-
-                    <div style={{ textAlign: "center", marginBottom: 30 }}>
+            <div
+                style={{
+                    minHeight: "100vh",
+                    background: "#f5f7fa",
+                    paddingTop: 48,
+                    paddingBottom: 80,
+                }}
+            >
+                <div
+                    style={{
+                        maxWidth: 900,
+                        margin: "0 auto",
+                        padding: 32,
+                        background: "#fff",
+                        borderRadius: 12,
+                        boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+                    }}
+                >
+                    <div style={{ textAlign: "center", marginBottom: 32 }}>
                         <Avatar
-                            size={128}
+                            size={120}
                             src={userDefault?.avatarUrl}
                             icon={<UserOutlined />}
-                            alt="avatar"
                         />
-                        <div style={{ marginTop: 10, fontWeight: "bold" }}>
-                            {userDefault?.fullname || "Bác sĩ"}
+                        <div style={{ marginTop: 16, fontSize: 20, fontWeight: 600 }}>
+                            {userDefault?.fullname || "Y tá"}
                         </div>
                         <Text type="secondary" style={{ fontSize: 14 }}>
                             Avatar chỉ xem, không thể chỉnh sửa
                         </Text>
                     </div>
+
+                    <Divider orientation="center" style={{ fontSize: 22, color: "#1890ff" }}>
+                        Hồ sơ cá nhân
+                    </Divider>
 
                     <ConfigProvider locale={viVN}>
                         <Form
@@ -147,13 +155,13 @@ function DoctorProfile() {
                                 hospitalName: "Bệnh viện Hà Đông"
                             }}
                         >
-                            <Row gutter={16}>
-                                <Col span={12}>
+                            <Row gutter={[24, 16]}>
+                                <Col xs={24} md={12}>
                                     <Form.Item name="fullname" label="Họ và tên (có dấu)">
                                         <Input prefix={<UserOutlined />} size="large" />
                                     </Form.Item>
                                 </Col>
-                                <Col span={12}>
+                                <Col xs={24} md={12}>
                                     <Form.Item name="dob" label="Ngày sinh">
                                         <DatePicker
                                             style={{ width: "100%" }}
@@ -165,22 +173,36 @@ function DoctorProfile() {
                                 </Col>
                             </Row>
 
-                            <Row gutter={16}>
-                                <Col span={12}>
-                                    <Form.Item name="phoneNumber" label="Số điện thoại"
-                                        rules={[{ pattern: /^0[0-9]{9}$/, message: "Số điện thoại không hợp lệ!" }]}>
+                            <Row gutter={[24, 16]}>
+                                <Col xs={24} md={12}>
+                                    <Form.Item
+                                        name="phoneNumber"
+                                        label="Số điện thoại"
+                                        rules={[
+                                            {
+                                                pattern: /^0[0-9]{9}$/,
+                                                message: "Số điện thoại không hợp lệ!",
+                                            },
+                                        ]}
+                                    >
                                         <Input prefix={<PhoneOutlined />} size="large" />
                                     </Form.Item>
                                 </Col>
-                                <Col span={12}>
-                                    <Form.Item name="email" label="Email" rules={[{ type: "email", message: "Email không hợp lệ!" }]}>
+                                <Col xs={24} md={12}>
+                                    <Form.Item
+                                        name="email"
+                                        label="Email"
+                                        rules={[
+                                            { type: "email", message: "Email không hợp lệ!" },
+                                        ]}
+                                    >
                                         <Input prefix={<MailOutlined />} size="large" />
                                     </Form.Item>
                                 </Col>
                             </Row>
 
-                            <Row gutter={16}>
-                                <Col span={12}>
+                            <Row gutter={[24, 16]}>
+                                <Col xs={24} md={12}>
                                     <Form.Item name="gender" label="Giới tính">
                                         <Select size="large">
                                             <Option value="true">Nam</Option>
@@ -188,34 +210,65 @@ function DoctorProfile() {
                                         </Select>
                                     </Form.Item>
                                 </Col>
-                                <Col span={12}>
-                                    <Form.Item name="cccd" label="Mã định danh/CCCD"
-                                        rules={[{ pattern: /^\d{12}$/, message: "CCCD phải gồm đúng 12 chữ số" }]}>
+                                <Col xs={24} md={12}>
+                                    <Form.Item
+                                        name="cccd"
+                                        label="Mã định danh/CCCD"
+                                        rules={[
+                                            {
+                                                pattern: /^\d{12}$/,
+                                                message: "CCCD phải gồm đúng 12 chữ số",
+                                            },
+                                        ]}
+                                    >
                                         <Input size="large" />
                                     </Form.Item>
                                 </Col>
                             </Row>
 
-                            <Row gutter={16}>
-                                <Col span={12}>
+                            <Row gutter={[24, 16]}>
+                                <Col xs={24} md={12}>
                                     <Form.Item name="function" label="Hàm vị">
-                                        <Input readOnly size="large" style={{ background: "#f5f5f5", color: "#999" }} />
+                                        <Input
+                                            readOnly
+                                            size="large"
+                                            style={{
+                                                background: "#f5f5f5",
+                                                color: "#999",
+                                            }}
+                                        />
                                     </Form.Item>
                                 </Col>
-                                <Col span={12}>
+                                <Col xs={24} md={12}>
                                     <Form.Item name="specialty" label="Chuyên khoa">
-                                        <Input readOnly size="large" style={{ background: "#f5f5f5", color: "#999" }} />
+                                        <Input
+                                            readOnly
+                                            size="large"
+                                            style={{
+                                                background: "#f5f5f5",
+                                                color: "#999",
+                                            }}
+                                        />
                                     </Form.Item>
                                 </Col>
                             </Row>
 
                             <Form.Item name="hospitalName" label="Bệnh viện">
-                                <Input readOnly size="large" style={{ background: "#f5f5f5", color: "#999" }} />
+                                <Input
+                                    readOnly
+                                    size="large"
+                                    style={{ background: "#f5f5f5", color: "#999" }}
+                                />
                             </Form.Item>
 
-                            <Form.Item style={{ textAlign: "center" }}>
-                                <Button type="primary" htmlType="submit" size="large" style={{ width: 160 }}>
-                                    Cập nhật
+                            <Form.Item style={{ textAlign: "center", marginTop: 32 }}>
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    size="large"
+                                    style={{ width: 200 }}
+                                >
+                                    Cập nhật thông tin
                                 </Button>
                             </Form.Item>
                         </Form>

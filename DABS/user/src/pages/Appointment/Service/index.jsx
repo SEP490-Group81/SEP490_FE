@@ -1,41 +1,40 @@
-import { current } from "@reduxjs/toolkit";
-import { Button, ConfigProvider, Menu, Table } from "antd";
+
+import { Button, ConfigProvider, Menu, Modal, Table } from "antd";
 import dayjs from 'dayjs';
 import viVN from 'antd/locale/vi_VN';
 import { CalendarOutlined, CheckCircleFilled } from '@ant-design/icons';
 import "./styles.scss";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { getHospitalDetail } from "../../../services/hospitalService";
 dayjs.locale('vi');
 
 
 function AppointmentService() {
-    const dataSource = [
-        {
-            key: '1',
-            name: 'Khám bệnh tổng quát',
-            schedule: 'Lịch khám: Thứ 2, 3, 4, 5, 6, 7, CN',
-            price: '200.000 đ',
-        },
-        {
-            key: '2',
-            name: 'Khám bệnh chuyên khoa',
-            schedule: 'Lịch khám: Thứ 2, 3, 4, 5, 6, 7, CN',
-            price: '200.000 đ',
-        },
-        {
-            key: '3',
-            name: 'Khám bác sĩ theo yêu cầu',
-            schedule: 'Lịch khám: Thứ 2, 3, 4, 5, 6, 7, CN',
-            price: '200.000 đ',
-        },
-         {
-            key: '4',
-            name: 'Khám chuyên gia',
-            schedule: 'Lịch khám: Thứ 2, 3, 4, 5, 6, 7, CN',
-            price: '200.000 đ',
-        },
-    ];
+    const [searchParams] = useSearchParams();
+    const hospitalId = searchParams.get("hospitalId");
+    const [hospital, setHospital] = useState();
+    const [loadingHospital, setLoadingHospital] = useState(true);
+    const [selectedServiceName, setSelectedServiceName] = useState('');
+    const [detailModalOpen, setDetailModalOpen] = useState(false);
+    const [selectedServiceDetail, setSelectedServiceDetail] = useState(null);
+    useEffect(() => {
+        const fetchApi = async () => {
+            const result = await getHospitalDetail(hospitalId);
+            setHospital(result);
+            setLoadingHospital(false);
+        };
+        fetchApi();
+    }, [hospitalId]);
 
+    const dataSource = hospital?.services?.map((s, index) => ({
+        key: index + 1,
+        id: s.id,
+        name: s.name,
+        schedule: 'Lịch khám: Thứ 2, 3, 4, 5, 6, 7, CN',
+        price: s.price.toLocaleString('vi-VN') + ' đ',
+    })) || [];
+    const navigate = useNavigate();
     const columns = [
         {
             title: '#',
@@ -65,17 +64,22 @@ function AppointmentService() {
             title: '',
             key: 'action',
             width: 200,
-            render: () => (
+            render: (text, record) => (
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Button
                         type="default"
                         style={{ marginRight: 8, borderRadius: 6, backgroundColor: '#eaf6ff', color: '#00baff', border: 'none' }}
+                        onClick={() => {
+                            setSelectedServiceDetail(record);
+                            setDetailModalOpen(true);
+                        }}
                     >
                         Chi tiết
                     </Button>
                     <Button
                         type="primary"
                         style={{ borderRadius: 6, backgroundColor: '#00cfff', borderColor: '#00cfff' }}
+                        onClick={() => navigate(`/appointment/booking?serviceId=${record.id}&serviceName=${encodeURIComponent(record.name)}&hospitalId=${hospitalId}&hospitalName=${encodeURIComponent(hospital?.name )}`)}
                     >
                         Đặt khám ngay
                     </Button>
@@ -87,8 +91,8 @@ function AppointmentService() {
     const items = [
         {
             key: 'center',
-            label: <span style={{ fontWeight: 600 }}>Trung Tâm Nội Soi Tiêu Hoá Doctor Check</span>,
-            
+            label: <span style={{ fontWeight: 600 }}>{hospital?.name }</span>,
+
         },
         {
             key: 'date',
@@ -101,7 +105,7 @@ function AppointmentService() {
         <div style={{ background: '#eaf8ff', display: "flex", flexDirection: "column" }}>
             <Menu
                 mode="horizontal"
-                selectedKeys={[current]}
+                selectedKeys={['date']}
                 style={{
                     background: 'transparent',
                     border: 'none',
@@ -133,8 +137,8 @@ function AppointmentService() {
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'flex-start',
+                        marginBottom: 50,
                         gap: 32,
-                        minHeight: '100vh',
                         padding: 40,
                     }}>
                     <div style={{
@@ -159,12 +163,12 @@ function AppointmentService() {
                         <div style={{ padding: '24px 24px 0 24px', fontSize: 15 }}>
                             <div style={{ fontWeight: 600, marginBottom: 8 }}>
                                 <CheckCircleFilled style={{ color: '#00bfff', marginRight: 8 }} />
-                                Trung Tâm Nội Soi Tiêu Hoá Doctor Check
+                                {hospital?.name }
                             </div>
 
                             <div style={{ marginBottom: 8 }}>
                                 <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
-                                <span style={{ fontWeight: 500 }}>Dịch vụ:</span> Đặt khám dạ dày & đại tràng
+                                <span style={{ fontWeight: 500 }}>Dịch vụ:</span> {selectedServiceName || 'Chọn dịch vụ'}
                             </div>
 
                         </div>
@@ -197,6 +201,11 @@ function AppointmentService() {
                             pagination={false}
                             rowKey="key"
                             style={{ maxHeight: 300, overflowY: 'auto', marginTop: 16, borderRadius: 8, boxShadow: '0 2px 8px #e6f4ff' }}
+                            onRow={(record) => ({
+                                onClick: () => {
+                                    setSelectedServiceName(record.name);
+                                },
+                            })}
                         />
 
                     </div>
@@ -204,6 +213,20 @@ function AppointmentService() {
 
 
             </ConfigProvider>
+            <Modal
+                title={<div style={{ fontWeight: 600, fontSize: 18, color: "black" }}>Chi tiết dịch vụ</div>}
+                open={detailModalOpen}
+                onCancel={() => setDetailModalOpen(false)}
+                footer={null}
+            >
+                {selectedServiceDetail && (
+                    <div>
+                        <p><strong>Tên dịch vụ:</strong> {selectedServiceDetail.name}</p>
+                        <p><strong>Lịch khám:</strong> {selectedServiceDetail.schedule}</p>
+                        <p><strong>Giá:</strong> {selectedServiceDetail.price}</p>
+                    </div>
+                )}
+            </Modal>
         </div>
     </>
 }

@@ -12,11 +12,12 @@ import HospitalList from "../../pages/Hospital/HospitalList";
 import HospitalDetail from "../../pages/Hospital/HospitalDetail";
 import PatientRecords from "../../pages/HealthRecords"; // Thêm import cho component mới
 
+
 import BlankLayout from "../../components/BlankLayout";
 import LayoutCommon from "../../components/LayoutCommon";
 import NewPassword from "../../pages/UserAccount/ForgetPassword/NewPassword";
 import ForgetPassword from "../../pages/UserAccount/ForgetPassword";
-import DoctorDetail from "../../pages/Doctor/doctorDetail";
+import DoctorDetail from "../../pages/Doctor/DoctorDetail/index.jsx";
 import VerifyEmailRegisterAuto from "../../pages/UserAccount/Register/VerifyEmailRegisterAuto";
 import VerifyEmailRegisterNotice from "../../pages/UserAccount/Register/VerifyEmailRegisterNotice";
 import VerifyEmailForgetAuto from "../../pages/UserAccount/ForgetPassword/VerifyEmailForgetAuto";
@@ -27,6 +28,14 @@ import AppointmentSpecialty from "../../pages/Appointment/Specialty";
 import ChatPage from "../../components/ChatBox/ChatPage";
 
 import BookingHistoryPage from "../../pages/BookingHistory/BookingHistoryPage";
+import PatientPortal from "../../pages/PatientPortal/PatientPortal";
+import PaymentPage from "../../pages/PatientPortal/PaymentPage";
+import RatingPage from "../../pages/PatientPortal/RatingPage";
+import DoctorList from "../../pages/Doctor/DoctorList/index.jsx";
+import AppointmentDoctor from "../../pages/Appointment/Doctor/index.jsx";
+import UserBookingFlow from "../../pages/Appointment/Flow/index.jsx";
+import AppointmentReviewPage from "../../pages/Appointment/Accept/index.jsx";
+
 
 export const routes = [
   //public
@@ -45,10 +54,14 @@ export const routes = [
       {
         path: "profile",
         element: <UpadteProfile /> // đã vẽ report 3
-      }, 
-        {
+      },
+      {
         path: "doctor-detail",
         element: <DoctorDetail /> // đã vẽ report 3
+      },
+      {
+        path: "doctor-list",
+        element: <DoctorList />
       },
       {
         path: "/chat",
@@ -80,6 +93,50 @@ export const routes = [
       },
 
       {
+        path: "/patient",
+        element: <BlankLayout />,
+        children: [
+          {
+            index: true,
+            element: <PatientPortal />
+          },
+          {
+            path: "payment",
+            element: <PaymentPage />
+          },
+          {
+            path: "rating",
+            element: <RatingPage />
+          },
+
+        ]
+      },
+
+      {
+        path: "change-password",
+        element: <ChangePassword />
+      },
+
+      {
+        path: "*",
+        element: <Navigate to="/" />
+      },
+      {
+        path: "account",
+        element: <ProtectedRoute allowedRoles={['Patient']} />,
+        children: [
+          {
+            path: "",
+            element: <UserAccount />,
+          },
+          {
+            path: "change-password",
+            element: <ChangePassword /> // đã vẽ report 3
+          },
+        ],
+      },
+
+      {
         path: "hospital-detail/:hospitalId",
         element: (
           <HospitalDetail />// đã vẽ report 3
@@ -89,7 +146,7 @@ export const routes = [
         path: "hospital-list",
         element: <HospitalList />// đã vẽ report 3
       },
-     
+
       {
         path: "*",
         element: <Navigate to="/" /> // bỏ qua
@@ -132,12 +189,25 @@ export const routes = [
         element: <AppointmentService /> // đã vẽ report 3
       },
       {
+        path: "booking",
+        element: <UserBookingFlow />
+
+      },
+      {
         path: "schedule",
         element: <AppointmentSchedule /> // đã vẽ report 3
       },
       {
+        path: "doctor",
+        element: <AppointmentDoctor />
+      },
+      {
         path: "specialty",
         element: <AppointmentSpecialty />
+      },
+      {
+        path: "accept-infomation",
+        element: <AppointmentReviewPage />
       }
     ]
   },
@@ -153,7 +223,7 @@ export const routes = [
         path: "verify-email-notice",
         element: <VerifyEmailRegisterNotice />
       },
-       {
+      {
         path: "reset-password/verify-code",
         element: <VerifyEmailForgetAuto />
       },
@@ -164,45 +234,6 @@ export const routes = [
 
     ]
   }
-  // bác sĩ hoặc quản lý nếu phải tách riêng
 
-  //   {
-  //     element: <PrivateRoute />,
-  //     children: [
-  //       {
-  //         element: <LayoutAdmin />,
-  //         children: [
-  //           {
-  //             path: "admin",
-  //             element: <Dashboard />
-  //           },
-  //           {
-  //             path: "info-company",
-  //             element: <InfoCompany />
-  //           },
-  //           {
-  //             path: "job-mangage",
-  //             element: <JobManage />
-  //           },
-  //           {
-  //             path: "create-job",
-  //             element: <CreateJob />
-  //           },
-  //           {
-  //             path: "detail-job/:id",
-  //             element: <JobDetailAdmin />
-  //           },
-  //           {
-  //             path: "cv-manage",
-  //             element: <CVManage />
-  //           },
-  //           {
-  //             path: "detail-cv/:id",
-  //             element: <CVDetail />
-  //           },
-  //         ]
-  //       }
-  //     ]
-  //   }
 ];
 
