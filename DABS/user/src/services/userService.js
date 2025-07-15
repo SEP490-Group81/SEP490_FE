@@ -76,3 +76,19 @@ export const forgotPassword = async (userData) => {
     return 'Có lỗi xảy ra, vui lòng thử lại!';
   }
 };
+
+export const getStepByServiceId = async (serviceId) => {
+  try {
+    const result = await getAuth(`/service/${serviceId}/servicesteps`);
+    console.log(`Steps for service ${serviceId}:`, result);
+
+    if (!result || !Array.isArray(result)) {
+      throw new Error("Invalid response from server. Expected an array.");
+    }
+
+    return result;
+  } catch (error) {
+    console.error(`Error fetching steps for service ${serviceId}:`, error.message);
+    throw error;
+  }
+};

@@ -1,6 +1,6 @@
 import React from "react";
-import { Card, Row, Col, Button, List, Avatar, Typography } from "antd";
-import { CalendarOutlined, UserOutlined, NotificationOutlined } from "@ant-design/icons";
+import { Card, Row, Col, Button, List, Avatar, Typography, Tag, Divider } from "antd";
+import { CalendarOutlined, UserOutlined, NotificationOutlined, EnvironmentOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
@@ -28,23 +28,53 @@ const fakeNews = [
   { id: 2, title: "Lời khuyên chăm sóc sức khỏe mùa hè", date: "25/06/2025" },
 ];
 
+const getStatusTag = (status) => {
+  switch (status) {
+    case "Đang khám":
+      return <Tag color="green">{status}</Tag>;
+    case "Chưa bắt đầu":
+      return <Tag color="orange">{status}</Tag>;
+    default:
+      return <Tag>{status}</Tag>;
+  }
+};
+
 const DoctorHome = () => {
   return (
-    <div style={{ maxWidth: 960, margin: "0 auto", padding: 24 }}>
-      <Title style={{display:"flex", textAlign:"center"}} level={2}>Chào bác sĩ Nguyễn Văn A</Title>
+    <div style={{ maxWidth: 1080, margin: "0 auto", padding: 24 }}>
+      <Title style={{ textAlign: "center", color: "#1890ff" }} level={2}>Chào bác sĩ Nguyễn Văn A</Title>
 
       <Row gutter={16}>
         <Col span={16}>
-          <Card title="Lịch làm việc hôm nay" extra={<Button type="link">Xem chi tiết</Button>}>
+          <Card
+            title="🗓️ Lịch làm việc hôm nay"
+            extra={<Button type="link">Xem chi tiết</Button>}
+            style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+          >
             <List
               itemLayout="horizontal"
               dataSource={fakeTodaySchedule}
               renderItem={(item) => (
                 <List.Item>
                   <List.Item.Meta
-                    avatar={<CalendarOutlined style={{ fontSize: 24, color: item.status === "Đang khám" ? "#52c41a" : "#faad14" }} />}
-                    title={`${item.time} - ${item.specialization}`}
-                    description={`Phòng: ${item.room} | Bệnh nhân: ${item.patientCount} | Trạng thái: ${item.status}`}
+                    avatar={
+                      <CalendarOutlined
+                        style={{
+                          fontSize: 24,
+                          color: item.status === "Đang khám" ? "#52c41a" : "#faad14",
+                        }}
+                      />
+                    }
+                    title={
+                      <span>
+                        <strong>{item.time}</strong> - {item.specialization} {getStatusTag(item.status)}
+                      </span>
+                    }
+                    description={
+                      <Text>
+                        Phòng: {item.room} | Bệnh nhân: {item.patientCount}
+                      </Text>
+                    }
                   />
                 </List.Item>
               )}
@@ -52,8 +82,8 @@ const DoctorHome = () => {
           </Card>
 
           <Card
-            title="Tin tức y khoa mới nhất"
-            style={{ marginTop: 24 }}
+            title="📰 Tin tức y khoa mới nhất"
+            style={{ marginTop: 24, borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
             extra={<Button type="link">Xem tất cả</Button>}
           >
             <List
@@ -68,7 +98,15 @@ const DoctorHome = () => {
         </Col>
 
         <Col span={8}>
-          <Card title="Thông tin cá nhân" style={{ textAlign: "center" }}>
+          <Card
+            title="👤 Thông tin cá nhân"
+            style={{
+              textAlign: "center",
+              borderRadius: 12,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              marginBottom: 24,
+            }}
+          >
             <Avatar size={100} icon={<UserOutlined />} />
             <Title level={4} style={{ marginTop: 16 }}>
               Nguyễn Văn A
@@ -77,15 +115,19 @@ const DoctorHome = () => {
             <br />
             <Text>Kinh nghiệm: 10 năm</Text>
             <br />
+            <Divider />
+            <EnvironmentOutlined style={{ color: "#1890ff", marginRight: 8 }} />
+            <Text strong>Bệnh viện: Bệnh viện Đại học Y Dược TP.HCM</Text>
+            <br />
             <Button type="primary" style={{ marginTop: 16 }}>
               Cập nhật hồ sơ
             </Button>
           </Card>
 
           <Card
-            title="Thông báo phòng khám"
-            style={{ marginTop: 24 }}
+            title="🔔 Thông báo phòng khám"
             extra={<Button type="link">Xem tất cả</Button>}
+            style={{ borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
           >
             <List>
               <List.Item>

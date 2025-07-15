@@ -241,7 +241,7 @@ function Home() {
                         <Slider {...settings}>
                             {hospital.map((item, idx) => (
                                 <div key={idx}>
-                                    <Card className="facility-card" hoverable>
+                                    <Card className="facility-card" hoverable onClick={() => navigate(`/hospital-detail/${item.id}`)}>
                                         <div style={{
                                             display: 'flex',
                                             justifyContent: 'center',

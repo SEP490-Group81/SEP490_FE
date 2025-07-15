@@ -1,4 +1,4 @@
-import { get, putAuth } from "../utils/request";
+import { deleteAuth, get, postAuth, putAuth } from "../utils/request";
 
 export const getSpecializationList = async () => {
     try {
@@ -22,6 +22,28 @@ export const updateSpecialization = async (specializationData) => {
     return result;
   } catch (error) {
     console.error(`Error updating user with ID ${specializationData.id}:`, error.message);
+    throw error;
+  }
+};
+
+export const createSpecialization = async (specializationData) => {
+  try {
+    const result = await postAuth(`/specialization/create`, specializationData);
+    console.log(`User created successfully:`, result);
+    return result;
+  } catch (error) {
+    console.error(`Error creating user with ID ${specializationData.id}:`, error.message);
+    throw error;
+  }
+};
+
+export const deleteSpecialization = async (specializationId) => {
+  try {
+    const result = await deleteAuth(`/specialization`, specializationId);
+    console.log(`User created successfully:`, result);
+    return result;
+  } catch (error) {
+    console.error(`Error delete user with ID ${specializationId}:`, error.message);
     throw error;
   }
 };
