@@ -4,12 +4,15 @@ import { API_DOMAIN, PATH } from '../constants/api/api';
 import api from '../constants/api/apiInterceptors';
 
 export const get = async (path) => {
-    const response = await axios.get(API_DOMAIN + PATH + path);
-    const result = response.data;
-    return result;
+  const response = await axios.get(API_DOMAIN + PATH + path);
+  const result = response.data;
+  return result;
 }
 
 export const getAuth = async (path) => {
+
+  console.log('getAuth called with path:', path);
+  console.log('Token from localStorage:', localStorage.getItem('accessToken'));
   const response = await api.get(path);
   return response.data;
 };
@@ -21,14 +24,14 @@ export const postAuth = async (path, data) => {
 
 
 export const post = async (path, data) => {
-    try {
-        const url = `${API_DOMAIN}${PATH}${path}`;
-        const response = await axios.post(url, data); 
-        return response.data;
-    } catch (error) {
-        console.error(`Error in POST request to ${path}:`, error.message);
-        throw error;
-    }
+  try {
+    const url = `${API_DOMAIN}${PATH}${path}`;
+    const response = await axios.post(url, data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error in POST request to ${path}:`, error.message);
+    throw error;
+  }
 };
 
 export const putAuth = async (path, data) => {
