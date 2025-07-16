@@ -59,7 +59,7 @@ function MenuSider() {
         },
         {
             key: "department-room",
-            label: <Link to="/admin-hospital/room-depart-management">Phòng khám</Link>,
+            label: <Link to="/admin-hospital/room-management">Phòng khám</Link>,
             icon: <ApartmentOutlined />,
         },
         {

@@ -87,7 +87,7 @@ export const routes = [
           <StaffShiftManagement />
       },
       {
-        path: "room-depart-management",
+        path: "room-management",
         element:
           <ManageRoom />
       },
