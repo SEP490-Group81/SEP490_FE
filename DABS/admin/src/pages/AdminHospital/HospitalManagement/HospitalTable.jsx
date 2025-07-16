@@ -24,7 +24,7 @@ const HospitalTable = ({ hospitals, loading, pagination, onChange, onReload }) =
 
   // Navigate to Hospital Detail page
   const handleViewDetail = (record) => {
-    navigate(`/hospital-detail/${record.id}`);
+    navigate(`/admin-system/hospital-detail/${record.id}`);
   };
 
   const handleEditSuccess = () => {

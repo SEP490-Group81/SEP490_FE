@@ -12,7 +12,9 @@ import {
   Rate,
   Statistic,
   Spin,
-  message
+  message,
+  Table,
+  Empty
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -23,7 +25,9 @@ import {
   MailOutlined,
   GlobalOutlined,
   CalendarOutlined,
-  SafetyCertificateOutlined
+  SafetyCertificateOutlined,
+  ClockCircleOutlined,
+  DollarOutlined
 } from '@ant-design/icons';
 import { getHospitalById } from '../../../services/hospitalService';
 import { useSelector } from 'react-redux';
@@ -49,74 +53,131 @@ const HospitalDetail = () => {
   const fetchHospitalDetail = async () => {
     setLoading(true);
     try {
-      const data = await getHospitalById(id);
-      if (data) {
-        setHospital(data);
+      console.log('🔍 Fetching hospital detail for ID:', id);
+      const response = await getHospitalById(id);
+      console.log('📦 Hospital response:', response);
+
+      // ✅ Handle API response format: {result: {...}, success: true, message: "..."}
+      let hospitalData = null;
+      if (response && response.result) {
+        hospitalData = response.result;
+      } else if (response && !response.result) {
+        hospitalData = response; // Fallback if direct data
+      }
+
+      if (hospitalData) {
+        console.log('🏥 Hospital data:', hospitalData);
+        setHospital(hospitalData);
       } else {
         message.error('Hospital not found');
-        navigate('/hospitals');
+        navigate('/admin/hospitals');
       }
     } catch (error) {
-      console.error('Error fetching hospital detail:', error);
+      console.error('❌ Error fetching hospital detail:', error);
       message.error('Failed to load hospital details');
+      navigate('/admin/hospitals');
     } finally {
       setLoading(false);
     }
   };
 
   const handleBack = () => {
-    // Check if user is hospital admin, redirect to appropriate page
-    if (userRole === 'hospitalAdmin') {
-      navigate('/dashboard'); // or their specific dashboard
+    console.log(userRole)
+    if (userRole.name === 'System Admin') {
+      navigate('/admin-system/hospitals');
     } else {
       navigate('/admin/hospitals');
     }
   };
 
   const handleEdit = () => {
-    // Only system admin can edit from this page
     if (userRole === 'admin' || userRole === 'systemAdmin') {
-      navigate(`/hospitals/edit/${id}`);
+      navigate(`/admin/hospitals/edit/${id}`);
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'inactive':
-        return 'default';
+  // ✅ Map type number to string
+  const getHospitalType = (type) => {
+    switch (type) {
+      case 1:
+        return 'General Hospital';
+      case 2:
+        return 'Specialized Hospital';
+      case 3:
+        return 'Community Hospital';
       default:
-        return 'default';
+        return 'Unknown Type';
     }
   };
 
   const getTypeColor = (type) => {
     switch (type) {
-      case 'General':
+      case 1:
         return 'blue';
-      case 'Specialized':
+      case 2:
         return 'purple';
-      case 'Community':
+      case 3:
         return 'green';
       default:
         return 'default';
     }
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+  // ✅ Format time properly
+  const formatTime = (timeString) => {
+    if (!timeString) return 'N/A';
+    try {
+      const time = new Date(timeString);
+      return time.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (error) {
+      return 'Invalid Time';
+    }
   };
+
+  // ✅ Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
+  // ✅ Services table columns
+  const servicesColumns = [
+    {
+      title: 'Service Name',
+      dataIndex: 'name',
+      key: 'name',
+      render: (name) => <strong>{name}</strong>
+    },
+    {
+      title: 'Price',
+      dataIndex: 'price',
+      key: 'price',
+      render: (price) => (
+        <span style={{ color: '#1890ff', fontWeight: 'bold' }}>
+          {formatCurrency(price)}
+        </span>
+      ),
+      sorter: (a, b) => a.price - b.price
+    },
+    {
+      title: 'Description',
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true
+    }
+  ];
 
   if (loading) {
     return (
       <div style={{ padding: '50px', textAlign: 'center' }}>
         <Spin size="large" />
+        <p style={{ marginTop: 16 }}>Loading hospital details...</p>
       </div>
     );
   }
@@ -124,7 +185,10 @@ const HospitalDetail = () => {
   if (!hospital) {
     return (
       <div style={{ padding: '50px', textAlign: 'center' }}>
-        <h3>Hospital not found</h3>
+        <Empty description="Hospital not found" />
+        <Button type="primary" onClick={handleBack}>
+          Go Back
+        </Button>
       </div>
     );
   }
@@ -142,7 +206,7 @@ const HospitalDetail = () => {
                   onClick={handleBack}
                   style={{ marginRight: 16 }}
                 >
-                  Back
+                  Back to Hospitals
                 </Button>
               </Col>
               <Col>
@@ -169,17 +233,17 @@ const HospitalDetail = () => {
                   <Avatar
                     size={120}
                     icon={<MedicineBoxOutlined />}
-                    src={hospital.logoUrl}
+                    src={hospital.image} // ✅ Use 'image' instead of 'logoUrl'
                     style={{ backgroundColor: '#1890ff', marginBottom: 16 }}
                   />
                   <div>
                     <Tag color={getTypeColor(hospital.type)} style={{ fontSize: '14px', padding: '4px 12px' }}>
-                      {hospital.type}
+                      {getHospitalType(hospital.type)} {/* ✅ Map type number to string */}
                     </Tag>
                   </div>
                   <div style={{ marginTop: 8 }}>
-                    <Tag color={getStatusColor(hospital.status)} style={{ fontSize: '12px' }}>
-                      {hospital.status?.toUpperCase()}
+                    <Tag color="green" style={{ fontSize: '12px' }}>
+                      ACTIVE {/* ✅ Default to active since no status in API */}
                     </Tag>
                   </div>
                 </div>
@@ -192,22 +256,23 @@ const HospitalDetail = () => {
                       {hospital.name}
                     </h1>
                     <p style={{ fontSize: '16px', color: '#8c8c8c', margin: '8px 0' }}>
-                      Code: {hospital.code} | License: {hospital.licenseNumber}
+                      Hospital ID: {hospital.id} | Code: {hospital.code}
                     </p>
                     <div style={{ marginBottom: 16 }}>
-                      <Rate disabled value={hospital.rating} style={{ fontSize: '16px' }} />
-                      <span style={{ marginLeft: 8, fontSize: '16px', fontWeight: 'bold' }}>
-                        {hospital.rating}/5.0
-                      </span>
-                      <Tag color="gold" style={{ marginLeft: 8 }}>
-                        {hospital.accreditation}
+                      <Tag color="blue" style={{ marginRight: 8 }}>
+                        <ClockCircleOutlined style={{ marginRight: 4 }} />
+                        {formatTime(hospital.openTime)} - {formatTime(hospital.closeTime)}
+                      </Tag>
+                      <Tag color="gold">
+                        {hospital.services?.length || 0} Services Available
                       </Tag>
                     </div>
                   </Col>
 
                   <Col span={24}>
-                    <p style={{ fontSize: '16px', lineHeight: '1.6' }}>
-                      {hospital.description}
+                    <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#666' }}>
+                      <EnvironmentOutlined style={{ marginRight: 8, color: '#1890ff' }} />
+                      {hospital.address}
                     </p>
                   </Col>
                 </Row>
@@ -222,38 +287,31 @@ const HospitalDetail = () => {
             <Col xs={12} sm={6}>
               <Card>
                 <Statistic
-                  title="Total Beds"
-                  value={hospital.totalBeds}
+                  title="Services"
+                  value={hospital.services?.length || 0}
                   valueStyle={{ color: '#3f8600' }}
+                  prefix={<MedicineBoxOutlined />}
                 />
               </Card>
             </Col>
             <Col xs={12} sm={6}>
               <Card>
                 <Statistic
-                  title="Departments"
-                  value={hospital.totalDepartments}
+                  title="Hospital Type"
+                  value={hospital.type}
                   valueStyle={{ color: '#1890ff' }}
+                  formatter={(value) => getHospitalType(value)}
                 />
               </Card>
             </Col>
+
             <Col xs={12} sm={6}>
               <Card>
                 <Statistic
-                  title="Total Staff"
-                  value={hospital.totalStaff}
-                  valueStyle={{ color: '#cf1322' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={12} sm={6}>
-              <Card>
-                <Statistic
-                  title="Rating"
-                  value={hospital.rating}
-                  precision={1}
+                  title="Average Price"
+                  value={hospital.services?.reduce((sum, service) => sum + service.price, 0) / (hospital.services?.length || 1)}
                   valueStyle={{ color: '#faad14' }}
-                  suffix="/ 5.0"
+                  formatter={(value) => formatCurrency(value)}
                 />
               </Card>
             </Col>
@@ -271,100 +329,103 @@ const HospitalDetail = () => {
                       <Descriptions.Item
                         label={<><PhoneOutlined style={{ marginRight: 8 }} />Phone</>}
                       >
-                        {hospital.phoneNumber}
+                        {hospital.phoneNumber || 'Not Available'}
                       </Descriptions.Item>
                       <Descriptions.Item
                         label={<><MailOutlined style={{ marginRight: 8 }} />Email</>}
                       >
-                        {hospital.email}
-                      </Descriptions.Item>
-                      <Descriptions.Item
-                        label={<><GlobalOutlined style={{ marginRight: 8 }} />Website</>}
-                      >
-                        <a href={hospital.website} target="_blank" rel="noopener noreferrer">
-                          {hospital.website}
-                        </a>
+                        {hospital.email || 'Not Available'}
                       </Descriptions.Item>
                       <Descriptions.Item
                         label={<><EnvironmentOutlined style={{ marginRight: 8 }} />Address</>}
                       >
-                        {hospital.address}<br />
-                        {hospital.city}, {hospital.state} {hospital.zipCode}<br />
-                        {hospital.country}
+                        {hospital.address}
+                      </Descriptions.Item>
+                      <Descriptions.Item
+                        label={<><GlobalOutlined style={{ marginRight: 8 }} />Google Maps</>}
+                      >
+                        {hospital.googleMapUri ? (
+                          <a href={hospital.googleMapUri} target="_blank" rel="noopener noreferrer">
+                            View on Google Maps
+                          </a>
+                        ) : (
+                          'Not Available'
+                        )}
                       </Descriptions.Item>
                     </Descriptions>
                   </Col>
 
                   <Col xs={24} lg={12}>
-                    <Descriptions title="Administrative Information" column={1} bordered>
-                      <Descriptions.Item label="Administrator">
-                        {hospital.adminName}
-                      </Descriptions.Item>
-                      <Descriptions.Item label="Admin Email">
-                        {hospital.adminEmail}
+                    <Descriptions title="Operating Information" column={1} bordered>
+                      <Descriptions.Item
+                        label={<><ClockCircleOutlined style={{ marginRight: 8 }} />Open Time</>}
+                      >
+                        {formatTime(hospital.openTime)}
                       </Descriptions.Item>
                       <Descriptions.Item
-                        label={<><CalendarOutlined style={{ marginRight: 8 }} />Established</>}
+                        label={<><ClockCircleOutlined style={{ marginRight: 8 }} />Close Time</>}
                       >
-                        {formatDate(hospital.establishedDate)}
+                        {formatTime(hospital.closeTime)}
                       </Descriptions.Item>
-                      <Descriptions.Item
-                        label={<><SafetyCertificateOutlined style={{ marginRight: 8 }} />License Number</>}
-                      >
-                        {hospital.licenseNumber}
+                      <Descriptions.Item label="Hospital Type">
+                        <Tag color={getTypeColor(hospital.type)}>
+                          {getHospitalType(hospital.type)}
+                        </Tag>
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Location Coordinates">
+                        Lat: {hospital.latitude}, Lng: {hospital.longitude}
                       </Descriptions.Item>
                     </Descriptions>
                   </Col>
                 </Row>
               </TabPane>
 
-              <TabPane tab="Services" key="2">
-                <Row gutter={16}>
-                  <Col span={24}>
-                    <h3>Available Services</h3>
-                    <div style={{ marginTop: 16 }}>
-                      {hospital.services?.map((service, index) => (
-                        <Tag
-                          key={index}
-                          color="blue"
-                          style={{ margin: '4px', padding: '4px 12px', fontSize: '14px' }}
-                        >
-                          {service}
-                        </Tag>
-                      ))}
-                    </div>
-                  </Col>
-                </Row>
+              <TabPane tab={`Services (${hospital.services?.length || 0})`} key="2">
+                {hospital.services && hospital.services.length > 0 ? (
+                  <Table
+                    columns={servicesColumns}
+                    dataSource={hospital.services}
+                    rowKey="id"
+                    pagination={{
+                      pageSize: 10,
+                      showSizeChanger: true,
+                      showQuickJumper: true,
+                      showTotal: (total, range) =>
+                        `${range[0]}-${range[1]} of ${total} services`
+                    }}
+                    scroll={{ x: 800 }}
+                  />
+                ) : (
+                  <Empty description="No services available" />
+                )}
               </TabPane>
 
-              <TabPane tab="Statistics" key="3">
+              <TabPane tab="Location" key="3">
                 <Row gutter={16}>
-                  <Col xs={24} md={8}>
-                    <Card>
-                      <Statistic
-                        title="Total Beds"
-                        value={hospital.totalBeds}
-                        valueStyle={{ color: '#3f8600', fontSize: '32px' }}
-                      />
+                  <Col xs={24} md={12}>
+                    <Card title="Address Details">
+                      <p><strong>Full Address:</strong></p>
+                      <p>{hospital.address}</p>
+                      <p><strong>Coordinates:</strong></p>
+                      <p>Latitude: {hospital.latitude}</p>
+                      <p>Longitude: {hospital.longitude}</p>
                     </Card>
                   </Col>
-                  <Col xs={24} md={8}>
-                    <Card>
-                      <Statistic
-                        title="Departments"
-                        value={hospital.totalDepartments}
-                        valueStyle={{ color: '#1890ff', fontSize: '32px' }}
-                      />
-                    </Card>
-                  </Col>
-                  <Col xs={24} md={8}>
-                    <Card>
-                      <Statistic
-                        title="Total Staff"
-                        value={hospital.totalStaff}
-                        valueStyle={{ color: '#cf1322', fontSize: '32px' }}
-                      />
-                    </Card>
+                  <Col xs={24} md={12}>
+                    {hospital.googleMapUri && (
+                      <Card title="Google Maps">
+                        <iframe
+                          src={hospital.googleMapUri}
+                          width="100%"
+                          height="300"
+                          style={{ border: 0 }}
+                          allowFullScreen=""
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          title="Hospital Location"
+                        />
+                      </Card>
+                    )}
                   </Col>
                 </Row>
               </TabPane>
@@ -377,21 +438,25 @@ const HospitalDetail = () => {
                   <Descriptions.Item label="Hospital Code">
                     {hospital.code}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Created Date">
-                    {formatDate(hospital.createdAt)}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Last Updated">
-                    {formatDate(hospital.updatedAt)}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Status">
-                    <Tag color={getStatusColor(hospital.status)}>
-                      {hospital.status?.toUpperCase()}
-                    </Tag>
-                  </Descriptions.Item>
                   <Descriptions.Item label="Type">
                     <Tag color={getTypeColor(hospital.type)}>
-                      {hospital.type}
+                      {getHospitalType(hospital.type)}
                     </Tag>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Total Services">
+                    {hospital.services?.length || 0}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Image URL" span={2}>
+                    {hospital.image ? (
+                      <a href={hospital.image} target="_blank" rel="noopener noreferrer">
+                        {hospital.image}
+                      </a>
+                    ) : (
+                      'No image available'
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Banner URL" span={2}>
+                    {hospital.banner || 'No banner available'}
                   </Descriptions.Item>
                 </Descriptions>
               </TabPane>

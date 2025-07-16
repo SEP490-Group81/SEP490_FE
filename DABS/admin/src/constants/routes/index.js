@@ -160,9 +160,9 @@ export const routes = [
         element: <HospitalStaffHome />
       },
       {
-      path: 'review-feedback',
-      element: <ReviewFeedback />,
-    },
+        path: 'review-feedback',
+        element: <ReviewFeedback />,
+      },
       {
         path: "staff-profile",
         element: <StaffProfile />
@@ -182,7 +182,7 @@ export const routes = [
         element: <AppointmentOverview />,
       },
 
-{
+      {
         path: "nurse-profile",
         element: <NurseProfile />
       },
@@ -203,6 +203,16 @@ export const routes = [
       {
         index: true,
         element: <AdminSystem />
+      },
+      {
+        path: 'hospitals',
+        element: <HospitalManagement />,
+      },
+      {
+        path: 'hospital-detail/:id',
+        element: <HospitalDetail />,
+        // requireAuth: true,
+        // roles: ['admin', 'systemAdmin', 'hospitalAdmin'], 
       },
 
     ]

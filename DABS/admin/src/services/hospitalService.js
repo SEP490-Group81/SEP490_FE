@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { deleteAuth, getAuth } from '../utils/request';
 
 // Token cho authorization
 const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWRlbnRpZmllciI6IjEiLCJlbWFpbCI6ImFkbWluQGhvc3RuYW1lLmNvbSIsImZ1bGxOYW1lIjoiU3VwZXIgVXNlciIsIm5hbWUiOiJTdXBlciIsInN1cm5hbWUiOiJVc2VyIiwiaXBBZGRyZXNzIjoiMC4wLjAuMSIsImF2YXRhclVybCI6IiIsIm1vYmlsZXBob25lIjoiIiwiZXhwIjoxNzgxMjcwNDgzLCJpc3MiOiJodHRwczovL0JFLlNFUDQ5MC5uZXQiLCJhdWQiOiJCRS5TRVA0OTAifQ.kQIX9uvjN9UOPiBitp9JsO2DlPlFyIU4VTP1ZyM4k3Y";
@@ -104,67 +105,25 @@ const sampleHospitals = [
 ];
 
 // Get all hospitals
-export const getAllHospitals = async (params = {}) => {
+export const getAllHospitals = async (params) => {
     try {
-        if (process.env.NODE_ENV === 'development') {
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            let filteredHospitals = [...sampleHospitals];
-
-            // Filter by search
-            if (params.search) {
-                const searchLower = params.search.toLowerCase();
-                filteredHospitals = filteredHospitals.filter(hospital =>
-                    hospital.name.toLowerCase().includes(searchLower) ||
-                    hospital.code.toLowerCase().includes(searchLower) ||
-                    hospital.city.toLowerCase().includes(searchLower) ||
-                    hospital.adminName.toLowerCase().includes(searchLower)
-                );
-            }
-
-            // Filter by status
-            if (params.status && params.status !== 'all') {
-                filteredHospitals = filteredHospitals.filter(hospital => hospital.status === params.status);
-            }
-
-            // Filter by type
-            if (params.type && params.type !== 'all') {
-                filteredHospitals = filteredHospitals.filter(hospital => hospital.type === params.type);
-            }
-
-            return {
-                items: filteredHospitals,
-                total: filteredHospitals.length,
-                page: params.page || 1,
-                pageSize: params.pageSize || 10
-            };
-        }
-
-        const response = await api.get('/hospital', { params });
-        return {
-            items: response.data || [],
-            total: response.data?.length || 0,
-            page: params.page || 1,
-            pageSize: params.pageSize || 10
-        };
+        const result = await getAuth(`/hospitals`);
+        console.log(`Fetched services for hospitals :`, result);
+        return result.result;
     } catch (error) {
-        console.error('Error fetching hospitals:', error);
-        return null;
+        console.error(`Error fetching services for hospitals:`, error.message);
+        throw error;
     }
 };
 
 // Get hospital by ID
 export const getHospitalById = async (id) => {
     try {
-        if (process.env.NODE_ENV === 'development') {
-            await new Promise(resolve => setTimeout(resolve, 300));
-            return sampleHospitals.find(hospital => hospital.id === parseInt(id));
-        }
-
-        const response = await api.get(`/hospital/${id}`);
-        return response.data;
+        const result = await getAuth(`/hospitals/${id}`);
+        console.log(`Fetched hospital with ID ${id}:`, result);
+        return result.result;
     } catch (error) {
-        console.error(`Error fetching hospital ${id}:`, error);
+        console.error(`Error fetching hospital with ID ${id}:`, error.message);
         throw error;
     }
 };
@@ -214,17 +173,13 @@ export const updateHospital = async (id, hospitalData) => {
 };
 
 // Delete hospital
-export const deleteHospital = async (id) => {
+export const deleteHospital = async (hospitalId) => {
     try {
-        if (process.env.NODE_ENV === 'development') {
-            await new Promise(resolve => setTimeout(resolve, 800));
-            return true;
-        }
-
-        const response = await api.delete(`/hospital/${id}`);
-        return response.data;
+        const result = await deleteAuth(`/hospital/${hospitalId}`);
+        console.log(`Hospital with ID ${hospitalId} deleted successfully:`, result);
+        return result.result;
     } catch (error) {
-        console.error(`Error deleting hospital ${id}:`, error);
-        return null;
+        console.error(`Error deleting hospital with ID ${hospitalId}:`, error.message);
+        throw error;
     }
 };

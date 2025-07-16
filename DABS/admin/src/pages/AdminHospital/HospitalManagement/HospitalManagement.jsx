@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs, Button, Input, Row, Col, Card, Badge, Select } from 'antd';
 import { PlusOutlined, SearchOutlined, MedicineBoxOutlined } from '@ant-design/icons';
 import HospitalTable from './HospitalTable';
@@ -11,6 +11,7 @@ const { Option } = Select;
 
 const HospitalManagement = () => {
   const [hospitals, setHospitals] = useState([]);
+  const [allHospitals, setAllHospitals] = useState([]); 
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -28,49 +29,131 @@ const HospitalManagement = () => {
   });
 
   const fetchHospitals = async (page = 1, pageSize = 10, search = '', status = 'all', type = 'all') => {
+    console.log('HospitalManagement: fetchHospitals called with:', { page, pageSize, search, status, type });
+    
     setLoading(true);
     try {
-      const params = {
-        page,
-        pageSize,
-        search,
-        status: status !== 'all' ? status : undefined,
-        type: type !== 'all' ? type : undefined
-      };
+      const response = await getAllHospitals();
+      console.log('HospitalManagement: getAllHospitals response:', response);
 
-      const data = await getAllHospitals(params);
-      if (data) {
-        setHospitals(data.items || []);
-        setPagination({
-          ...pagination,
-          current: page,
-          pageSize,
-          total: data.total || 0,
-        });
-
-        setCounts({
-          all: data.total || 0,
-          active: (data.items || []).filter(hospital => hospital.status === 'active').length,
-          inactive: (data.items || []).filter(hospital => hospital.status === 'inactive').length,
-        });
+   
+      let allData = [];
+      
+      if (response && response.result && Array.isArray(response.result)) {
+        allData = response.result;
+      } else if (Array.isArray(response)) {
+        allData = response;
       }
+
+      console.log('HospitalManagement: Processed data:', allData);
+
+     
+      allData = allData.map(hospital => ({
+        ...hospital,
+        status: hospital.status || 'active',
+        type: hospital.type || hospital.hospitalType || 'General'
+      }));
+
+      setAllHospitals(allData);
+
+
+      let filteredData = allData;
+
+      // Filter by search text
+      if (search && search.trim() !== '') {
+        const searchLower = search.toLowerCase();
+        filteredData = filteredData.filter(hospital =>
+          hospital.name?.toLowerCase().includes(searchLower) ||
+          hospital.address?.toLowerCase().includes(searchLower) ||
+          hospital.email?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      // Filter by status
+      if (status && status !== 'all') {
+        filteredData = filteredData.filter(hospital => hospital.status === status);
+      }
+
+      // Filter by type
+      if (type && type !== 'all') {
+        filteredData = filteredData.filter(hospital => 
+          hospital.type === type || hospital.hospitalType === type
+        );
+      }
+
+ 
+      const startIndex = (page - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedData = filteredData.slice(startIndex, endIndex);
+
+      setHospitals(paginatedData);
+      setPagination({
+        current: page,
+        pageSize,
+        total: filteredData.length,
+      });
+
+  
+      setCounts({
+        all: allData.length,
+        active: allData.filter(hospital => hospital.status === 'active').length,
+        inactive: allData.filter(hospital => hospital.status === 'inactive').length,
+      });
+
     } catch (error) {
       console.error('Failed to fetch hospitals:', error);
+      
+      // Reset data on error
+      setHospitals([]);
+      setAllHospitals([]);
+      setPagination({
+        current: 1,
+        pageSize: 10,
+        total: 0,
+      });
+      setCounts({
+        all: 0,
+        active: 0,
+        inactive: 0,
+      });
     } finally {
       setLoading(false);
     }
   };
 
+
+  const debouncedFetchHospitals = useCallback(
+    debounce((search, status, type) => {
+      fetchHospitals(1, pagination.pageSize, search, status, type);
+    }, 300),
+    [pagination.pageSize]
+  );
+
+  
+  useEffect(() => {
+    if (allHospitals.length > 0) {
+      debouncedFetchHospitals(searchText, statusFilter, typeFilter);
+    }
+  }, [searchText, debouncedFetchHospitals, statusFilter, typeFilter, allHospitals.length]);
+
+  // Initial data load
   useEffect(() => {
     fetchHospitals(pagination.current, pagination.pageSize, searchText, statusFilter, typeFilter);
   }, []);
 
-  const handleTableChange = (pagination) => {
-    fetchHospitals(pagination.current, pagination.pageSize, searchText, statusFilter, typeFilter);
+  const handleTableChange = (paginationConfig) => {
+    fetchHospitals(paginationConfig.current, paginationConfig.pageSize, searchText, statusFilter, typeFilter);
   };
 
   const handleSearch = () => {
     fetchHospitals(1, pagination.pageSize, searchText, statusFilter, typeFilter);
+  };
+
+ 
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+    setPagination(prev => ({ ...prev, current: 1 }));
   };
 
   const handleStatusFilter = (value) => {
@@ -90,6 +173,12 @@ const HospitalManagement = () => {
   const handleAddHospitalSuccess = () => {
     setShowAddModal(false);
     fetchHospitals(pagination.current, pagination.pageSize, searchText, statusFilter, typeFilter);
+  };
+
+  
+  const getFilteredHospitals = (status) => {
+    if (status === 'all') return hospitals;
+    return allHospitals.filter(hospital => hospital.status === status);
   };
 
   return (
@@ -123,10 +212,11 @@ const HospitalManagement = () => {
                 <Input.Search
                   placeholder="Search hospitals..."
                   value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
+                  onChange={handleSearchChange} 
                   onSearch={handleSearch}
                   enterButton={<SearchOutlined />}
                   allowClear
+                  loading={loading} 
                 />
               </Col>
               <Col xs={24} sm={6} md={4} lg={3}>
@@ -156,7 +246,14 @@ const HospitalManagement = () => {
               </Col>
             </Row>
 
-            <Tabs defaultActiveKey="1" className="hospital-tabs">
+            <Tabs 
+              defaultActiveKey="1" 
+              className="hospital-tabs"
+              onChange={(key) => {
+                const statusMap = { '1': 'all', '2': 'active', '3': 'inactive' };
+                handleStatusFilter(statusMap[key]);
+              }}
+            >
               <TabPane
                 tab={
                   <span>
@@ -166,9 +263,9 @@ const HospitalManagement = () => {
                 key="1"
               >
                 <HospitalTable
-                  hospitals={hospitals}
+                  hospitals={statusFilter === 'all' ? hospitals : getFilteredHospitals('all')}
                   loading={loading}
-                  pagination={pagination}
+                  pagination={statusFilter === 'all' ? pagination : { ...pagination, total: counts.all }}
                   onChange={handleTableChange}
                   onReload={() => fetchHospitals(pagination.current, pagination.pageSize, searchText, statusFilter, typeFilter)}
                 />
@@ -183,9 +280,9 @@ const HospitalManagement = () => {
                 key="2"
               >
                 <HospitalTable
-                  hospitals={hospitals.filter(hospital => hospital.status === 'active')}
+                  hospitals={statusFilter === 'active' ? hospitals : getFilteredHospitals('active')}
                   loading={loading}
-                  pagination={{ ...pagination, total: counts.active }}
+                  pagination={statusFilter === 'active' ? pagination : { ...pagination, total: counts.active }}
                   onChange={handleTableChange}
                   onReload={() => fetchHospitals(pagination.current, pagination.pageSize, searchText, statusFilter, typeFilter)}
                 />
@@ -200,9 +297,9 @@ const HospitalManagement = () => {
                 key="3"
               >
                 <HospitalTable
-                  hospitals={hospitals.filter(hospital => hospital.status === 'inactive')}
+                  hospitals={statusFilter === 'inactive' ? hospitals : getFilteredHospitals('inactive')}
                   loading={loading}
-                  pagination={{ ...pagination, total: counts.inactive }}
+                  pagination={statusFilter === 'inactive' ? pagination : { ...pagination, total: counts.inactive }}
                   onChange={handleTableChange}
                   onReload={() => fetchHospitals(pagination.current, pagination.pageSize, searchText, statusFilter, typeFilter)}
                 />
@@ -222,5 +319,18 @@ const HospitalManagement = () => {
     </div>
   );
 };
+
+
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
 
 export default HospitalManagement;
