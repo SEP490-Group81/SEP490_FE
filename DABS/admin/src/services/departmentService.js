@@ -1,118 +1,66 @@
 import { getAuth, postAuth, putAuth, deleteAuth } from '../utils/request';
 
-// Sample data for fallback (giữ nguyên)
-const sampleDepartments = [
-  // ... existing sample data
-];
+const sampleDepartments = []
 
-// Get all departments with pagination and filters
-export const getAllDepartments = async (params = {}) => {
+export const getAllDepartments = async (hospitalId) => {
   try {
-    // Build query string from params
-    const queryParams = new URLSearchParams();
-    Object.keys(params).forEach(key => {
-      if (params[key] !== undefined && params[key] !== null) {
-        queryParams.append(key, params[key]);
-      }
-    });
-    
-    const queryString = queryParams.toString();
-    const endpoint = queryString ? `/department?${queryString}` : '/department';
-    
-    const response = await getAuth(endpoint);
-    
-    // Xử lý response data từ backend
-    if (Array.isArray(response)) {
-      return {
-        items: response,
-        total: response.length,
-        page: params.page || 1,
-        pageSize: params.pageSize || 10
-      };
-    }
-    
-    if (response && typeof response === 'object') {
-      return {
-        items: response.data || response.items || response.departments || [],
-        total: response.total || response.count || (response.data?.length) || 0,
-        page: response.page || params.page || 1,
-        pageSize: response.pageSize || params.pageSize || 10
-      };
-    }
-    
-    return {
-      items: [],
-      total: 0,
-      page: 1,
-      pageSize: 10
-    };
-    
+    const result = await getAuth(`/department`);
+    console.log(`Fetched services for department :`, result);
+    return result.result;
   } catch (error) {
-    console.error('Error fetching departments:', error);
-    
-    // Fallback to sample data in development
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('Falling back to sample departments');
-      return {
-        items: sampleDepartments,
-        total: sampleDepartments.length,
-        page: 1,
-        pageSize: 10
-      };
-    }
-    
-    throw new Error(`Failed to fetch departments: ${error.message}`);
+    console.error(`Error fetching services for department ID ${hospitalId}:`, error.message);
+    throw error;
   }
 };
+
+// Get all departments with pagination and filters
+
 
 // Get department by ID
 export const getDepartmentById = async (id) => {
   try {
-    const response = await getAuth(`/department/${id}`);
-    return response;
+    const result = await getAuth(`/department/${id}`);
+    console.log(`Fetched department with ID ${id}:`, result);
+    return result.result;
   } catch (error) {
-    console.error(`Error fetching department ${id}:`, error);
-    
-    if (process.env.NODE_ENV === 'development') {
-      const dept = sampleDepartments.find(d => d.id === parseInt(id));
-      if (dept) return dept;
-    }
-    
-    throw new Error(`Failed to fetch department: ${error.message}`);
+    console.error(`Error fetching department with ID ${id}:`, error.message);
+    throw error;
   }
 };
 
 // Create new department
-export const createDepartment = async (departmentData) => {
+export const createDepartment = async (department) => {
   try {
-    const response = await postAuth('/department/create', departmentData);
-    return response;
+    const result = await postAuth(`/department/create`, department);
+    console.log(`Department created successfully:`, result);
+    return result;
   } catch (error) {
-    console.error('Error creating department:', error);
-    throw new Error(`Failed to create department: ${error.message}`);
+    console.error(`Error creating department :`, error.message);
+    throw error;
   }
 };
 
 // Update department
-export const updateDepartment = async (id, departmentData) => {
+export const updateDepartment = async (departmentData) => {
   try {
-    const dataWithId = { ...departmentData, id };
-    const response = await putAuth('/department/update', dataWithId);
-    return response;
+    const result = await putAuth(`/department/update`, departmentData);
+    console.log(`Department updated successfully:`, result);
+    return result;
   } catch (error) {
-    console.error(`Error updating department ${id}:`, error);
-    throw new Error(`Failed to update department: ${error.message}`);
+    console.error(`Error updating department with ID ${departmentData.id}:`, error.message);
+    throw error;
   }
 };
 
 // Delete department
-export const deleteDepartment = async (id) => {
+export const deleteDepartment = async (departmentId) => {
   try {
-    const response = await deleteAuth('/department', id);
-    return response;
+    const result = await deleteAuth(`/department`, departmentId);
+    console.log(`Department deleted successfully:`, result);
+    return result;
   } catch (error) {
-    console.error(`Error deleting department ${id}:`, error);
-    throw new Error(`Failed to delete department: ${error.message}`);
+    console.error(`Error deleting department with ID ${departmentId}:`, error.message);
+    throw error;
   }
 };
 
@@ -120,10 +68,10 @@ export const deleteDepartment = async (id) => {
 export const getDepartmentsList = async () => {
   try {
     const response = await getAuth('/department');
-    const departments = Array.isArray(response) 
-      ? response 
+    const departments = Array.isArray(response)
+      ? response
       : response?.data || response?.items || [];
-    
+
     return departments.map(dept => ({
       value: dept.id || dept.code,
       label: dept.name,
@@ -131,7 +79,7 @@ export const getDepartmentsList = async () => {
     }));
   } catch (error) {
     console.error('Error fetching departments list:', error);
-    
+
     if (process.env.NODE_ENV === 'development') {
       return sampleDepartments.map(dept => ({
         value: dept.id,
@@ -139,7 +87,7 @@ export const getDepartmentsList = async () => {
         code: dept.code
       }));
     }
-    
+
     return [];
   }
 };
@@ -151,12 +99,12 @@ export const getDepartmentStatistics = async () => {
     return response;
   } catch (error) {
     console.error('Error fetching department statistics:', error);
-    
+
     // Fallback: calculate từ getAllDepartments
     try {
       const allDepts = await getAllDepartments();
       const departments = allDepts.items || [];
-      
+
       return {
         total: departments.length,
         active: departments.filter(d => d.status === 'active').length,
@@ -166,7 +114,7 @@ export const getDepartmentStatistics = async () => {
       };
     } catch (fallbackError) {
       console.error('Error in fallback statistics:', fallbackError);
-      
+
       if (process.env.NODE_ENV === 'development') {
         return {
           total: sampleDepartments.length,
@@ -176,7 +124,7 @@ export const getDepartmentStatistics = async () => {
           totalBeds: sampleDepartments.reduce((sum, d) => sum + (d.totalBeds || 0), 0)
         };
       }
-      
+
       return {
         total: 0,
         active: 0,
