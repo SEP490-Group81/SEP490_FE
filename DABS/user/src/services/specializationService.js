@@ -19,7 +19,7 @@ export const getSpecializationByHospitalId = async (hospitalId) => {
     try {
         if (!hospitalId) throw new Error("hospitalId is required");
 
-        const result = await get(`/hospitals/${hospitalId}/specializations`);
+        const result = await get(`/hospitals/${hospitalId}/specialization`);
 
         if (!result || !result.result) {
             throw new Error('Specialization data is missing in the response.');

@@ -53,9 +53,14 @@ function AppointmentSpecialty({ onNext, defaultValue, infomationValue, onBack })
         },
     ];
     const [selectedSpecialty, setSelectedSpecialty] = useState(null);
+    useEffect(() => {
+        if (defaultValue?.specialty) {
+            setSelectedSpecialty(defaultValue.specialty);
+        }
+    }, [defaultValue]);
     return <>
 
-        <div style={{  display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
             <Menu
                 mode="horizontal"
                 selectedKeys={[current]}
@@ -128,7 +133,10 @@ function AppointmentSpecialty({ onNext, defaultValue, infomationValue, onBack })
                                 <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
                                 <span style={{ fontWeight: 500 }}>Dịch vụ:</span> {infomationValue.serviceName}
                             </div>
-
+                            <div style={{ marginBottom: 8 }}>
+                                <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
+                                <span style={{ fontWeight: 500 }}>Chuyên khoa:</span> {selectedSpecialty?.name}
+                            </div>
 
                         </div>
                     </div>

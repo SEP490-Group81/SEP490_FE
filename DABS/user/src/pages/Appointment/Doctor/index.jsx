@@ -19,15 +19,21 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [doctors, setDoctors] = useState([]);
     const [searchParams] = useSearchParams();
-    const hospitalId = searchParams.get("hospitalId");
+    const [selectedSpecialty, setSelectedSpecialty] = useState(null);
+    useEffect(() => {
+        if (defaultValue?.specialty) {
+            setSelectedSpecialty(defaultValue.specialty);
+        }
+    }, [defaultValue]);
+    console.log("default value: " + defaultValue);
     useEffect(() => {
         const fetchApi = async () => {
-            const result = await getDoctorByHospitalId(hospitalId);
+            const result = await getDoctorByHospitalId(infomationValue.hospitalId);
             setDoctors(result);
             //   setLoadingHospital(false);
         };
         fetchApi();
-    }, [hospitalId]);
+    }, [infomationValue.hospitalId]);
 
 
     const handleDetail = (doctor) => {
@@ -83,7 +89,7 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
                             borderColor: "#00cfff",
                         }}
                         onClick={() => {
-                            setSelectedDoctor(record); 
+                            setSelectedDoctor(record);
                             console.log("Đặt khám với bác sĩ:", record.user.fullname);
                         }}
                     >
@@ -184,7 +190,15 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
                                 <CheckCircleFilled
                                     style={{ color: "#00bfff", marginRight: 8 }}
                                 />
-                                Trung Tâm Chuyên Khoa Doctor Check
+                                {infomationValue.hospitalName}
+                            </div>
+                            <div style={{ marginBottom: 8 }}>
+                                <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
+                                <span style={{ fontWeight: 500 }}>Dịch vụ: {infomationValue.serviceName}</span>
+                            </div>
+                            <div style={{ marginBottom: 8 }}>
+                                <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
+                                <span style={{ fontWeight: 500 }}>Chuyên khoa:</span> {selectedSpecialty?.name}
                             </div>
                             <div style={{ marginBottom: 8 }}>
                                 <CalendarOutlined

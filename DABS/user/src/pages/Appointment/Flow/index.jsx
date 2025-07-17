@@ -17,6 +17,7 @@ export default function UserBookingFlow() {
   const [stepData, setStepData] = useState({});
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const hospitalId = searchParams.get("hospitalId");
   const serviceId = searchParams.get("serviceId");
   const serviceName = searchParams.get("serviceName");
   const hospitalName = searchParams.get("hospitalName");
@@ -77,6 +78,7 @@ export default function UserBookingFlow() {
       onBack: handlePrevStep,
       defaultValue: stepData[stepType],
       infomationValue: {
+        hospitalId,
         serviceId,
         serviceName,
         hospitalName,
@@ -99,8 +101,8 @@ export default function UserBookingFlow() {
 
   return (
     <div style={{ marginTop: 50, paddingTop: 50, background: '#eaf8ff' }}>
-      <div style={{ display: "flex", justifyContent: "center"}}>
-        <Steps current={currentStepIndex} style={{width:"70%"}}>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <Steps current={currentStepIndex} style={{ width: "70%" }}>
           {steps.map((s, i) => (
             <Step key={i} title={s.steps.name} />
           ))}
