@@ -4,7 +4,7 @@ import { Steps, Button, message } from "antd";
 import AppointmentSpecialty from "../Specialty";
 import AppointmentDoctor from "../Doctor";
 import AppointmentSchedule from "../Schedule";
-import { getStepByServiceId } from "../../../services/userService";
+import { getStepByServiceId } from "../../../services/appointmentService";
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import PaymentMethod from "../PaymentMethod";
 import { useSelector } from "react-redux";
@@ -107,7 +107,7 @@ export default function UserBookingFlow() {
         </Steps>
       </div>
 
-      <div style={{ marginTop: 32 }}>{renderCurrentStep()}</div>
+      <div>{renderCurrentStep()}</div>
     </div>
   );
 }
