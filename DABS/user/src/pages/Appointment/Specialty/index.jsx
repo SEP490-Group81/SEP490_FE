@@ -175,9 +175,13 @@ function AppointmentSpecialty({ onNext, defaultValue, infomationValue, onBack })
                                 rowKey="key"
                                 style={{ minWidth: 600, maxHeight: 300, overflowY: 'auto', marginTop: 16, borderRadius: 8, boxShadow: '0 2px 8px #e6f4ff' }}
                                 columns={columns}
-                                onRow={(record) => ({
-                                    onClick: () => setSelectedSpecialty(record),
+                                  onRow={(record) => ({
+                                    onClick: () => {
+                                        setSelectedSpecialty(record);
+                                    },
+                                    style: { cursor: 'pointer' }
                                 })}
+                              
                             />
 
                         </div>

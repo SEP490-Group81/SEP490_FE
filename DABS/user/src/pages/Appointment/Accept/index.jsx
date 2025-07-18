@@ -7,18 +7,36 @@ import {
     DollarOutlined,
     SolutionOutlined,
     TeamOutlined,
+    EnvironmentOutlined,
 } from "@ant-design/icons";
 import "./styles.scss";
 import dayjs from "dayjs";
-import { useLocation } from "react-router-dom";
-
+import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { getHospitalDetail } from "../../../services/hospitalService";
 dayjs.locale("vi");
 
+function formatTime(datetimeString) {
+  return dayjs(datetimeString).format("HH:mm");
+}
+
 function AppointmentReviewPage() {
+    const user = useSelector((state) => state.user.user);
+    const [hospital, setHospital] = useState();
     const location = useLocation();
     const { stepData } = location.state || {};
-
+    const navigate = useNavigate();
     console.log("meta in accept : " + JSON.stringify(stepData));
+
+    useEffect(() => {
+        const fetchApi = async () => {
+            const result = await getHospitalDetail(stepData?.hospitalId);
+            setHospital(result);
+        };
+        fetchApi();
+    }, [stepData?.hospitalId]);
+
     const items = [
         {
             key: "center",
@@ -46,6 +64,12 @@ function AppointmentReviewPage() {
         return "Không xác định";
     };
 
+    const handleBackToPayment = () => {
+        navigate("/appointment/booking" +
+            `?hospitalId=${stepData?.hospitalId}&serviceId=${stepData?.serviceId}&serviceName=${stepData?.serviceName}&hospitalName=${stepData?.hospitalName}`,
+            { state: { stepData: stepData, backToStepIndex: 3 } }
+        );
+    };
     return (
         <div style={{ background: "#eaf8ff", display: "flex", flexDirection: "column" }}>
             <Menu
@@ -102,16 +126,27 @@ function AppointmentReviewPage() {
                         </div>
 
                         <div style={{ padding: "24px 24px 0 24px", fontSize: 15 }}>
-                            <div style={{ fontWeight: 600, marginBottom: 8 }}>
-                                <CheckCircleFilled style={{ color: "#00bfff", marginRight: 8 }} />
-                                {stepData?.hospitalName || "Không rõ"}
+                            <div style={{  fontSize: 15 }}>
+                        
+                                <div style={{ fontWeight: 600, marginBottom: 8 }}>
+                                    <CheckCircleFilled style={{ color: "#00bfff", marginRight: 8 }} />
+                                    {hospital?.name || "Không rõ"}
+                                </div>
+
+                                <div style={{ marginBottom: 8 }}>
+                                    <EnvironmentOutlined style={{ color: "#00bfff", marginRight: 8 }} />
+                                    <span style={{ fontWeight: 500 }}>Địa chỉ:</span> {hospital?.address || "Không rõ"}
+                                </div>
+
+                                {stepData?.[3] && (
+                                    <div style={{ marginBottom: 8 }}>
+                                        <CalendarOutlined style={{ color: "#00bfff", marginRight: 8 }} />
+                                        <span style={{ fontWeight: 500 }}>Thời gian đặt:</span>{" "}
+                                        {stepData[3].date} - {getShiftText(stepData[3].shift)}
+                                    </div>
+                                )}
                             </div>
 
-                            <div style={{ marginBottom: 8 }}>
-                                <CalendarOutlined style={{ color: "#00bfff", marginRight: 8 }} />
-                                <span style={{ fontWeight: 500 }}>Thời gian:</span>{" "}
-                                {stepData?.[3]?.date} - {getShiftText(stepData?.[3]?.shift)}
-                            </div>
                         </div>
                     </div>
 
@@ -181,22 +216,30 @@ function AppointmentReviewPage() {
                             <p><strong>Số điện thoại:</strong> {stepData?.user?.phoneNumber || "..."}</p>
                         </div>
 
-                        <div style={{ padding: "0 24px", marginTop: 24 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between" }}>
                             <Button
-                                type="primary"
+                                onClick={handleBackToPayment}
                                 style={{
-                                    width: "100%",
-                                    borderRadius: 8,
-                                    backgroundColor: "#00cfff",
-                                    borderColor: "#00cfff",
-                                    fontWeight: 600,
-                                }}
-                                onClick={() => {
-                                    console.log("🟦 Gửi dữ liệu đặt khám:", stepData);
-
+                                    borderRadius: 6,
+                                    border: "1px solid #ccc",
+                                    backgroundColor: "#f9f9f9",
+                                    marginTop: 30
                                 }}
                             >
-                                Xác nhận & Đặt khám
+                                ← Quay lại
+                            </Button>
+
+                            <Button
+                                type="primary"
+                                // onClick={() => onNext({ paymentType: selectedPayment })}
+                                style={{
+                                    borderRadius: 6,
+                                    backgroundColor: "#00cfff",
+                                    borderColor: "#00cfff",
+                                    marginTop: 30
+                                }}
+                            >
+                                Xác nhận đặt khám
                             </Button>
                         </div>
                     </div>

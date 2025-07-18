@@ -5,9 +5,8 @@ import AppointmentSpecialty from "../Specialty";
 import AppointmentDoctor from "../Doctor";
 import AppointmentSchedule from "../Schedule";
 import { getStepByServiceId } from "../../../services/appointmentService";
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import PaymentMethod from "../PaymentMethod";
-import { useSelector } from "react-redux";
 
 const { Step } = Steps;
 
@@ -21,7 +20,18 @@ export default function UserBookingFlow() {
   const serviceId = searchParams.get("serviceId");
   const serviceName = searchParams.get("serviceName");
   const hospitalName = searchParams.get("hospitalName");
-  const user = useSelector((state) => state.user.user);
+ 
+  const location = useLocation();
+  useEffect(() => {
+    console.log("Location: ", location);
+    if (location.state?.stepData) {
+      setStepData(location.state.stepData);
+    }
+    if (location.state?.backToStepIndex !== undefined) {
+      setCurrentStepIndex(location.state.backToStepIndex);
+    }
+  }, [location.state]);
+
   useEffect(() => {
     const fetchSteps = async () => {
       const rawSteps = await getStepByServiceId(serviceId);
@@ -39,6 +49,7 @@ export default function UserBookingFlow() {
       setCurrentStepIndex(prev => prev - 1);
     }
   };
+
   const handleNextStep = (result) => {
     const updatedStepData = {
       ...stepData,
@@ -47,7 +58,6 @@ export default function UserBookingFlow() {
       serviceName,
       hospitalName,
       hospitalId
-
     };
 
     setStepData(updatedStepData);
@@ -55,13 +65,11 @@ export default function UserBookingFlow() {
     if (currentStepIndex < steps.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
     } else {
-
       navigate("/appointment/accept-infomation", {
         state: {
           hospitalName,
           stepData: {
-            ...updatedStepData,
-            user: user
+            ...updatedStepData
           }
         }
       });
@@ -99,8 +107,8 @@ export default function UserBookingFlow() {
   };
 
   return (
-    <div style={{ marginTop: 50, paddingTop: 50, background: '#eaf8ff' }}>
-      <div style={{ display: "flex", justifyContent: "center" }}>
+    <div style={{ marginTop: 50, paddingTop: 50, background: '#eaf8ff', minHeight:700 }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems:"center" }}>
         <Steps current={currentStepIndex} style={{ width: "70%" }}>
           {steps.map((s, i) => (
             <Step key={i} title={s.steps.name} />

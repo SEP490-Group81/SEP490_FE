@@ -182,9 +182,10 @@ function PaymentMethod({ onNext, defaultValue, infomationValue, onBack }) {
                 onRow={(record) => ({
                   onClick: () => {
                     setSelectedPayment(record.key);
-                    console.log("record key : " + record.key);
                   },
+                  style: { cursor: 'pointer' }
                 })}
+
                 rowClassName={(record) =>
                   record.key === selectedPayment ? "selected-payment-row" : ""
                 }

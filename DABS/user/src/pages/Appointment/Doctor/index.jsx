@@ -9,7 +9,6 @@ import {
     MailOutlined,
 } from "@ant-design/icons";
 import "./styles.scss";
-import { useSearchParams } from "react-router-dom";
 import { getDoctorByHospitalId } from "../../../services/doctorService";
 
 dayjs.locale("vi");
@@ -18,7 +17,7 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
     const [selectedDoctor, setSelectedDoctor] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [doctors, setDoctors] = useState([]);
-    const [searchParams] = useSearchParams();
+    const [selectedDoctorModal, setSelectedDoctorModal] = useState(null);
 
     console.log("default value: " + defaultValue?.specialty?.name);
     useEffect(() => {
@@ -36,7 +35,7 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
         }
     }, [defaultValue]);
     const handleDetail = (doctor) => {
-        setSelectedDoctor(doctor);
+        setSelectedDoctorModal(doctor);
         setIsModalVisible(true);
     };
 
@@ -266,7 +265,7 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
                                 onClick={() => onNext({ doctor: selectedDoctor })}
                             >
 
-                                Xác nhận
+                                Tiếp tục →
                             </Button>
                         </div>
                     </div>
@@ -285,7 +284,7 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
                     <div>
                         <p>
                             <UserOutlined /> <strong>Họ tên:</strong>{" "}
-                            {selectedDoctor?.user?.fullname}
+                            {selectedDoctorModal?.user?.fullname}
                         </p>
                         <p>
                             <strong>Chuyên khoa:</strong> {selectedDoctor.specialty}
