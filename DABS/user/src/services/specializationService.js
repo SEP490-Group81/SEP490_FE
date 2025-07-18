@@ -2,7 +2,7 @@ import { get } from "../utils/request";
 
 export const getSpecializationList = async () => {
     try {
-        const result = await get('/specialization');
+        const result = await get('/specializations');
        
         if (!result || !result.result) {
             throw new Error('Specialization data is missing in the response.');

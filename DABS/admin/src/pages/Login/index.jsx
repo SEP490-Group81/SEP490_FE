@@ -5,6 +5,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { clearMessage, setMessage } from "../../redux/slices/messageSlice";
 import { loginUser } from "../../redux/slices/userSlice";
+import {
+    DOCTOR,
+    NURSE,
+    PATIENT,
+    HOSPITALADMIN,
+    HOSPITALSTAFF,
+    SYSTEMADMIN
+} from "../../constants/roles/role";
 const { Title } = Typography;
 
 function Login() {
@@ -33,27 +41,37 @@ function Login() {
                 const tokenData = resultAction.payload;
                 console.log("Token data in login: ", tokenData.user.role);
 
-                if (tokenData?.user && tokenData.user.role.name !== 'Patient') {
+                if (tokenData?.user && tokenData.user.role.name !== PATIENT) {
+                    const role = tokenData.user.role.name;
 
-                    dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
+                    const isInternal =
+                        role === NURSE ||
+                        role === DOCTOR ||
+                        role === HOSPITALSTAFF ||
+                        role === HOSPITALADMIN ||
+                        role === SYSTEMADMIN;
 
-                    setTimeout(() => {
+                    if (isInternal) {
                         dispatch(setMessage({ type: 'success', content: 'Đăng nhập thành công!' }));
-                        if (tokenData.user.role.name === 'Nurse') {
-                            navigate('/nurse');
-                        } else if (tokenData.user.role.name === 'Hospital Admin') {
-                            navigate('/admin-hospital');
-                        } else if (tokenData.user.role.name === 'Doctor') {
-                            navigate('/doctor');
-                        } else if (tokenData.user.role.name === 'Hospital Staff') {
-                            navigate('/staff');
-                        } else if (tokenData.user.role.name === 'System Admin') {
-                            navigate('/admin-system');
-                        } else {
-                            dispatch(setMessage({ type: 'error', content: 'Vui lòng dùng tài khoản nội bộ!' }));
-                        }
-                    }, 800);
-                } else if (tokenData?.user && tokenData.user.role.name === 'Patient') {
+
+                        setTimeout(() => {
+                            if (role === NURSE) {
+                                navigate('/nurse');
+                            } else if (role === DOCTOR) {
+                                navigate('/doctor');
+                            } else if (role === HOSPITALSTAFF) {
+                                navigate('/staff');
+                            } else if (role === HOSPITALADMIN) {
+                                navigate('/admin-hospital');
+                            } else if (role === SYSTEMADMIN) {
+                                navigate('/admin-system');
+                            }
+                        }, 800);
+                    } else {
+                        dispatch(setMessage({ type: 'error', content: 'Vui lòng dùng tài khoản nội bộ!' }));
+                    }
+
+                } else if (tokenData?.user && tokenData.user.role.name === PATIENT) {
                     dispatch(setMessage({ type: 'error', content: 'Vui lòng dùng tài khoản nội bộ!' }));
                 }
                 else {

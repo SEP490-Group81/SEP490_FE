@@ -6,6 +6,7 @@ import "./style.scss";
 import banner1 from "../../assets/images/banner1.png";
 import banner2 from "../../assets/images/banner2.png";
 import banner3 from "../../assets/images/banner3.png";
+import { Spin } from 'antd';
 import React, { useEffect, useState } from "react";
 import { getHospitalList } from "../../services/hospitalService";
 import imgErrorHospital from "../../assets/images/errorImgHospital.jpg";
@@ -89,11 +90,13 @@ function Home() {
     ));
 
     const [hospital, setHospital] = useState([]);
+    const [loadingHospital, setLoadingHospital] = useState(true);
     useEffect(() => {
         const fetchApi = async () => {
             const result = await getHospitalList();
             if (result) {
                 setHospital(result);
+                setLoadingHospital(false);
             } else {
                 console.error("No hospital data found");
             }
@@ -103,18 +106,19 @@ function Home() {
     console.log(hospital);
 
     const [specialization, setSpecialization] = useState([]);
+    const [loadingSpecialization, setLoadingSpecialization] = useState(true);
     useEffect(() => {
         const fetchApi = async () => {
             const result = await getSpecializationList();
             if (result) {
                 setSpecialization(result);
+                setLoadingSpecialization(false);
             } else {
                 console.error("No hospital data found");
             }
         };
         fetchApi();
     }, []);
-    console.log(specialization);
 
     const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
 
@@ -238,45 +242,47 @@ function Home() {
 
                 <Row justify="center">
                     <Col span={20} >
-                        <Slider {...settings}>
-                            {hospital.map((item, idx) => (
-                                <div key={idx}>
-                                    <Card className="facility-card" hoverable onClick={() => navigate(`/hospital-detail/${item.id}`)}>
-                                        <div style={{
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            marginBottom: 20,
-                                            height: 140
-                                        }}>
-                                            <img
-                                                src={item.image || imgErrorHospital}
-                                                alt="img is loading..."
-                                                style={{ width: 120, height: 120, objectFit: 'cover' }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <h3 style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', height: 50, overflow: 'hidden' }}>
-                                                {item.name || "Cơ sở y tế"}
-                                                <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 5 }} />
-                                            </h3>
-                                            <p style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', height: 80, overflow: 'hidden' }}>
-                                                <EnvironmentOutlined /> {item.address || "Địa chỉ không xác định"}
-                                            </p>
-                                            <div style={{ marginBottom: 10 }}>
-                                                <span>(5) </span>
-                                                <Rate defaultValue={5} disabled style={{ fontSize: 16 }} />
+                        <Spin spinning={loadingHospital} tip="Đang tải cơ sở y tế...">
+                            <Slider {...settings}>
+                                {hospital.map((item, idx) => (
+                                    <div key={idx}>
+                                        <Card className="facility-card" hoverable onClick={() => navigate(`/hospital-detail/${item.id}`)}>
+                                            <div style={{
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                marginBottom: 20,
+                                                height: 140
+                                            }}>
+                                                <img
+                                                    src={item.image || imgErrorHospital}
+                                                    alt="img is loading..."
+                                                    style={{ width: 120, height: 120, objectFit: 'cover' }}
+                                                />
                                             </div>
-                                            <Button type="primary" block>
-                                                Đặt khám ngay
-                                            </Button>
-                                        </div>
-                                    </Card>
-                                </div>
-                            ))}
+                                            <div>
+                                                <h3 style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', height: 50, overflow: 'hidden' }}>
+                                                    {item.name || "Cơ sở y tế"}
+                                                    <CheckCircleFilled style={{ color: '#1890ff', marginLeft: 5 }} />
+                                                </h3>
+                                                <p style={{ whiteSpace: 'normal', wordBreak: 'break-word', textAlign: 'center', height: 80, overflow: 'hidden' }}>
+                                                    <EnvironmentOutlined /> {item.address || "Địa chỉ không xác định"}
+                                                </p>
+                                                <div style={{ marginBottom: 10 }}>
+                                                    <span>(5) </span>
+                                                    <Rate defaultValue={5} disabled style={{ fontSize: 16 }} />
+                                                </div>
+                                                <Button type="primary" block>
+                                                    Đặt khám ngay
+                                                </Button>
+                                            </div>
+                                        </Card>
+                                    </div>
+                                ))}
 
 
-                        </Slider>
+                            </Slider>
+                        </Spin>
                     </Col>
                 </Row>
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20, marginBottom: 30 }}>
@@ -295,12 +301,15 @@ function Home() {
                     <h1>Chuyên khoa</h1>
                 </Col>
             </Row>
-            <Row gutter={[0, 30]} justify="center" style={{ width: '80%', margin: '0 auto' }}>
-                {specialization.slice(0, visibleCount).map((item, idx) => (
-                    <SpecializationItem key={idx} item={item} />
-                ))}
-            </Row>
+            <Spin spinning={loadingSpecialization} tip="Đang tải chuyên khoa...">
+                <Row gutter={[0, 30]} justify="center" style={{ width: '80%', margin: '0 auto' }}>
 
+                    {specialization.slice(0, visibleCount).map((item, idx) => (
+                        <SpecializationItem key={idx} item={item} />
+                    ))}
+
+                </Row>
+            </Spin>
             <div style={{ marginTop: 24, justifyContent: 'center', display: 'flex', marginBottom: 100 }}>
                 <span
                     style={{
