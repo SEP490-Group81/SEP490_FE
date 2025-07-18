@@ -26,6 +26,9 @@ const AdminSystemHeader = () => {
           <Menu.Item key="/admin-system" icon={<DashboardOutlined />}>
             <NavLink to="/admin-system">Dashboard</NavLink>
           </Menu.Item>,
+          <Menu.Item key="/admin-system/hospitals" icon={<DashboardOutlined />}>
+            <NavLink to="/admin-system/hospitals">Quản lý bệnh viện</NavLink>
+          </Menu.Item>
         </Menu>
       </Sider>
       <Layout>

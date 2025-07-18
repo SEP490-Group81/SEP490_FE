@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { deleteAuth, getAuth } from '../utils/request';
+import { deleteAuth, getAuth, postAuth, putAuth } from '../utils/request';
 
 // Token cho authorization
 const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWRlbnRpZmllciI6IjEiLCJlbWFpbCI6ImFkbWluQGhvc3RuYW1lLmNvbSIsImZ1bGxOYW1lIjoiU3VwZXIgVXNlciIsIm5hbWUiOiJTdXBlciIsInN1cm5hbWUiOiJVc2VyIiwiaXBBZGRyZXNzIjoiMC4wLjAuMSIsImF2YXRhclVybCI6IiIsIm1vYmlsZXBob25lIjoiIiwiZXhwIjoxNzgxMjcwNDgzLCJpc3MiOiJodHRwczovL0JFLlNFUDQ5MC5uZXQiLCJhdWQiOiJCRS5TRVA0OTAifQ.kQIX9uvjN9UOPiBitp9JsO2DlPlFyIU4VTP1ZyM4k3Y";
@@ -131,51 +131,31 @@ export const getHospitalById = async (id) => {
 // Create hospital
 export const createHospital = async (hospitalData) => {
     try {
-        if (process.env.NODE_ENV === 'development') {
-            await new Promise(resolve => setTimeout(resolve, 700));
-            const newHospital = {
-                ...hospitalData,
-                id: sampleHospitals.length + 1,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-            return newHospital;
-        }
-
-        const response = await api.post('/hospital/create', hospitalData);
-        return response.data;
+        const result = await postAuth('/hospitals/create', hospitalData);
+        console.log(`hospital created successfully:`, result);
+        return result;
     } catch (error) {
-        console.error('Error creating hospital:', error);
+        console.error(`Error creating hospital with ID ${hospitalData.id}:`, error.message);
         throw error;
     }
 };
 
 // Update hospital
-export const updateHospital = async (id, hospitalData) => {
-    try {
-        if (process.env.NODE_ENV === 'development') {
-            await new Promise(resolve => setTimeout(resolve, 600));
-            const updatedHospital = {
-                ...hospitalData,
-                id,
-                updatedAt: new Date().toISOString()
-            };
-            return updatedHospital;
-        }
-
-        const dataWithId = { ...hospitalData, id };
-        const response = await api.put('/hospital/update', dataWithId);
-        return response.data;
-    } catch (error) {
-        console.error(`Error updating hospital ${id}:`, error);
-        throw error;
-    }
+export const updateHospital = async (hospitalData) => {
+  try {
+    const result = await putAuth(`/hospitals/update`, hospitalData);
+    console.log(`Hospital updated successfully:`, result);
+    return result;
+  } catch (error) {
+    console.error(`Error updating hospital with ID ${hospitalData.id}:`, error.message);
+    throw error;
+  }
 };
 
 // Delete hospital
 export const deleteHospital = async (hospitalId) => {
     try {
-        const result = await deleteAuth(`/hospital/${hospitalId}`);
+        const result = await deleteAuth(`/hospitals`,hospitalId);
         console.log(`Hospital with ID ${hospitalId} deleted successfully:`, result);
         return result.result;
     } catch (error) {

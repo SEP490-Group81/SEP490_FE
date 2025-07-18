@@ -166,13 +166,13 @@ const HospitalTable = ({ hospitals, loading, pagination, onChange, onReload }) =
               onClick={() => handleViewDetail(record)}
             />
           </Tooltip>
-          <Tooltip title="Edit">
+          {/* <Tooltip title="Edit">
             <Button
               type="text"
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
             />
-          </Tooltip>
+          </Tooltip> */}
           <Tooltip title="Delete">
             <Button
               type="text" 
