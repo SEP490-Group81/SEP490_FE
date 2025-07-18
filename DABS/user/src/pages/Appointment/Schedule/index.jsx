@@ -3,7 +3,7 @@ import { Button, Calendar, ConfigProvider, Menu } from "antd";
 import dayjs from 'dayjs';
 import viVN from 'antd/locale/vi_VN';
 import { LeftOutlined, EnvironmentOutlined, CalendarOutlined, SolutionOutlined, CheckCircleFilled, RightOutlined } from '@ant-design/icons';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./styles.scss";
 dayjs.locale('vi');
 
@@ -26,10 +26,11 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
         setSelectedDate(date);
         setSelectedShift(null);
     };
-    const handleNextStep = () => {
-        if (!selectedShift) return;
-        onNext({ date: selectedDate.format('YYYY-MM-DD'), shift: selectedShift });
-    };
+    useEffect(() => {
+        if (defaultValue?.specialty) {
+            setSelectedShift(defaultValue.shift);
+        }
+    }, [defaultValue]);
     return <>
 
         <div style={{ background: '#eaf8ff', display: "flex", flexDirection: "column" }}>
@@ -94,18 +95,31 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
                                 <CheckCircleFilled style={{ color: '#00bfff', marginRight: 8 }} />
                                 {infomationValue.hospitalName}
                             </div>
-                            {/* <div style={{ color: '#777', marginBottom: 16 }}>
-                                <EnvironmentOutlined style={{ color: '#00bfff', marginRight: 8 }} />
-                                429 Tô Hiến Thành, Phường 14, Quận 10, Thành phố Hồ Chí Minh
-                            </div> */}
-                        
+
                             <div style={{ marginBottom: 8 }}>
                                 <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
                                 <span style={{ fontWeight: 500 }}>Dịch vụ:</span> {infomationValue.serviceName}
                             </div>
-                            <div>
+                            <div style={{ marginBottom: 8 }}>
+                                <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
+                                <span style={{ fontWeight: 500 }}>Chuyên khoa:</span> {defaultValue?.specialty?.name}
+                            </div>
+                            <div style={{ marginBottom: 8 }}>
+                                <CalendarOutlined
+                                    style={{ color: "#00bfff", marginRight: 8 }}
+                                />
+                                <span style={{ fontWeight: 500 }}>
+                                    Bác sĩ: {defaultValue?.doctor?.user?.fullname}
+                                </span>
+                            </div>
+                            <div style={{ marginBottom: 8 }}>
                                 <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
                                 <span style={{ fontWeight: 500 }}>Ngày khám:</span> {selectedDate.format('DD/MM/YYYY')}
+                                {selectedShift && (
+                                    <span style={{ fontWeight: 500 }}>
+                                        {" "}({selectedShift === 'morning' ? 'Buổi sáng' : 'Buổi chiều'})
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -242,16 +256,13 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
                                     borderColor: '#00cfff',
                                     marginTop: 30
                                 }}
-                                onClick={handleNextStep}
+                                onClick={() => onNext({ date: selectedDate.format('YYYY-MM-DD'), shift: selectedShift })}
                             >
                                 Tiếp tục →
                             </Button>
                         </div>
                     </div>
-
                 </div>
-
-
             </ConfigProvider>
         </div>
     </>

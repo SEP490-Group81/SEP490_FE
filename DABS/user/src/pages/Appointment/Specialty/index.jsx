@@ -201,7 +201,7 @@ function AppointmentSpecialty({ onNext, defaultValue, infomationValue, onBack })
                                     backgroundColor: '#00cfff',
                                     borderColor: '#00cfff'
                                 }}
-                                onClick={() => onNext({ specialty: selectedSpecialty, hospitalId })}
+                                onClick={() => onNext({ specialty: selectedSpecialty })}
                             >
                                 Tiếp tục →
                             </Button>

@@ -19,13 +19,8 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [doctors, setDoctors] = useState([]);
     const [searchParams] = useSearchParams();
-    const [selectedSpecialty, setSelectedSpecialty] = useState(null);
-    useEffect(() => {
-        if (defaultValue?.specialty) {
-            setSelectedSpecialty(defaultValue.specialty);
-        }
-    }, [defaultValue]);
-    console.log("default value: " + defaultValue);
+
+    console.log("default value: " + defaultValue?.specialty?.name);
     useEffect(() => {
         const fetchApi = async () => {
             const result = await getDoctorByHospitalId(infomationValue.hospitalId);
@@ -35,7 +30,11 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
         fetchApi();
     }, [infomationValue.hospitalId]);
 
-
+    useEffect(() => {
+        if (defaultValue?.doctor) {
+            setSelectedDoctor(defaultValue.doctor);
+        }
+    }, [defaultValue]);
     const handleDetail = (doctor) => {
         setSelectedDoctor(doctor);
         setIsModalVisible(true);
@@ -80,20 +79,6 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
                         onClick={() => handleDetail(record)}
                     >
                         Xem chi tiết
-                    </Button>
-                    <Button
-                        type="primary"
-                        style={{
-                            borderRadius: 6,
-                            backgroundColor: "#00cfff",
-                            borderColor: "#00cfff",
-                        }}
-                        onClick={() => {
-                            setSelectedDoctor(record);
-                            console.log("Đặt khám với bác sĩ:", record.user.fullname);
-                        }}
-                    >
-                        Đặt khám
                     </Button>
                 </div>
 
@@ -198,7 +183,7 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
                             </div>
                             <div style={{ marginBottom: 8 }}>
                                 <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
-                                <span style={{ fontWeight: 500 }}>Chuyên khoa:</span> {selectedSpecialty?.name}
+                                <span style={{ fontWeight: 500 }}>Chuyên khoa:</span> {defaultValue?.specialty?.name}
                             </div>
                             <div style={{ marginBottom: 8 }}>
                                 <CalendarOutlined
@@ -250,6 +235,12 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
                                     borderRadius: 8,
                                     boxShadow: "0 2px 8px #e6f4ff",
                                 }}
+                                onRow={(record) => ({
+                                    onClick: () => {
+                                        setSelectedDoctor(record);
+                                    },
+                                    style: { cursor: 'pointer' }
+                                })}
                             />
 
                         </div>

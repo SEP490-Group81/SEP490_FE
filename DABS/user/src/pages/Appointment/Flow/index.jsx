@@ -33,20 +33,20 @@ export default function UserBookingFlow() {
 
     fetchSteps();
   }, [serviceId]);
+
   const handlePrevStep = () => {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(prev => prev - 1);
     }
   };
   const handleNextStep = (result) => {
-    const key = steps[currentStepIndex].steps.stepType;
     const updatedStepData = {
       ...stepData,
-      [key]: result,
+      ...result,
       serviceId,
       serviceName,
       hospitalName,
-      hospitalId: stepData?.[1]?.hospitalId || null,
+      hospitalId
 
     };
 
@@ -71,12 +71,11 @@ export default function UserBookingFlow() {
   const renderCurrentStep = () => {
     const currentStep = steps[currentStepIndex];
     if (!currentStep) return null;
-
     const stepType = currentStep.steps.stepType;
     const commonProps = {
       onNext: handleNextStep,
       onBack: handlePrevStep,
-      defaultValue: stepData[stepType],
+      defaultValue: stepData,
       infomationValue: {
         hospitalId,
         serviceId,
