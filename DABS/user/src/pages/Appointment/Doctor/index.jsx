@@ -22,12 +22,29 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
     console.log("default value: " + defaultValue?.specialty?.name);
     useEffect(() => {
         const fetchApi = async () => {
-            const result = await getDoctorByHospitalId(infomationValue.hospitalId);
-            setDoctors(result);
-            //   setLoadingHospital(false);
+            try {
+                const result = await getDoctorByHospitalId(infomationValue.hospitalId);
+                const filteredDoctors = defaultValue?.specialty
+                    ? result.filter((doctor) =>
+                        doctor.specializations.some(
+                            (spec) => spec.id === defaultValue.specialty.id
+                        )
+                    )
+                    : result;
+
+                const doctorsWithKey = filteredDoctors.map((doctor, index) => ({
+                    ...doctor,
+                    key: index + 1,
+                }));
+
+                setDoctors(doctorsWithKey);
+            } catch (error) {
+                console.error("Lỗi khi fetch danh sách bác sĩ:", error);
+            }
         };
+
         fetchApi();
-    }, [infomationValue.hospitalId]);
+    }, [infomationValue.hospitalId, defaultValue?.specialty?.id]);
 
     useEffect(() => {
         if (defaultValue?.doctor) {
@@ -213,6 +230,7 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
                                     color: "#fff",
                                     borderTopLeftRadius: 16,
                                     borderTopRightRadius: 16,
+                                    minWidth: 460,
                                     fontWeight: 600,
                                     fontSize: 20,
                                     padding: "16px 24px",
@@ -257,6 +275,7 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
 
                             <Button
                                 type="primary"
+                                disabled={!selectedDoctor}
                                 style={{
                                     borderRadius: 6,
                                     backgroundColor: "#00cfff",
@@ -275,28 +294,78 @@ function AppointmentDoctor({ onNext, defaultValue, infomationValue, onBack }) {
 
             {/* Modal chi tiết bác sĩ */}
             <Modal
-                title="Thông tin chi tiết bác sĩ"
+                title={
+                    <span style={{ color: "black", fontSize: 20, fontWeight: 600 }}>
+                        🩺 Thông tin chi tiết bác sĩ
+                    </span>
+                }
                 open={isModalVisible}
                 onCancel={() => setIsModalVisible(false)}
                 footer={null}
+                bodyStyle={{
+                    padding: 16,
+                    borderRadius: "0 0 8px 8px",
+                }}
             >
-                {selectedDoctor && (
-                    <div>
-                        <p>
-                            <UserOutlined /> <strong>Họ tên:</strong>{" "}
-                            {selectedDoctorModal?.user?.fullname}
-                        </p>
-                        <p>
-                            <strong>Chuyên khoa:</strong> {selectedDoctor.specialty}
-                        </p>
+                {selectedDoctorModal && (
+                    <div style={{ fontSize: 15, lineHeight: "1.8" }}>
+                        {selectedDoctorModal?.user?.avatarUrl && (
+                            <div style={{ textAlign: "center", marginBottom: 20 }}>
+                                <img
+                                    src={selectedDoctorModal.user.avatarUrl}
+                                    alt="Avatar"
+                                    style={{
+                                        width: 100,
+                                        height: 100,
+                                        borderRadius: "50%",
+                                        objectFit: "cover",
+                                        border: "3px solid #00bfff",
+                                    }}
+                                />
+                            </div>
+                        )}
 
                         <p>
-                            <MailOutlined /> <strong>Email:</strong>{" "}
-                            {selectedDoctor?.user?.email}
+                            <UserOutlined style={{ color: "#00bfff", marginRight: 8 }} />
+                            <strong>Họ tên:</strong> {selectedDoctorModal?.user?.fullname || "Chưa cập nhật"}
+                        </p>
+                        <p>
+                            <MailOutlined style={{ color: "#00bfff", marginRight: 8 }} />
+                            <strong>Email:</strong> {selectedDoctorModal?.user?.email || "Chưa cập nhật"}
+                        </p>
+                        <p>
+                            <UserOutlined style={{ color: "#00bfff", marginRight: 8 }} />
+                            <strong>SĐT:</strong> {selectedDoctorModal?.user?.phoneNumber || "Chưa cập nhật"}
+                        </p>
+                        <p>
+                            <strong>🧠 Chuyên khoa:</strong>{" "}
+                            {selectedDoctorModal?.specializations
+                                ?.map((s) => s.name)
+                                .join(", ") || "Chưa cập nhật"}
+                        </p>
+                        <p>
+                            <strong>🎓 Bằng cấp:</strong>
+                            <ul style={{ paddingLeft: 20 }}>
+                                {selectedDoctorModal?.qualification?.map((q) => (
+                                    <li key={q.id}>
+                                        {q.qualificationName} - {q.instituteName} ({q.procurementYear})
+                                    </li>
+                                )) || <li>Chưa cập nhật</li>}
+                            </ul>
+                        </p>
+                        <p>
+                            <strong>🗓 Bắt đầu hành nghề:</strong>{" "}
+                            {selectedDoctorModal?.practicingFrom
+                                ? dayjs(selectedDoctorModal.practicingFrom).format("DD/MM/YYYY")
+                                : "Chưa cập nhật"}
+                        </p>
+                        <p>
+                            <strong>📝 Mô tả:</strong> {selectedDoctorModal?.description || "Chưa có mô tả"}
                         </p>
                     </div>
                 )}
             </Modal>
+
         </div>
     );
 }
