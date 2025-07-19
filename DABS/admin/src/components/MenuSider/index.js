@@ -113,7 +113,7 @@ function MenuSider() {
         },
         {
             key: "profile",
-            label: <Link to="/doctor/doctor-profile">Hồ sơ</Link>,
+            label: <Link to="/doctor/profile">Hồ sơ</Link>,
             icon: <IdcardOutlined />,
         },
         {

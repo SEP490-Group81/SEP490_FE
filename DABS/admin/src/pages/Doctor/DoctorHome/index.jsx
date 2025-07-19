@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, Row, Col, Button, List, Avatar, Typography, Tag, Divider } from "antd";
 import { CalendarOutlined, UserOutlined, NotificationOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import { useSelector } from "react-redux";
 
 const { Title, Text } = Typography;
 
@@ -40,6 +41,8 @@ const getStatusTag = (status) => {
 };
 
 const DoctorHome = () => {
+  const user = useSelector((state) => state.user.user);
+    console.log("doctor id is: " + JSON.stringify(user));
   return (
     <div style={{ maxWidth: 1080, margin: "0 auto", padding: 24 }}>
       <Title style={{ textAlign: "center", color: "#1890ff" }} level={2}>Chào bác sĩ Nguyễn Văn A</Title>

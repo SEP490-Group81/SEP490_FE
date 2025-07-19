@@ -89,7 +89,7 @@ function AppointmentReviewPage() {
                 doctorId: Number(stepData.doctor?.id || 0),
                 appointmentDate: dayjs(stepData.date).toISOString(),
                 bookingTime: stepData.shift === "morning" ? 1 : 2,
-                paymentMethod: stepData.paymentType === "cash" ? 1 : 2,
+                paymentMethod: stepData.paymentType === "cash" ? 1 : 5,
                 note: "",
             };
             console.log("pay load in booking confirm : " + JSON.stringify(payload));
