@@ -1,47 +1,133 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, Select, Button, Spin, notification, Row, Col } from 'antd';
+import { Modal, Form, Input, Select, Button, Spin, Row, Col, DatePicker } from 'antd';
 import { UserAddOutlined } from '@ant-design/icons';
+import { useDispatch } from 'react-redux';
+import { setMessage } from '../../../redux/slices/messageSlice'; // ✅ Sử dụng path đúng
 import { createUser } from '../../../services/userService';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 
 const AddUser = ({ visible, onCancel, onSuccess }) => {
     const [form] = Form.useForm();
-    const [spinning, setSpinning] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const dispatch = useDispatch();
 
-    const success = () => {
-        notification.success({
-            message: 'Success',
-            description: 'User added successfully!',
-            placement: 'topRight',
-        });
-    };
-
-    const error = () => {
-        notification.error({
-            message: 'Error',
-            description: 'Failed to add user. Please try again.',
-            placement: 'topRight',
-        });
-    };
+    // ✅ Simplified roles data
+    const roles = [
+        { id: 1, name: 'Doctor', roleType: 2 },
+        { id: 2, name: 'Patient', roleType: 6 },
+        { id: 3, name: 'Hospital Admin', roleType: 4 },
+        { id: 4, name: 'System Admin', roleType: 5 },
+        { id: 5, name: 'Nurse', roleType: 7 },
+        { id: 6, name: 'Default User', roleType: 1 }
+    ];
 
     const handleSubmit = async (values) => {
-        setSpinning(true);
+        setLoading(true);
+        
         try {
-            const response = await createUser(values);
-            setSpinning(false);
+            const selectedRole = roles.find(role => role.id === values.roleId);
+            
+            const userData = {
+                hospitalId: 0,
+                roleType: selectedRole?.roleType || 1,
+                fullname: values.fullname,
+                phoneNumber: values.phoneNumber || '',
+                email: values.email,
+                password: values.password,
+                avatarUrl: '',
+                dob: values.dob ? values.dob.format('YYYY-MM-DD') : '2025-07-18',
+                gender: values.gender === 'male',
+                job: values.job || '',
+                cccd: values.cccd || '',
+                province: values.province || '',
+                ward: values.ward || '',
+                streetAddress: values.streetAddress || ''
+            };
 
-            if (response) {
+            console.log('📤 Creating user:', userData);
+
+            const response = await createUser(userData);
+            
+            if (response?.success || response?.result) {
+                // ✅ Success message sử dụng Redux messageSlice có sẵn
+                dispatch(setMessage({
+                    type: 'success',
+                    content: 'User created successfully! 🎉',
+                    duration: 4
+                }));
+                
                 form.resetFields();
-                success();
                 onSuccess();
             } else {
-                error();
+                throw new Error('Invalid response from server');
             }
-        } catch (err) {
-            setSpinning(false);
-            error();
-            console.error("Error adding user:", err);
+        } catch (error) {
+            console.error('❌ Error creating user:', error);
+            
+            let errorMessage = 'Failed to create user. Please try again.';
+            
+            // ✅ Handle specific error responses
+            if (error.response?.data) {
+                const errorData = error.response.data;
+                
+                if (errorData.title) {
+                    switch (errorData.title) {
+                        case 'PHONE_ALREADY_EXISTS':
+                            errorMessage = 'This phone number is already registered. Please use a different phone number.';
+                            break;
+                        case 'EMAIL_ALREADY_EXISTS':
+                            errorMessage = 'This email is already registered. Please use a different email address.';
+                            break;
+                        case 'CCCD_ALREADY_EXISTS':
+                            errorMessage = 'This CCCD/ID card number is already registered. Please check your ID number.';
+                            break;
+                        case 'USERNAME_ALREADY_EXISTS':
+                            errorMessage = 'This username is already taken. Please choose a different username.';
+                            break;
+                        case 'VALIDATION_ERROR':
+                            errorMessage = 'Please check your input data. Some fields contain invalid information.';
+                            break;
+                        default:
+                            errorMessage = errorData.title.replace(/_/g, ' ').toLowerCase();
+                            break;
+                    }
+                }
+                else if (errorData.errors) {
+                    const validationErrors = [];
+                    Object.keys(errorData.errors).forEach(field => {
+                        const fieldErrors = errorData.errors[field];
+                        if (Array.isArray(fieldErrors)) {
+                            validationErrors.push(...fieldErrors.filter(err => typeof err === 'string'));
+                        } else if (typeof fieldErrors === 'string') {
+                            validationErrors.push(fieldErrors);
+                        }
+                    });
+                    if (validationErrors.length > 0) {
+                        errorMessage = validationErrors.join('. ');
+                    }
+                }
+                else if (errorData.message) {
+                    errorMessage = errorData.message;
+                }
+                else if (errorData.error) {
+                    errorMessage = errorData.error;
+                }
+            }
+            else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            // ✅ Error message sử dụng Redux messageSlice có sẵn
+            dispatch(setMessage({
+                type: 'error',
+                content: `❌ ${errorMessage}`,
+                duration: 6
+            }));
+            
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -53,63 +139,59 @@ const AddUser = ({ visible, onCancel, onSuccess }) => {
                     Add New User
                 </div>
             }
-            visible={visible}
+            open={visible}
             onCancel={onCancel}
             footer={null}
-            width={700}
-            className="custom-modal"
+            width={900}
+            destroyOnClose
         >
-            <Spin spinning={spinning}>
-                <div className="user-form-container">
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        onFinish={handleSubmit}
-                        initialValues={{ status: 'active', role: 'user' }}
-                    >
+            <Spin spinning={loading}>
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSubmit}
+                    initialValues={{
+                        gender: 'female',
+                        dob: dayjs('1990-01-01')
+                    }}
+                >
+                    {/* Account Information */}
+                    <div style={{ marginBottom: 24 }}>
+                        <h4 style={{ color: '#1890ff', marginBottom: 16 }}>Account Information</h4>
+                        
                         <Row gutter={16}>
-                            <Col xs={24} md={12}>
+                            <Col span={12}>
                                 <Form.Item
-                                    name="firstName"
-                                    label="First Name"
-                                    rules={[{ required: true, message: 'Please enter first name' }]}
+                                    name="email"
+                                    label="Email"
+                                    rules={[
+                                        { required: true, message: 'Please enter email' },
+                                        { type: 'email', message: 'Please enter valid email' },
+                                        { max: 100, message: 'Email must not exceed 100 characters' }
+                                    ]}
                                 >
-                                    <Input placeholder="Enter first name" />
+                                    <Input placeholder="Enter email address" />
                                 </Form.Item>
                             </Col>
-
-                            <Col xs={24} md={12}>
+                            <Col span={12}>
                                 <Form.Item
-                                    name="lastName"
-                                    label="Last Name"
-                                    rules={[{ required: true, message: 'Please enter last name' }]}
+                                    name="roleId"
+                                    label="Role"
+                                    rules={[{ required: true, message: 'Please select role' }]}
                                 >
-                                    <Input placeholder="Enter last name" />
+                                    <Select placeholder="Select user role">
+                                        {roles.map(role => (
+                                            <Option key={role.id} value={role.id}>
+                                                {role.name}
+                                            </Option>
+                                        ))}
+                                    </Select>
                                 </Form.Item>
                             </Col>
                         </Row>
 
-                        <Form.Item
-                            name="email"
-                            label="Email"
-                            rules={[
-                                { required: true, message: 'Please enter email' },
-                                { type: 'email', message: 'Please enter a valid email' }
-                            ]}
-                        >
-                            <Input placeholder="Enter email" />
-                        </Form.Item>
-
-                        <Form.Item
-                            name="username"
-                            label="Username"
-                            rules={[{ required: true, message: 'Please enter username' }]}
-                        >
-                            <Input placeholder="Enter username" />
-                        </Form.Item>
-
                         <Row gutter={16}>
-                            <Col xs={24} md={12}>
+                            <Col span={12}>
                                 <Form.Item
                                     name="password"
                                     label="Password"
@@ -121,8 +203,7 @@ const AddUser = ({ visible, onCancel, onSuccess }) => {
                                     <Input.Password placeholder="Enter password" />
                                 </Form.Item>
                             </Col>
-
-                            <Col xs={24} md={12}>
+                            <Col span={12}>
                                 <Form.Item
                                     name="confirmPassword"
                                     label="Confirm Password"
@@ -134,7 +215,7 @@ const AddUser = ({ visible, onCancel, onSuccess }) => {
                                                 if (!value || getFieldValue('password') === value) {
                                                     return Promise.resolve();
                                                 }
-                                                return Promise.reject(new Error('The two passwords do not match!'));
+                                                return Promise.reject(new Error('Passwords do not match!'));
                                             },
                                         }),
                                     ]}
@@ -143,46 +224,118 @@ const AddUser = ({ visible, onCancel, onSuccess }) => {
                                 </Form.Item>
                             </Col>
                         </Row>
+                    </div>
+
+                    {/* Personal Information */}
+                    <div style={{ marginBottom: 24 }}>
+                        <h4 style={{ color: '#1890ff', marginBottom: 16 }}>Personal Information</h4>
+                        
+                        <Form.Item
+                            name="fullname"
+                            label="Full Name"
+                            rules={[{ required: true, message: 'Please enter full name' }]}
+                        >
+                            <Input placeholder="Enter full name" />
+                        </Form.Item>
 
                         <Row gutter={16}>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="role"
-                                    label="Role"
-                                    rules={[{ required: true, message: 'Please select role' }]}
+                            <Col span={8}>
+                                <Form.Item 
+                                    name="phoneNumber" 
+                                    label="Phone Number"
+                                    rules={[
+                                        { 
+                                            pattern: /^[0-9]{10,11}$/, 
+                                            message: 'Phone number must be 10-11 digits' 
+                                        }
+                                    ]}
                                 >
-                                    <Select placeholder="Select role">
-                                        <Option value="admin">Administrator</Option>
-                                        <Option value="user">Regular User</Option>
+                                    <Input placeholder="Enter phone number (10-11 digits)" />
+                                </Form.Item>
+                            </Col>
+                            <Col span={8}>
+                                <Form.Item
+                                    name="gender"
+                                    label="Gender"
+                                    rules={[{ required: true, message: 'Please select gender' }]}
+                                >
+                                    <Select placeholder="Select gender">
+                                        <Option value="male">Male</Option>
+                                        <Option value="female">Female</Option>
                                     </Select>
                                 </Form.Item>
                             </Col>
-
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="status"
-                                    label="Status"
-                                    rules={[{ required: true, message: 'Please select status' }]}
-                                >
-                                    <Select placeholder="Select status">
-                                        <Option value="active">Active</Option>
-                                        <Option value="inactive">Inactive</Option>
-                                        <Option value="blocked">Blocked</Option>
-                                    </Select>
+                            <Col span={8}>
+                                <Form.Item name="dob" label="Date of Birth">
+                                    <DatePicker
+                                        style={{ width: '100%' }}
+                                        placeholder="Select date"
+                                        format="YYYY-MM-DD"
+                                    />
                                 </Form.Item>
                             </Col>
                         </Row>
 
-                        <Form.Item className="button-group">
-                            <Button type="default" onClick={onCancel} style={{ marginRight: 8 }}>
+                        <Row gutter={16}>
+                            <Col span={12}>
+                                <Form.Item name="job" label="Job/Occupation">
+                                    <Input placeholder="Enter job" />
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item 
+                                    name="cccd" 
+                                    label="CCCD/ID Card"
+                                    rules={[
+                                        { 
+                                            pattern: /^[0-9]{9,12}$/, 
+                                            message: 'CCCD must be 9-12 digits' 
+                                        }
+                                    ]}
+                                >
+                                    <Input placeholder="Enter ID number (9-12 digits)" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </div>
+
+                    {/* Address Information */}
+                    <div style={{ marginBottom: 24 }}>
+                        <h4 style={{ color: '#1890ff', marginBottom: 16 }}>Address Information</h4>
+                        
+                        <Row gutter={16}>
+                            <Col span={8}>
+                                <Form.Item name="province" label="Province">
+                                    <Input placeholder="Enter province" />
+                                </Form.Item>
+                            </Col>
+                            <Col span={8}>
+                                <Form.Item name="ward" label="Ward">
+                                    <Input placeholder="Enter ward" />
+                                </Form.Item>
+                            </Col>
+                            <Col span={8}>
+                                <Form.Item name="streetAddress" label="Street Address">
+                                    <Input placeholder="Enter street address" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <Row justify="end" gutter={8}>
+                        <Col>
+                            <Button onClick={onCancel}>
                                 Cancel
                             </Button>
-                            <Button type="primary" htmlType="submit">
+                        </Col>
+                        <Col>
+                            <Button type="primary" htmlType="submit" loading={loading}>
                                 Create User
                             </Button>
-                        </Form.Item>
-                    </Form>
-                </div>
+                        </Col>
+                    </Row>
+                </Form>
             </Spin>
         </Modal>
     );

@@ -224,6 +224,16 @@ export const routes = [
         // requireAuth: true,
         // roles: ['admin', 'systemAdmin', 'hospitalAdmin'], 
       },
+      {
+        path: "users",
+        element:
+          //  <ProtectedRoute allowedRoles={['admin']}>
+          <UserManagement />
+        // </ProtectedRoute>
+        ,
+        // requireAuth: true,
+
+      },
 
     ]
   },

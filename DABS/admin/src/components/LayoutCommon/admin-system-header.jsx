@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Layout, Menu } from "antd";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import Sider from "antd/es/layout/Sider";
-import { DashboardOutlined, UserOutlined } from '@ant-design/icons';
+import { DashboardOutlined, HomeOutlined, UserOutlined } from '@ant-design/icons';
 import { Content, Header } from "antd/es/layout/layout";
 import Title from "antd/es/skeleton/Title";
 import { DOCTOR, HOSPITALADMIN, HOSPITALSTAFF, NURSE, SYSTEMADMIN } from "../../constants/roles/role";
@@ -26,7 +26,7 @@ const AdminSystemHeader = () => {
           <Menu.Item key="/admin-system" icon={<DashboardOutlined />}>
             <NavLink to="/admin-system">Dashboard</NavLink>
           </Menu.Item>,
-          <Menu.Item key="/admin-system/hospitals" icon={<DashboardOutlined />}>
+          <Menu.Item key="/admin-system/hospitals" icon={<HomeOutlined />}>
             <NavLink to="/admin-system/hospitals">Quản lý bệnh viện</NavLink>
           </Menu.Item>
         </Menu>
