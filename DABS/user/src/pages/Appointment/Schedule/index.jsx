@@ -5,6 +5,7 @@ import viVN from 'antd/locale/vi_VN';
 import { LeftOutlined, EnvironmentOutlined, CalendarOutlined, SolutionOutlined, CheckCircleFilled, RightOutlined } from '@ant-design/icons';
 import { useEffect, useState } from "react";
 import "./styles.scss";
+import { getHospitalSpecializationSchedule } from "../../../services/scheduleService";
 dayjs.locale('vi');
 
 
@@ -20,10 +21,74 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
             label: <span style={{ color: '#00bfff', fontWeight: 600 }}>Chọn ngày khám</span>,
         },
     ];
-    const [selectedDate, setSelectedDate] = useState(dayjs('2025-07-03'));
+    const defaultSelectedDate = dayjs().startOf('day');
+    const [selectedDate, setSelectedDate] = useState(defaultSelectedDate);
     const [selectedShift, setSelectedShift] = useState(null);
+    const [fromDate, setFromDate] = useState(defaultSelectedDate.startOf('month').startOf('day').toISOString());
+    const [toDate, setToDate] = useState(defaultSelectedDate.endOf('month').endOf('day').toISOString());
+    const [schedules, setSchedules] = useState([]);
+    const [hasMorning, setHasMorning] = useState(false);
+    const [hasAfternoon, setHasAfternoon] = useState(false);
+    useEffect(() => {
+        const fetchSchedule = async () => {
+            try {
+                const hospitalIdInt = defaultValue?.hospitalId ? parseInt(defaultValue.hospitalId, 10) : undefined;
+                const data = await getHospitalSpecializationSchedule({
+                    hospitalId: hospitalIdInt,
+                    doctorIds: defaultValue?.doctor?.id ? [defaultValue.doctor.id] : [],
+                    specializationId: defaultValue?.specialty?.id,
+                    dateFrom: fromDate,
+                    dateTo: toDate
+                });
+                const data2 = ({
+                    hospitalId: hospitalIdInt,
+                    doctorIds: defaultValue?.doctor?.id ? [defaultValue.doctor.id] : [],
+                    specializationId: defaultValue?.specialty?.id,
+                    dateFrom: fromDate,
+                    dateTo: toDate
+                });
+                console.log("data2 call api: " + JSON.stringify(data2));
+                console.log("data call api: " + JSON.stringify(data));
+                setSchedules(data.schedules || []);
+                console.log("schedule call api: " + JSON.stringify(schedules));
+            } catch (err) {
+                console.error("Failed to fetch schedules:", err);
+            }
+        };
+
+        fetchSchedule();
+    }, [toDate, fromDate]);
+
+    useEffect(() => {
+        if (!selectedDate || !schedules.length) {
+            setHasMorning(false);
+            setHasAfternoon(false);
+            return;
+        }
+
+        const selected = selectedDate.format("YYYY-MM-DD");
+        const schedulesOfDay = schedules.filter(s =>
+            dayjs(s.workDate).format("YYYY-MM-DD") === selected && s.isAvailable
+        );
+
+        const morning = schedulesOfDay.some(s =>
+            dayjs(s.startTime, "HH:mm:ss").isBefore(dayjs("12:00:00", "HH:mm:ss"))
+        );
+        const afternoon = schedulesOfDay.some(s =>
+            dayjs(s.startTime, "HH:mm:ss").isAfter(dayjs("13:00:00", "HH:mm:ss"))
+        );
+
+        setHasMorning(morning);
+        setHasAfternoon(afternoon);
+    }, [selectedDate, schedules]);
+
     const handleSelect = (date) => {
         setSelectedDate(date);
+        const startOfMonth = date.startOf('month').startOf('day').toISOString();
+        const endOfMonth = date.endOf('month').endOf('day').toISOString();
+
+        setFromDate(startOfMonth);
+        setToDate(endOfMonth);
         setSelectedShift(null);
     };
     useEffect(() => {
@@ -31,6 +96,7 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
             setSelectedShift(defaultValue.shift);
         }
     }, [defaultValue]);
+    console.log("information in 2 steps is " + JSON.stringify(defaultValue));
     return <>
 
         <div style={{ background: '#eaf8ff', display: "flex", flexDirection: "column" }}>
@@ -149,6 +215,26 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
                                     fullscreen={false}
                                     value={selectedDate}
                                     onSelect={handleSelect}
+                                    disabledDate={currentDate => {
+                                        const dateStr = currentDate.format('YYYY-MM-DD');
+                                        const today = dayjs().startOf('day')
+                                        if (!currentDate.isAfter(today)) {
+                                            return true;
+                                        }
+                                        const schedulesOfDay = schedules.filter(s =>
+                                            dayjs(s.workDate).format('YYYY-MM-DD') === dateStr && s.isAvailable
+                                        );
+
+                                        const hasMorning = schedulesOfDay.some(s =>
+                                            dayjs(s.startTime, 'HH:mm:ss').isBefore(dayjs('12:00:00', 'HH:mm:ss'))
+                                        );
+                                        const hasAfternoon = schedulesOfDay.some(s =>
+                                            dayjs(s.startTime, 'HH:mm:ss').isAfter(dayjs('13:00:00', 'HH:mm:ss'))
+                                        );
+
+
+                                        return !(hasMorning || hasAfternoon);
+                                    }}
                                     headerRender={({ value, onChange }) => (
                                         <div style={{
                                             display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8,
@@ -199,6 +285,7 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
                                     <div style={{ display: 'flex', gap: 24 }}>
                                         <Button
                                             type={selectedShift === 'morning' ? "primary" : "default"}
+                                            disabled={!hasMorning}
                                             style={{
                                                 border: '2px solid #00bfff',
                                                 borderRadius: 8,
@@ -207,13 +294,16 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
                                                 background: selectedShift === 'morning' ? '#00bfff' : '#fff',
                                                 width: 140,
                                                 height: 48,
+                                                opacity: hasMorning ? 1 : 0.5,
+                                                cursor: hasMorning ? 'pointer' : 'not-allowed',
                                             }}
-                                            onClick={() => setSelectedShift('morning')}
+                                            onClick={() => hasMorning && setSelectedShift('morning')}
                                         >
                                             Buổi sáng
                                         </Button>
                                         <Button
                                             type={selectedShift === 'afternoon' ? "primary" : "default"}
+                                            disabled={!hasAfternoon}
                                             style={{
                                                 border: '2px solid #00bfff',
                                                 borderRadius: 8,
@@ -222,8 +312,10 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
                                                 background: selectedShift === 'afternoon' ? '#00bfff' : '#fff',
                                                 width: 140,
                                                 height: 48,
+                                                opacity: hasAfternoon ? 1 : 0.5,
+                                                cursor: hasAfternoon ? 'pointer' : 'not-allowed',
                                             }}
-                                            onClick={() => setSelectedShift('afternoon')}
+                                            onClick={() => hasAfternoon && setSelectedShift('afternoon')}
                                         >
                                             Buổi chiều
                                         </Button>

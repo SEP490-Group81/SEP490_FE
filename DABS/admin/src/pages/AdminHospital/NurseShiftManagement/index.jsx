@@ -374,7 +374,7 @@ const NurseShiftManagement = () => {
                 }}
               >
                 <CalendarOutlined style={{ marginRight: 16 }} />
-                Quản lý lịch trực Y tá
+                Quản lý lịch làm việc Y tá
               </h1>
             </Col>
           </Row>

@@ -20,7 +20,7 @@ export const getStepByServiceId = async (serviceId) => {
 export const createBookAppointment = async (payload) => {
   try {
     const result = await postAuth('/appointments/book', payload);
-    if (!result || !Array.isArray(result)) {
+    if (!result) {
       throw new Error("Invalid response from server. Expected an array.");
     }
 

@@ -394,7 +394,7 @@ const AdminDoctorShiftManagement = () => {
                 }}
               >
                 <CalendarOutlined style={{ marginRight: 16 }} />
-                Quản lý lịch trực bác sĩ
+                Quản lý lịch làm việc bác sĩ
               </h1>
             </Col>
           </Row>
