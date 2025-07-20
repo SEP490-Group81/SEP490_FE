@@ -29,6 +29,9 @@ const AdminSystemHeader = () => {
           <Menu.Item key="/admin-system/hospitals" icon={<HomeOutlined />}>
             <NavLink to="/admin-system/hospitals">Quản lý bệnh viện</NavLink>
           </Menu.Item>
+          <Menu.Item key="/admin-system/users" icon={<UserOutlined />}>
+            <NavLink to="/admin-system/users">Quản lý người dùng</NavLink>
+          </Menu.Item>
         </Menu>
       </Sider>
       <Layout>
