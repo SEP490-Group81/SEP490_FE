@@ -213,6 +213,26 @@ export const routes = [
         index: true,
         element: <AdminSystem />
       },
+      {
+        path: 'hospitals',
+        element: <HospitalManagement />,
+      },
+      {
+        path: 'hospital-detail/:id',
+        element: <HospitalDetail />,
+        // requireAuth: true,
+        // roles: ['admin', 'systemAdmin', 'hospitalAdmin'], 
+      },
+      {
+        path: "users",
+        element:
+          //  <ProtectedRoute allowedRoles={['admin']}>
+          <UserManagement />
+        // </ProtectedRoute>
+        ,
+        // requireAuth: true,
+
+      },
 
     ]
   },

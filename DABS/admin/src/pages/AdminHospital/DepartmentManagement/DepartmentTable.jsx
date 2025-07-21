@@ -6,23 +6,28 @@ import DeleteDepartment from './DeleteDepartment';
 import ViewDepartment from './ViewDepartmentDetail';
 import DoctorManagement from './DoctorManage';
 
-
 const DepartmentTable = ({ departments, loading, pagination, onChange, onReload }) => {
     const [editingDepartment, setEditingDepartment] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [departmentToDelete, setDepartmentToDelete] = useState(null);
+    const [departmentToDelete, setDepartmentToDelete] = useState(null); // Sử dụng này thay vì selectedRecord
     const [showViewModal, setShowViewModal] = useState(false);
     const [viewingDepartment, setViewingDepartment] = useState(null);
     const [showDoctorModal, setShowDoctorModal] = useState(false);
     const [managingDepartment, setManagingDepartment] = useState(null);
 
     const handleEdit = (record) => {
+        console.log('DepartmentTable: Edit clicked for record:', record);
         setEditingDepartment(record);
         setShowEditModal(true);
     };
 
     const handleDelete = (record) => {
+        console.log('🔍 DepartmentTable: Delete clicked for record:', record);
+        console.log('🔍 Record keys:', Object.keys(record || {}));
+        console.log('🔍 Record ID:', record?.id);
+        console.log('🔍 Record structure:', JSON.stringify(record, null, 2));
+
         setDepartmentToDelete(record);
         setShowDeleteModal(true);
     };
@@ -39,11 +44,13 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
 
     const handleEditSuccess = () => {
         setShowEditModal(false);
+        setEditingDepartment(null);
         onReload();
     };
 
     const handleDeleteSuccess = () => {
         setShowDeleteModal(false);
+        setDepartmentToDelete(null);
         onReload();
     };
 
@@ -79,8 +86,24 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
                     />
                     <div>
                         <div style={{ fontWeight: 500 }}>{record.name}</div>
-                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>Code: {record.code}</div>
+                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                            ID: {record.id} {record.code && `| Code: ${record.code}`}
+                        </div>
                     </div>
+                </div>
+            ),
+        },
+        {
+            title: 'Description',
+            dataIndex: 'description',
+            key: 'description',
+            render: (description) => (
+                <div style={{ maxWidth: 200 }}>
+                    {description ? (
+                        description.length > 80
+                            ? description.substring(0, 80) + '...'
+                            : description
+                    ) : 'N/A'}
                 </div>
             ),
         },
@@ -112,7 +135,7 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
             key: 'status',
             render: (status) => (
                 <Tag color={getStatusColor(status)} className="department-status-tag">
-                    {status?.toUpperCase() || 'N/A'}
+                    {status?.toUpperCase() || 'ACTIVE'}
                 </Tag>
             ),
         },
@@ -136,40 +159,47 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
             title: 'Actions',
             key: 'actions',
             width: 200,
-            render: (_, record) => (
-                <Space size="small">
-                    <Tooltip title="View Details">
-                        <Button
-                            type="text"
-                            icon={<EyeOutlined />}
-                            onClick={() => handleView(record)}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Manage Doctors">
-                        <Button
-                            type="text"
-                            icon={<TeamOutlined />}
-                            onClick={() => handleManageDoctors(record)}
-                            style={{ color: '#52c41a' }}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Edit">
-                        <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            onClick={() => handleEdit(record)}
-                        />
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                        <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleDelete(record)}
-                        />
-                    </Tooltip>
-                </Space>
-            ),
+            render: (_, record) => {
+
+
+                return (
+                    <Space size="small">
+                        <Tooltip title="View Details">
+                            <Button
+                                type="text"
+                                icon={<EyeOutlined />}
+                                onClick={() => handleView(record)}
+                            />
+                        </Tooltip>
+                        <Tooltip title="Manage Doctors">
+                            <Button
+                                type="text"
+                                icon={<TeamOutlined />}
+                                onClick={() => handleManageDoctors(record)}
+                                style={{ color: '#52c41a' }}
+                            />
+                        </Tooltip>
+                        <Tooltip title="Edit">
+                            <Button
+                                type="text"
+                                icon={<EditOutlined />}
+                                onClick={() => handleEdit(record)}
+                            />
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                            <Button
+                                type="text"
+                                danger
+                                icon={<DeleteOutlined />}
+                                onClick={() => {
+                                    console.log('Delete button clicked for record:', record);
+                                    handleDelete(record);
+                                }}
+                            />
+                        </Tooltip>
+                    </Space>
+                );
+            },
         },
     ];
 
@@ -178,7 +208,10 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
             <Table
                 columns={columns}
                 dataSource={departments}
-                rowKey="id"
+                rowKey={(record) => {
+
+                    return record.id || record.departmentId || record.deptId || Math.random();
+                }}
                 pagination={pagination}
                 loading={loading}
                 onChange={onChange}
@@ -190,7 +223,10 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
                 <EditDepartment
                     visible={showEditModal}
                     record={editingDepartment}
-                    onCancel={() => setShowEditModal(false)}
+                    onCancel={() => {
+                        setShowEditModal(false);
+                        setEditingDepartment(null);
+                    }}
                     onSuccess={handleEditSuccess}
                 />
             )}
@@ -198,8 +234,11 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
             {showDeleteModal && (
                 <DeleteDepartment
                     visible={showDeleteModal}
-                    record={departmentToDelete}
-                    onCancel={() => setShowDeleteModal(false)}
+                    record={departmentToDelete} // Sử dụng departmentToDelete thay vì selectedRecord
+                    onCancel={() => {
+                        setShowDeleteModal(false);
+                        setDepartmentToDelete(null);
+                    }}
                     onSuccess={handleDeleteSuccess}
                 />
             )}
@@ -208,7 +247,10 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
                 <ViewDepartment
                     visible={showViewModal}
                     record={viewingDepartment}
-                    onCancel={() => setShowViewModal(false)}
+                    onCancel={() => {
+                        setShowViewModal(false);
+                        setViewingDepartment(null);
+                    }}
                 />
             )}
 
@@ -216,7 +258,10 @@ const DepartmentTable = ({ departments, loading, pagination, onChange, onReload 
                 <DoctorManagement
                     visible={showDoctorModal}
                     department={managingDepartment}
-                    onCancel={() => setShowDoctorModal(false)}
+                    onCancel={() => {
+                        setShowDoctorModal(false);
+                        setManagingDepartment(null);
+                    }}
                     onSuccess={handleDoctorManagementSuccess}
                 />
             )}

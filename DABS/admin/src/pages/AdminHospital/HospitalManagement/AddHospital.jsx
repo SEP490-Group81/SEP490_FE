@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, Select, Row, Col, Button, Spin, message } from 'antd';
+import { Modal, Form, Input, Select, Row, Col, Button, Spin, message, TimePicker } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { createHospital } from '../../../services/hospitalService';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -13,22 +14,43 @@ const AddHospital = ({ visible, onCancel, onSuccess }) => {
     const handleSubmit = async (values) => {
         setSpinning(true);
         try {
-            const response = await createHospital(values);
+            console.log('🚀 Form values:', values);
+            
+            // ✅ Transform data to match API schema
+            const hospitalData = {
+                code: values.code,
+                name: values.name,
+                address: values.address,
+                image: values.image || '',
+                googleMapUri: values.googleMapUri || '',
+                banner: values.banner || '',
+                type: parseInt(values.type), // Convert to number
+                phoneNumber: values.phoneNumber,
+                email: values.email,
+                openTime: values.openTime ? values.openTime.toISOString() : null,
+                closeTime: values.closeTime ? values.closeTime.toISOString() : null
+            };
 
-            setTimeout(() => {
-                setSpinning(false);
-                if (response) {
-                    form.resetFields();
-                    message.success('Hospital created successfully!');
-                    onSuccess();
-                } else {
-                    message.error('Failed to create hospital');
-                }
-            }, 1000);
+            console.log('📤 Sending hospital data:', hospitalData);
+            
+            const response = await createHospital(hospitalData);
+
+            setSpinning(false);
+            if (response) {
+                form.resetFields();
+                message.success('Hospital created successfully!');
+                onSuccess();
+            } else {
+                message.error('Failed to create hospital');
+            }
         } catch (err) {
             setSpinning(false);
-            message.error('Error creating hospital');
-            console.error("Error creating hospital:", err);
+            console.error("❌ Error creating hospital:", err);
+            const errorMessage = err.response?.data?.message || 
+                               err.response?.data?.error ||
+                               err.message || 
+                               'Failed to create hospital. Please try again.';
+            message.error(errorMessage);
         }
     };
 
@@ -53,10 +75,12 @@ const AddHospital = ({ visible, onCancel, onSuccess }) => {
                         layout="vertical"
                         onFinish={handleSubmit}
                         initialValues={{
-                            status: 'active',
-                            type: 'General'
+                            type: 1, // Default to General Hospital
+                            openTime: dayjs('08:00', 'HH:mm'),
+                            closeTime: dayjs('18:00', 'HH:mm')
                         }}
                     >
+                        {/* Basic Information */}
                         <Row gutter={16}>
                             <Col xs={24} md={12}>
                                 <Form.Item
@@ -79,6 +103,7 @@ const AddHospital = ({ visible, onCancel, onSuccess }) => {
                             </Col>
                         </Row>
 
+                        {/* Type and Contact */}
                         <Row gutter={16}>
                             <Col xs={24} md={8}>
                                 <Form.Item
@@ -87,89 +112,24 @@ const AddHospital = ({ visible, onCancel, onSuccess }) => {
                                     rules={[{ required: true, message: 'Please select hospital type' }]}
                                 >
                                     <Select placeholder="Select type">
-                                        <Option value="General">General</Option>
-                                        <Option value="Specialized">Specialized</Option>
-                                        <Option value="Community">Community</Option>
+                                        <Option value={1}>General Hospital</Option>
+                                        <Option value={2}>Specialized Hospital</Option>
+                                        <Option value={3}>Community Hospital</Option>
                                     </Select>
                                 </Form.Item>
                             </Col>
 
                             <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="status"
-                                    label="Status"
-                                    rules={[{ required: true, message: 'Please select status' }]}
-                                >
-                                    <Select placeholder="Select status">
-                                        <Option value="active">Active</Option>
-                                        <Option value="inactive">Inactive</Option>
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="establishedDate"
-                                    label="Established Date"
-                                    rules={[{ required: true, message: 'Please enter established date' }]}
-                                >
-                                    <Input type="date" />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-
-                        <Form.Item
-                            name="address"
-                            label="Address"
-                            rules={[{ required: true, message: 'Please enter address' }]}
-                        >
-                            <Input placeholder="123 Main Street" />
-                        </Form.Item>
-
-                        <Row gutter={16}>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="city"
-                                    label="City"
-                                    rules={[{ required: true, message: 'Please enter city' }]}
-                                >
-                                    <Input placeholder="New York" />
-                                </Form.Item>
-                            </Col>
-
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="state"
-                                    label="State"
-                                    rules={[{ required: true, message: 'Please enter state' }]}
-                                >
-                                    <Input placeholder="NY" />
-                                </Form.Item>
-                            </Col>
-
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="zipCode"
-                                    label="Zip Code"
-                                    rules={[{ required: true, message: 'Please enter zip code' }]}
-                                >
-                                    <Input placeholder="10001" />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-
-                        <Row gutter={16}>
-                            <Col xs={24} md={12}>
                                 <Form.Item
                                     name="phoneNumber"
                                     label="Phone Number"
                                     rules={[{ required: true, message: 'Please enter phone number' }]}
                                 >
-                                    <Input placeholder="+1-555-0123" />
+                                    <Input placeholder="+84-123-456-789" />
                                 </Form.Item>
                             </Col>
 
-                            <Col xs={24} md={12}>
+                            <Col xs={24} md={8}>
                                 <Form.Item
                                     name="email"
                                     label="Email"
@@ -183,73 +143,79 @@ const AddHospital = ({ visible, onCancel, onSuccess }) => {
                             </Col>
                         </Row>
 
-                        <Row gutter={16}>
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="adminName"
-                                    label="Administrator Name"
-                                    rules={[{ required: true, message: 'Please enter administrator name' }]}
-                                >
-                                    <Input placeholder="Dr. John Smith" />
-                                </Form.Item>
-                            </Col>
-
-                            <Col xs={24} md={12}>
-                                <Form.Item
-                                    name="adminEmail"
-                                    label="Administrator Email"
-                                    rules={[
-                                        { required: true, message: 'Please enter administrator email' },
-                                        { type: 'email', message: 'Please enter valid email' }
-                                    ]}
-                                >
-                                    <Input placeholder="admin@hospital.com" />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-
-                        <Row gutter={16}>
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="totalBeds"
-                                    label="Total Beds"
-                                    rules={[{ required: true, message: 'Please enter total beds' }]}
-                                >
-                                    <Input type="number" placeholder="500" />
-                                </Form.Item>
-                            </Col>
-
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="totalDepartments"
-                                    label="Total Departments"
-                                    rules={[{ required: true, message: 'Please enter total departments' }]}
-                                >
-                                    <Input type="number" placeholder="15" />
-                                </Form.Item>
-                            </Col>
-
-                            <Col xs={24} md={8}>
-                                <Form.Item
-                                    name="totalStaff"
-                                    label="Total Staff"
-                                    rules={[{ required: true, message: 'Please enter total staff' }]}
-                                >
-                                    <Input type="number" placeholder="800" />
-                                </Form.Item>
-                            </Col>
-                        </Row>
-
+                        {/* Address */}
                         <Form.Item
-                            name="description"
-                            label="Description"
+                            name="address"
+                            label="Address"
+                            rules={[{ required: true, message: 'Please enter address' }]}
                         >
-                            <TextArea
+                            <Input placeholder="123 Main Street, District 1, Ho Chi Minh City" />
+                        </Form.Item>
+
+                        {/* Operating Hours */}
+                        <Row gutter={16}>
+                            <Col xs={24} md={12}>
+                                <Form.Item
+                                    name="openTime"
+                                    label="Opening Time"
+                                    rules={[{ required: true, message: 'Please select opening time' }]}
+                                >
+                                    <TimePicker 
+                                        style={{ width: '100%' }}
+                                        format="HH:mm"
+                                        placeholder="Select opening time"
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col xs={24} md={12}>
+                                <Form.Item
+                                    name="closeTime"
+                                    label="Closing Time"
+                                    rules={[{ required: true, message: 'Please select closing time' }]}
+                                >
+                                    <TimePicker 
+                                        style={{ width: '100%' }}
+                                        format="HH:mm"
+                                        placeholder="Select closing time"
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        {/* Media URLs */}
+                        <Row gutter={16}>
+                            <Col xs={24} md={12}>
+                                <Form.Item
+                                    name="image"
+                                    label="Hospital Logo/Image URL"
+                                >
+                                    <Input placeholder="https://example.com/hospital-logo.png" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col xs={24} md={12}>
+                                <Form.Item
+                                    name="banner"
+                                    label="Banner Image URL"
+                                >
+                                    <Input placeholder="https://example.com/hospital-banner.png" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        {/* Google Maps */}
+                        <Form.Item
+                            name="googleMapUri"
+                            label="Google Maps Embed URI"
+                        >
+                            <TextArea 
                                 rows={3}
-                                placeholder="Brief description of the hospital..."
+                                placeholder="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d..."
                             />
                         </Form.Item>
 
+                        {/* Action Buttons */}
                         <Form.Item className="button-group">
                             <Button type="default" onClick={onCancel} style={{ marginRight: 8 }}>
                                 Cancel

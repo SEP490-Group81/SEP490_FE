@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Layout, Menu, Button } from "antd";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import Sider from "antd/es/layout/Sider";
-import { DashboardOutlined } from '@ant-design/icons';
+import { DashboardOutlined, HomeOutlined, UserOutlined } from '@ant-design/icons';
 import { Content, Header } from "antd/es/layout/layout";
 import Title from "antd/es/typography/Title"; // sửa từ Skeleton thành Typography
 import { useDispatch, useSelector } from "react-redux";
@@ -31,6 +31,12 @@ const AdminSystemHeader = () => {
         >
           <Menu.Item key="/admin-system" icon={<DashboardOutlined />}>
             <NavLink to="/admin-system">Dashboard</NavLink>
+          </Menu.Item>,
+          <Menu.Item key="/admin-system/hospitals" icon={<HomeOutlined />}>
+            <NavLink to="/admin-system/hospitals">Quản lý bệnh viện</NavLink>
+          </Menu.Item>
+          <Menu.Item key="/admin-system/users" icon={<UserOutlined />}>
+            <NavLink to="/admin-system/users">Quản lý người dùng</NavLink>
           </Menu.Item>
         </Menu>
       </Sider>
