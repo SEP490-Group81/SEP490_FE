@@ -18,7 +18,8 @@ export const refreshToken = createAsyncThunk(
 
             const tokenData = await refreshTokenService(accessToken, refreshTokenValue);
             const decoded = decodeToken(tokenData.token);
-           // dispatch(updateAccessToken(tokenData.token));
+          
+            //dispatch(updateAccessToken(tokenData.token));
             localStorage.setItem('accessToken', tokenData.token);
             if (!decoded) throw new Error('Token decoding failed');
 
@@ -79,6 +80,7 @@ const authSlice = createSlice({
     },
     reducers: {
         updateAccessToken: (state, action) => {
+            console.log("after")
             state.accessToken = action.payload;
         },
         logout: (state) => {

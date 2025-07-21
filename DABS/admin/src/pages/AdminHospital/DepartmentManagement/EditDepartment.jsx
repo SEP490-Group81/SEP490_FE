@@ -20,28 +20,37 @@ const EditDepartment = ({ visible, record, onCancel, onSuccess }) => {
   const fetchDepartmentDetails = async (departmentId) => {
     setLoading(true);
     try {
-      const departmentData = await getDepartmentById(departmentId);
-      if (departmentData) {
-        form.setFieldsValue({
-          name: departmentData.name,
-          code: departmentData.code,
-          description: departmentData.description,
-          headOfDepartment: departmentData.headOfDepartment,
-          location: departmentData.location,
-          phoneNumber: departmentData.phoneNumber,
-          email: departmentData.email,
-          totalStaff: departmentData.totalStaff,
-          totalBeds: departmentData.totalBeds,
-          operatingHours: departmentData.operatingHours,
-          status: departmentData.status,
-        });
-      }
+        console.log('🔍 Fetching department details for ID:', departmentId);
+        
+        const departmentData = await getDepartmentById(departmentId);
+        console.log('📦 Department data received:', departmentData);
+        
+        if (departmentData) {
+            form.setFieldsValue({
+                name: departmentData.name || '',
+                code: departmentData.code || '',
+                description: departmentData.description || '',
+                headOfDepartment: departmentData.headOfDepartment || '',
+                location: departmentData.location || '',
+                phoneNumber: departmentData.phoneNumber || '',
+                email: departmentData.email || '',
+                totalStaff: departmentData.totalStaff || 0,
+                totalBeds: departmentData.totalBeds || 0,
+                operatingHours: departmentData.operatingHours || '',
+                status: departmentData.status || 'active',
+            });
+        }
     } catch (error) {
-      console.error("Error fetching department details:", error);
+        console.error("❌ Error fetching department details:", error);
+        notification.error({
+            message: 'Error',
+            description: 'Failed to load department details. Please try again.',
+            placement: 'topRight',
+        });
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   const success = () => {
     notification.success({
@@ -62,21 +71,35 @@ const EditDepartment = ({ visible, record, onCancel, onSuccess }) => {
   const handleSubmit = async (values) => {
     setSpinning(true);
     try {
-      const response = await updateDepartment(record.id, values);
-      setSpinning(false);
-      
-      if (response) {
-        success();
-        onSuccess();
-      } else {
-        error();
-      }
+        console.log('🚀 Updating department with values:', values);
+        console.log('🚀 Department ID:', record.id);
+        
+        const response = await updateDepartment(record.id, values);
+        setSpinning(false);
+        
+        console.log('✅ Update response:', response);
+        
+        if (response) {
+            success();
+            onSuccess();
+        } else {
+            error('No response received from server');
+        }
     } catch (err) {
-      setSpinning(false);
-      error();
-      console.error("Error updating department:", err);
+        setSpinning(false);
+        console.error(" Error updating department:", err);
+        console.error(" Error details:", err.response?.data);
+        
+        const errorMessage = err.response?.data?.message || 
+                            err.message || 
+                            'Failed to update department. Please try again.';
+        notification.error({
+            message: 'Error',
+            description: errorMessage,
+            placement: 'topRight',
+        });
     }
-  };
+};
 
   return (
     <Modal

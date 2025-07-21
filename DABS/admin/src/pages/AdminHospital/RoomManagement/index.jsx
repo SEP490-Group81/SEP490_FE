@@ -99,19 +99,7 @@ const ManageRoom = () => {
       sorter: (a, b) => a.id - b.id
     },
     {
-      title: (
-        <div>
-          Tên phòng khám
-          <Input.Search
-            placeholder="Tìm kiếm..."
-            enterButton={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ marginTop: 8 }}
-            allowClear
-          />
-        </div>
-      ),
+      title: "Tên phòng khám",
       dataIndex: "name",
       width: 450,
       key: "name"
@@ -169,6 +157,18 @@ const ManageRoom = () => {
 
           <Col span={24}>
             <Card>
+              <Row style={{ marginBottom: 25 }}>
+                <Col span={8}>
+                  <Input.Search
+                    placeholder="Tìm kiếm..."
+                    enterButton={<SearchOutlined />}
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    style={{ marginTop: 8 }}
+                    allowClear
+                  />
+                </Col>
+              </Row>
               <Table
                 dataSource={filteredData}
                 rowKey="id"
@@ -196,7 +196,7 @@ const ManageRoom = () => {
               <Input placeholder="Tên phòng khám" />
             </Form.Item>
 
-            <Form.Item 
+            <Form.Item
               name="specialty"
               label="Chuyên khoa"
               rules={[{ required: true, message: "Vui lòng chọn chuyên khoa" }]}
@@ -211,7 +211,7 @@ const ManageRoom = () => {
               name="description"
               label="Mô tả"
             >
-              <Input  placeholder="Mô tả"/>
+              <Input placeholder="Mô tả" />
             </Form.Item>
           </Form>
         </Modal>
