@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { deleteAuth, get, getAuth, postAuth, putAuth } from "../utils/request";
 
 const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWRlbnRpZmllciI6IjEiLCJlbWFpbCI6ImFkbWluQGhvc3RuYW1lLmNvbSIsImZ1bGxOYW1lIjoiU3VwZXIgVXNlciIsIm5hbWUiOiJTdXBlciIsInN1cm5hbWUiOiJVc2VyIiwiaXBBZGRyZXNzIjoiMC4wLjAuMSIsImF2YXRhclVybCI6IiIsIm1vYmlsZXBob25lIjoiIiwiZXhwIjoxNzgxMjcwNDgzLCJpc3MiOiJodHRwczovL0JFLlNFUDQ5MC5uZXQiLCJhdWQiOiJCRS5TRVA0OTAifQ.kQIX9uvjN9UOPiBitp9JsO2DlPlFyIU4VTP1ZyM4k3Y";
 
@@ -207,6 +208,32 @@ export const assignDoctorToDepartment = async (doctorId, departmentId) => {
     return response.data;
   } catch (error) {
     console.error('Error assigning doctor to department:', error);
+    throw error;
+  }
+};
+
+export const getDoctorByHospitalId = async (id) => {
+  try {
+    const result = await get(`/doctors/by-hospital/${id}`);
+    if (!result || !result.result) {
+      throw new Error('User data is missing in the response.');
+    }
+    return result.result;
+  } catch (error) {
+    console.error(`Error fetching user with ID ${id}:`, error.message);
+    throw error;
+  }
+};
+
+export const getDoctorByUserId = async (id) => {
+  try {
+    const result = await get(`/doctors/by-user/${id}`);
+    if (!result || !result.result) {
+      throw new Error('Doctor is missing in the response.');
+    }
+    return result.result;
+  } catch (error) {
+    console.error(`Error fetching doctor with ID ${id}:`, error.message);
     throw error;
   }
 };

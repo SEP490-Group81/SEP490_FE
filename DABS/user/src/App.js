@@ -59,9 +59,7 @@ const App = () => {
     }, 300);
   }, [dispatch]);
 
-  if (!isReady) {
-    return <div>Loading...</div>;
-  }
+  if (!isReady) return null;
   return (
     <AllRouter />
   );

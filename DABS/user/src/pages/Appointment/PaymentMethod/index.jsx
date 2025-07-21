@@ -2,12 +2,16 @@ import { Button, ConfigProvider, Menu, Table } from "antd";
 import dayjs from "dayjs";
 import viVN from "antd/locale/vi_VN";
 import { CalendarOutlined, CheckCircleFilled } from "@ant-design/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 dayjs.locale("vi");
 
 function PaymentMethod({ onNext, defaultValue, infomationValue, onBack }) {
   const [selectedPayment, setSelectedPayment] = useState(defaultValue?.paymentType || null);
-
+  useEffect(() => {
+    if (defaultValue?.paymentType) {
+      setSelectedPayment(defaultValue.paymentType);
+    }
+  }, [defaultValue]);
   const items = [
     {
       key: "center",
@@ -45,10 +49,7 @@ function PaymentMethod({ onNext, defaultValue, infomationValue, onBack }) {
     },
   ];
 
-  const handleSubmit = () => {
-    if (!selectedPayment) return;
-    onNext({ paymentType: selectedPayment });
-  };
+
 
   return (
     <div style={{ background: "#eaf8ff", display: "flex", flexDirection: "column" }}>
@@ -75,12 +76,10 @@ function PaymentMethod({ onNext, defaultValue, infomationValue, onBack }) {
             display: "flex",
             justifyContent: "center",
             alignItems: "flex-start",
-            marginBottom: 50,
             gap: 32,
             padding: 40,
           }}
         >
-          {/* Bảng thông tin */}
           <div
             style={{
               background: "#fff",
@@ -104,71 +103,103 @@ function PaymentMethod({ onNext, defaultValue, infomationValue, onBack }) {
             >
               Thông tin cơ sở y tế
             </div>
-            <div style={{ padding: "24px 24px 0 24px", fontSize: 15 }}>
+            <div style={{ padding: '24px 24px 0 24px', fontSize: 15 }}>
               <div style={{ fontWeight: 600, marginBottom: 8 }}>
-                <CheckCircleFilled style={{ color: "#00bfff", marginRight: 8 }} />
+                <CheckCircleFilled style={{ color: '#00bfff', marginRight: 8 }} />
                 {infomationValue.hospitalName}
               </div>
 
               <div style={{ marginBottom: 8 }}>
-                <CalendarOutlined style={{ color: "#00bfff", marginRight: 8 }} />
+                <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
                 <span style={{ fontWeight: 500 }}>Dịch vụ:</span> {infomationValue.serviceName}
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
+                <span style={{ fontWeight: 500 }}>Chuyên khoa:</span> {defaultValue?.specialty?.name}
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <CalendarOutlined
+                  style={{ color: "#00bfff", marginRight: 8 }}
+                />
+                <span style={{ fontWeight: 500 }}>
+                  Bác sĩ: {defaultValue?.doctor?.user?.fullname}
+                </span>
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
+                <span style={{ fontWeight: 500 }}>Ngày khám:</span> {defaultValue?.date}
+
+                <span style={{ fontWeight: 500 }}>
+                  {" "}({defaultValue?.shift === 'morning' ? 'Buổi sáng' : 'Buổi chiều'})
+                </span>
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
+                <span style={{ fontWeight: 500 }}>Thanh toán:</span>{" "}
+                {selectedPayment === 'cash'
+                  ? 'Tiền mặt tại cơ sở'
+                  : selectedPayment === 'online'
+                    ? 'Thanh toán online'
+                    : 'Chưa chọn'}
               </div>
             </div>
           </div>
 
-          {/* Bảng chọn hình thức thanh toán */}
-          <div
-            style={{
-              background: "#fff",
+          <div style={{ display: "flex", flexDirection: "column", marginBottom: 50 }}>
+            <div style={{
+              background: '#fff',
               borderRadius: 16,
-              boxShadow: "0 2px 8px #e6f4ff",
+              boxShadow: '0 2px 8px #e6f4ff',
               width: "auto",
               maxWidth: 600,
               paddingBottom: 24,
-            }}
-          >
-            <div
-              style={{
-                background: "linear-gradient(90deg, #00bfff 60%, #00eaff 100%)",
-                color: "#fff",
-                borderTopLeftRadius: 16,
-                borderTopRightRadius: 16,
-                fontWeight: 600,
-                fontSize: 20,
-                padding: "16px 24px",
-                marginBottom: 0,
-              }}
-            >
-              Vui lòng chọn hình thức thanh toán
+            }}>
+              <div
+                style={{
+                  background: "linear-gradient(90deg, #00bfff 60%, #00eaff 100%)",
+                  color: "#fff",
+                  borderTopLeftRadius: 16,
+                  borderTopRightRadius: 16,
+                  fontWeight: 600,
+                  fontSize: 20,
+                  padding: "16px 24px",
+                  marginBottom: 0,
+                }}
+              >
+                Vui lòng chọn hình thức thanh toán
+              </div>
+
+              <Table
+                dataSource={paymentOptions}
+                columns={columns}
+                pagination={false}
+                rowKey="key"
+                style={{
+                  marginTop: 16,
+                  borderRadius: 8,
+                  boxShadow: "0 2px 8px #e6f4ff",
+                }}
+                onRow={(record) => ({
+                  onClick: () => {
+                    setSelectedPayment(record.key);
+                  },
+                  style: { cursor: 'pointer' }
+                })}
+
+                rowClassName={(record) =>
+                  record.key === selectedPayment ? "selected-payment-row" : ""
+                }
+              />
             </div>
 
-            <Table
-              dataSource={paymentOptions}
-              columns={columns}
-              pagination={false}
-              rowKey="key"
-              style={{
-                marginTop: 16,
-                borderRadius: 8,
-                boxShadow: "0 2px 8px #e6f4ff",
-              }}
-              onRow={(record) => ({
-                onClick: () => setSelectedPayment(record.key),
-              })}
-              rowClassName={(record) =>
-                record.key === selectedPayment ? "selected-payment-row" : ""
-              }
-            />
-
-            {/* Nút điều hướng */}
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 16px", marginTop: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
               <Button
                 onClick={onBack}
                 style={{
                   borderRadius: 6,
                   border: "1px solid #ccc",
                   backgroundColor: "#f9f9f9",
+                  marginTop: 30
                 }}
               >
                 ← Quay lại
@@ -177,11 +208,12 @@ function PaymentMethod({ onNext, defaultValue, infomationValue, onBack }) {
               <Button
                 type="primary"
                 disabled={!selectedPayment}
-                onClick={handleSubmit}
+                onClick={() => onNext({ paymentType: selectedPayment })}
                 style={{
                   borderRadius: 6,
                   backgroundColor: "#00cfff",
                   borderColor: "#00cfff",
+                  marginTop: 30
                 }}
               >
                 Tiếp tục →
