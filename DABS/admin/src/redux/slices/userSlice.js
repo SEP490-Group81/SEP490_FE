@@ -19,7 +19,7 @@ export const refreshToken = createAsyncThunk(
 
             const tokenData = await refreshTokenService(accessToken, refreshTokenValue);
             const decoded = decodeToken(tokenData.token);
-            dispatch(updateAccessToken(tokenData.token));
+            // dispatch(updateAccessToken(tokenData.token));
             localStorage.setItem('accessToken', tokenData.token);
             if (!decoded) throw new Error('Token decoding failed');
 
@@ -52,7 +52,7 @@ export const loginUser = createAsyncThunk(
                     storeTokens(tokenData.refreshToken, tokenData.refreshTokenExpiryTime);
                     console.log("access token in login : " + tokenData.token);
                     localStorage.setItem('accessToken', tokenData.token);
-                   // dispatch(updateAccessToken(tokenData.token));
+                    dispatch(updateAccessToken(tokenData.token));
                     const user = await getUserById(decoded.nameidentifier);
                     console.log("user in login sucess : " + user);
                     console.log('User fetched:', user);

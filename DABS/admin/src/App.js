@@ -11,7 +11,7 @@ function App() {
   const dispatch = useDispatch();
   const accessToken = useSelector((state) => state.user.accessToken);
   const accessTokenRef = useRef(accessToken);
-  const [authReady, setAuthReady] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   useEffect(() => {
     accessTokenRef.current = accessToken;
     console.log("Access token updated in App component: " + accessTokenRef.current);
@@ -36,6 +36,7 @@ function App() {
           dispatch(updateAccessToken(accessToken))
         } catch {
           dispatch(logout());
+          setIsReady(true);
           return;
         }
       }
@@ -45,11 +46,13 @@ function App() {
         const user = await getUserById(decoded.nameidentifier);
         dispatch(setUser(user));
       }
-      setAuthReady(true);
+      setIsReady(true);
     };
-    init();
+    setTimeout(() => {
+      init();
+    }, 300);
   }, [dispatch]);
-  if (!authReady) return null;
+  if (!isReady) return null;
   return (
     <AllRouter />
   );

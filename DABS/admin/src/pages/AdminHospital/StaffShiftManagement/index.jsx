@@ -374,7 +374,7 @@ const StaffShiftManagement = () => {
                 }}
               >
                 <CalendarOutlined style={{ marginRight: 16 }} />
-                Quản lý lịch trực Nhân viên
+                Quản lý lịch làm việc Nhân viên
               </h1>
             </Col>
           </Row>

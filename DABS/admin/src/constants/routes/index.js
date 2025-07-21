@@ -173,7 +173,7 @@ export const routes = [
         path: "payment-confirm",
         element: <StaffPaymentConfirmation />
       },
-        {
+      {
         path: "payment-list",
         element: <StaffUnpaidBookingList />
       },
@@ -191,9 +191,8 @@ export const routes = [
         path: 'appointment',
         element: <AppointmentOverview />,
       },
-
       {
-        path: "profile",
+        path: "nurse-profile",
         element: <NurseProfile />
       },
       {

@@ -17,6 +17,9 @@ function AppointmentSpecialty({ onNext, defaultValue, infomationValue, onBack })
     const hospitalId = searchParams.get("hospitalId");
     console.log("hospital in spe : " + hospitalId);
     const [specialtiesData, setspecialtiesData] = useState();
+    const filteredSpecialties = specialtiesData?.filter((item) =>
+        item.name?.toLowerCase().includes(searchText.toLowerCase())
+    );
     useEffect(() => {
         const fetchApi = async () => {
             const result = await getSpecializationByHospitalId(hospitalId);
@@ -165,19 +168,22 @@ function AppointmentSpecialty({ onNext, defaultValue, infomationValue, onBack })
                                 <Search
                                     placeholder="Tìm kiếm theo tên chuyên khoa"
                                     onChange={e => setSearchText(e.target.value)}
-
                                     allowClear
                                 />
                             </div>
                             <Table
-                                dataSource={specialtiesData}
+                                dataSource={filteredSpecialties}
                                 pagination={false}
                                 rowKey="key"
                                 style={{ minWidth: 600, maxHeight: 300, overflowY: 'auto', marginTop: 16, borderRadius: 8, boxShadow: '0 2px 8px #e6f4ff' }}
                                 columns={columns}
                                 onRow={(record) => ({
-                                    onClick: () => setSelectedSpecialty(record),
+                                    onClick: () => {
+                                        setSelectedSpecialty(record);
+                                    },
+                                    style: { cursor: 'pointer' }
                                 })}
+
                             />
 
                         </div>
@@ -201,7 +207,7 @@ function AppointmentSpecialty({ onNext, defaultValue, infomationValue, onBack })
                                     backgroundColor: '#00cfff',
                                     borderColor: '#00cfff'
                                 }}
-                                onClick={() => onNext({ specialty: selectedSpecialty, hospitalId })}
+                                onClick={() => onNext({ specialty: selectedSpecialty })}
                             >
                                 Tiếp tục →
                             </Button>

@@ -22,7 +22,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-
+import { useDispatch, useSelector } from 'react-redux';
 import {
   PlusOutlined,
   CalendarOutlined,
@@ -119,6 +119,9 @@ const AdminDoctorShiftManagement = () => {
   const [bulkForm] = Form.useForm();
   const [modalDetail, setModalDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const dispatch = useDispatch();
+  const user = useSelector((state) => state.user.user);
+  console.log("hospital admin id is: " + JSON.stringify(user));
   const caTimes = {
     morning: { start: "08:00:00", end: "12:00:00", label: "Ca sáng" },
     afternoon: { start: "13:00:00", end: "17:00:00", label: "Ca chiều" },
@@ -391,7 +394,7 @@ const AdminDoctorShiftManagement = () => {
                 }}
               >
                 <CalendarOutlined style={{ marginRight: 16 }} />
-                Quản lý lịch trực bác sĩ
+                Quản lý lịch làm việc bác sĩ
               </h1>
             </Col>
           </Row>
@@ -563,7 +566,13 @@ const AdminDoctorShiftManagement = () => {
                   eventClick={(info) => onEditShift(info.event.extendedProps)}
                   eventDidMount={eventColor}
                   dateClick={(info) => onAddShift(info.dateStr)}
-                  
+                  datesSet={(arg) => {
+                    const from = dayjs(arg.start).format("YYYY-MM-DDTHH:mm:ss");
+                    const to = dayjs(arg.end).format("YYYY-MM-DDTHH:mm:ss");
+                    console.log("Ngày bắt đầu của view:", from);
+                    console.log("Ngày kết thúc của view:", to);
+                    console.log("View hiện tại:", arg.view.type);
+                  }}
                   firstDay={1}
                   allDaySlot={false}
                   slotMinTime="06:00:00"
@@ -588,7 +597,6 @@ const AdminDoctorShiftManagement = () => {
             </Col>
           </Row>
 
-          {/* Modal: Add / Edit Shift */}
           <Modal
             open={modalVisible}
             onCancel={() => setModalVisible(false)}
