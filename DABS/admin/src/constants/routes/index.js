@@ -162,9 +162,9 @@ export const routes = [
         element: <HospitalStaffHome />
       },
       {
-      path: 'review-feedback',
-      element: <ReviewFeedback />,
-    },
+        path: 'review-feedback',
+        element: <ReviewFeedback />,
+      },
       {
         path: "staff-profile",
         element: <StaffProfile />
@@ -173,7 +173,7 @@ export const routes = [
         path: "payment-confirm",
         element: <StaffPaymentConfirmation />
       },
-        {
+      {
         path: "payment-list",
         element: <StaffUnpaidBookingList />
       },
@@ -191,8 +191,7 @@ export const routes = [
         path: 'appointment',
         element: <AppointmentOverview />,
       },
-
-{
+      {
         path: "nurse-profile",
         element: <NurseProfile />
       },
