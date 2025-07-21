@@ -8,17 +8,26 @@ import './styles.scss';
 
 const { TabPane } = Tabs;
 
-// Hàm phụ trợ để xác định vai trò từ username
+// ✅ Hàm xác định role từ API response
 const getUserRole = (user) => {
-    if (user.role) return user.role;
+    if (!user.role) return 'user';
 
-    const username = user.userName?.toLowerCase();
-    if (username.includes('admin')) return 'admin';
-    if (username.includes('doctor')) return 'doctor';
-    if (username.includes('staff')) return 'staff';
-    if (username.includes('hospitaladmin')) return 'hospitalAdmin';
-    if (username.includes('systemadmin')) return 'systemAdmin';
-    return 'user';
+    const roleType = user.role.roleType;
+
+    switch (roleType) {
+        case 2: return 'doctor';
+        case 4: return 'hospitalAdmin';
+        case 5: return 'systemAdmin';
+        case 6: return 'patient';
+        case 7: return 'nurse';
+        default: return 'user';
+    }
+};
+
+// ✅ Hàm kiểm tra có phải admin không (gộp systemAdmin và hospitalAdmin)
+const isAdmin = (user) => {
+    const role = getUserRole(user);
+    return role === 'systemAdmin' || role === 'hospitalAdmin';
 };
 
 const UserManagement = () => {
@@ -33,10 +42,11 @@ const UserManagement = () => {
     });
     const [counts, setCounts] = useState({
         all: 0,
-        admin: 0,
+        admin: 0, // Gộp systemAdmin + hospitalAdmin
         doctor: 0,
-        staff: 0,
-        user: 0,
+        nurse: 0,
+        patient: 0,
+        user: 0, // Other users
     });
 
     const fetchUsers = async (page = 1, pageSize = 10, search = '') => {
@@ -48,6 +58,8 @@ const UserManagement = () => {
                 search,
             });
 
+            console.log('✅ Users API response:', response);
+
             if (response && response.success) {
                 const userData = response.result || [];
                 setUsers(userData);
@@ -58,18 +70,32 @@ const UserManagement = () => {
                     total: userData.length,
                 });
 
-                // Phân loại người dùng theo vai trò
-                const adminCount = userData.filter(user => getUserRole(user) === 'admin').length;
+                // ✅ Phân loại người dùng theo role từ API
+                const adminCount = userData.filter(user => isAdmin(user)).length;
                 const doctorCount = userData.filter(user => getUserRole(user) === 'doctor').length;
-                const staffCount = userData.filter(user => getUserRole(user) === 'staff').length;
-                const normalUserCount = userData.filter(user => getUserRole(user) === 'user').length;
+                const nurseCount = userData.filter(user => getUserRole(user) === 'nurse').length;
+                const patientCount = userData.filter(user => getUserRole(user) === 'patient').length;
+                const otherCount = userData.filter(user => {
+                    const role = getUserRole(user);
+                    return !isAdmin(user) && role !== 'doctor' && role !== 'nurse' && role !== 'patient';
+                }).length;
 
                 setCounts({
                     all: userData.length,
                     admin: adminCount,
                     doctor: doctorCount,
-                    staff: staffCount,
-                    user: normalUserCount,
+                    nurse: nurseCount,
+                    patient: patientCount,
+                    user: otherCount,
+                });
+
+                console.log('📊 User counts:', {
+                    all: userData.length,
+                    admin: adminCount,
+                    doctor: doctorCount,
+                    nurse: nurseCount,
+                    patient: patientCount,
+                    user: otherCount
                 });
             }
         } catch (error) {
@@ -141,6 +167,7 @@ const UserManagement = () => {
                         </Row>
 
                         <Tabs defaultActiveKey="1" className="user-tabs">
+                            {/* ✅ All Users Tab */}
                             <TabPane
                                 tab={
                                     <span>
@@ -158,16 +185,17 @@ const UserManagement = () => {
                                 />
                             </TabPane>
 
+                            {/* ✅ Administrators Tab (gộp System Admin + Hospital Admin) */}
                             <TabPane
                                 tab={
                                     <span>
-                                        Administrators <Badge count={counts.admin} style={{ backgroundColor: '#ff4d4f' }} />
+                                        Administrators <Badge count={counts.admin} style={{ backgroundColor: '#faad14' }} />
                                     </span>
                                 }
                                 key="2"
                             >
                                 <UserTable
-                                    users={users.filter(user => getUserRole(user) === 'admin')}
+                                    users={users.filter(user => isAdmin(user))}
                                     loading={loading}
                                     pagination={{ ...pagination, total: counts.admin }}
                                     onChange={handleTableChange}
@@ -175,6 +203,7 @@ const UserManagement = () => {
                                 />
                             </TabPane>
 
+                            {/* ✅ Doctors Tab */}
                             <TabPane
                                 tab={
                                     <span>
@@ -192,18 +221,58 @@ const UserManagement = () => {
                                 />
                             </TabPane>
 
+                            {/* ✅ Nurses Tab */}
                             <TabPane
                                 tab={
                                     <span>
-                                        Staff <Badge count={counts.staff} style={{ backgroundColor: '#1890ff' }} />
+                                        Nurses <Badge count={counts.nurse} style={{ backgroundColor: '#13c2c2' }} />
                                     </span>
                                 }
                                 key="4"
                             >
                                 <UserTable
-                                    users={users.filter(user => getUserRole(user) === 'staff')}
+                                    users={users.filter(user => getUserRole(user) === 'nurse')}
                                     loading={loading}
-                                    pagination={{ ...pagination, total: counts.staff }}
+                                    pagination={{ ...pagination, total: counts.nurse }}
+                                    onChange={handleTableChange}
+                                    onReload={() => fetchUsers(pagination.current, pagination.pageSize, searchText)}
+                                />
+                            </TabPane>
+
+                            {/* ✅ Patients Tab */}
+                            <TabPane
+                                tab={
+                                    <span>
+                                        Patients <Badge count={counts.patient} style={{ backgroundColor: '#1890ff' }} />
+                                    </span>
+                                }
+                                key="5"
+                            >
+                                <UserTable
+                                    users={users.filter(user => getUserRole(user) === 'patient')}
+                                    loading={loading}
+                                    pagination={{ ...pagination, total: counts.patient }}
+                                    onChange={handleTableChange}
+                                    onReload={() => fetchUsers(pagination.current, pagination.pageSize, searchText)}
+                                />
+                            </TabPane>
+
+                            {/* ✅ Other Users Tab */}
+                            <TabPane
+                                tab={
+                                    <span>
+                                        Others <Badge count={counts.user} style={{ backgroundColor: '#8c8c8c' }} />
+                                    </span>
+                                }
+                                key="6"
+                            >
+                                <UserTable
+                                    users={users.filter(user => {
+                                        const role = getUserRole(user);
+                                        return !isAdmin(user) && role !== 'doctor' && role !== 'nurse' && role !== 'patient';
+                                    })}
+                                    loading={loading}
+                                    pagination={{ ...pagination, total: counts.user }}
                                     onChange={handleTableChange}
                                     onReload={() => fetchUsers(pagination.current, pagination.pageSize, searchText)}
                                 />

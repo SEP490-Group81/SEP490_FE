@@ -18,10 +18,10 @@ const AddDepartment = ({ visible, onCancel, onSuccess }) => {
     });
   };
 
-  const error = () => {
+  const error = (message = 'Failed to add department. Please try again.') => {
     notification.error({
       message: 'Error',
-      description: 'Failed to add department. Please try again.',
+      description: message,
       placement: 'topRight',
     });
   };
@@ -29,20 +29,34 @@ const AddDepartment = ({ visible, onCancel, onSuccess }) => {
   const handleSubmit = async (values) => {
     setSpinning(true);
     try {
-      const response = await createDepartment(values);
+      // Chuẩn bị data theo format API yêu cầu
+      const departmentData = {
+        hospitalId: 200, // Default hospitalId, có thể lấy từ context hoặc props
+        name: values.name,
+        description: values.description
+      };
+
+      console.log('Creating department with data:', departmentData);
+
+
+
+      const response = await createDepartment(departmentData);
       setSpinning(false);
-      
+
       if (response) {
         form.resetFields();
         success();
-        onSuccess();
+        onSuccess(); // Callback để refresh danh sách departments
       } else {
         error();
       }
     } catch (err) {
       setSpinning(false);
-      error();
       console.error("Error adding department:", err);
+
+      // Hiển thị error message cụ thể từ API nếu có
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to add department. Please try again.';
+      error(errorMessage);
     }
   };
 
@@ -57,7 +71,7 @@ const AddDepartment = ({ visible, onCancel, onSuccess }) => {
       visible={visible}
       onCancel={onCancel}
       footer={null}
-      width={800}
+      width={600} // Giảm width vì chỉ còn 2 fields
       className="custom-modal"
     >
       <Spin spinning={spinning}>
@@ -66,136 +80,66 @@ const AddDepartment = ({ visible, onCancel, onSuccess }) => {
             form={form}
             layout="vertical"
             onFinish={handleSubmit}
-            initialValues={{ status: 'active' }}
           >
-            <Row gutter={16}>
-              <Col xs={24} md={12}>
-                <Form.Item
-                  name="name"
-                  label="Department Name"
-                  rules={[{ required: true, message: 'Please enter department name' }]}
-                >
-                  <Input placeholder="Enter department name" />
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} md={12}>
-                <Form.Item
-                  name="code"
-                  label="Department Code"
-                  rules={[{ required: true, message: 'Please enter department code' }]}
-                >
-                  <Input placeholder="Enter department code (e.g., EM, CD)" />
-                </Form.Item>
-              </Col>
-            </Row>
+            <Form.Item
+              name="name"
+              label="Department Name"
+              rules={[
+                { required: true, message: 'Please enter department name' },
+                { min: 2, message: 'Department name must be at least 2 characters' },
+                { max: 100, message: 'Department name must not exceed 100 characters' }
+              ]}
+            >
+              <Input
+                placeholder="Enter department name (e.g., Emergency Department, Cardiology)"
+                showCount
+                maxLength={100}
+              />
+            </Form.Item>
 
             <Form.Item
               name="description"
               label="Description"
-              rules={[{ required: true, message: 'Please enter description' }]}
+              rules={[
+                { required: true, message: 'Please enter description' },
+                { min: 10, message: 'Description must be at least 10 characters' },
+                { max: 500, message: 'Description must not exceed 500 characters' }
+              ]}
             >
-              <TextArea 
-                placeholder="Enter department description" 
-                rows={3}
+              <TextArea
+                placeholder="Enter detailed description of the department's purpose and services"
+                rows={4}
+                showCount
+                maxLength={500}
               />
             </Form.Item>
 
-            <Row gutter={16}>
-              <Col xs={24} md={12}>
-                <Form.Item
-                  name="headOfDepartment"
-                  label="Head of Department"
-                  rules={[{ required: true, message: 'Please enter head of department' }]}
-                >
-                  <Input placeholder="Dr. John Smith" />
-                </Form.Item>
-              </Col>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#f0f2f5',
+              borderRadius: '6px',
+              marginBottom: '16px'
+            }}>
+              <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>
+                <strong>Note:</strong> Hospital ID will be automatically assigned. Additional department details can be updated after creation.
+              </p>
+            </div>
 
-              <Col xs={24} md={12}>
-                <Form.Item
-                  name="location"
-                  label="Location"
-                  rules={[{ required: true, message: 'Please enter location' }]}
-                >
-                  <Input placeholder="Building A - Floor 1" />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={16}>
-              <Col xs={24} md={12}>
-                <Form.Item
-                  name="phoneNumber"
-                  label="Phone Number"
-                  rules={[{ required: true, message: 'Please enter phone number' }]}
-                >
-                  <Input placeholder="+1-234-567-8901" />
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} md={12}>
-                <Form.Item
-                  name="email"
-                  label="Email"
-                  rules={[
-                    { required: true, message: 'Please enter email' },
-                    { type: 'email', message: 'Please enter a valid email' }
-                  ]}
-                >
-                  <Input placeholder="department@hospital.com" />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={16}>
-              <Col xs={24} md={8}>
-                <Form.Item
-                  name="totalStaff"
-                  label="Total Staff"
-                  rules={[{ required: true, message: 'Please enter total staff' }]}
-                >
-                  <Input type="number" placeholder="25" />
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} md={8}>
-                <Form.Item
-                  name="totalBeds"
-                  label="Total Beds"
-                  rules={[{ required: true, message: 'Please enter total beds' }]}
-                >
-                  <Input type="number" placeholder="15" />
-                </Form.Item>
-              </Col>
-
-              <Col xs={24} md={8}>
-                <Form.Item
-                  name="status"
-                  label="Status"
-                  rules={[{ required: true, message: 'Please select status' }]}
-                >
-                  <Select placeholder="Select status">
-                    <Option value="active">Active</Option>
-                    <Option value="inactive">Inactive</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Form.Item
-              name="operatingHours"
-              label="Operating Hours"
-              rules={[{ required: true, message: 'Please enter operating hours' }]}
-            >
-              <Input placeholder="Mon-Fri: 8AM-6PM or 24/7" />
-            </Form.Item>
-
-            <Form.Item className="button-group">
-              <Button type="default" onClick={onCancel} style={{ marginRight: 8 }}>
+            <Form.Item className="button-group" style={{ textAlign: 'right', marginBottom: 0 }}>
+              <Button
+                type="default"
+                onClick={onCancel}
+                style={{ marginRight: 8 }}
+                disabled={spinning}
+              >
                 Cancel
               </Button>
-              <Button type="primary" htmlType="submit">
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={spinning}
+                icon={<PlusOutlined />}
+              >
                 Create Department
               </Button>
             </Form.Item>

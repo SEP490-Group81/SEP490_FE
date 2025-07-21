@@ -140,19 +140,7 @@ const MedicalServiceManagement = () => {
       sorter: (a, b) => a.id - b.id
     },
     {
-      title: (
-        <div>
-          Tên dịch vụ
-          <Input.Search
-            placeholder="Tìm kiếm..."
-            enterButton={<SearchOutlined />}
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            style={{ marginTop: 8 }}
-            allowClear
-          />
-        </div>
-      ),
+      title: "Tên dịch vụ",
       dataIndex: "name",
       key: "name"
     },
@@ -227,10 +215,22 @@ const MedicalServiceManagement = () => {
                   </Button>
                 </Col>
               </Row>
+
             </Col>
 
             <Col span={24}>
               <Card>
+                <Row style={{marginBottom: 25}}>
+                  <Col span={8}>
+                    <Input.Search
+                      placeholder="Tìm theo tên dịch vụ..."
+                      enterButton={<SearchOutlined />}
+                      value={searchText}
+                      onChange={(e) => setSearchText(e.target.value)}
+                      allowClear
+                    />
+                  </Col>
+                </Row>
                 <Table
                   dataSource={filteredData}
                   rowKey="id"
@@ -308,7 +308,7 @@ const MedicalServiceManagement = () => {
               console.log("update success : " + updatedFlow.flow);
               setFlowModalVisible(false);
               dispatch(setMessage({ type: 'success', content: 'Cập nhật luồng thành công!' }));
-    
+
             }}
           />
 

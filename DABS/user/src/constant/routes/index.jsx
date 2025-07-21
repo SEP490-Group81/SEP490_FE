@@ -190,8 +190,13 @@ export const routes = [
       },
       {
         path: "booking",
-        element: <UserBookingFlow />
-
+        element: <ProtectedRoute allowedRoles={['Patient']} />,
+        children: [
+          {
+            index: true,
+            element: <UserBookingFlow />,
+          },
+        ],
       },
       {
         path: "schedule",
