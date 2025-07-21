@@ -1,25 +1,27 @@
 import React from "react";
 import { Card, Row, Col, Button, List, Avatar, Typography, Tag } from "antd";
-import { UserOutlined, NotificationOutlined, CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import { UserOutlined, NotificationOutlined, CheckCircleOutlined, ClockCircleOutlined, CommentOutlined, StarOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 const HospitalStaffHome = () => {
-const { Title, Text } = Typography;
+  const { Title, Text } = Typography;
+  const navigate = useNavigate();
 
-const fakeTasks = [
-  { id: 1, title: "Chuẩn bị phòng khám số 10", status: "Đang xử lý" },
-  { id: 2, title: "Kiểm tra trang thiết bị phòng mổ", status: "Chưa xử lý" },
-  { id: 3, title: "Hỗ trợ bác sĩ Nguyễn Văn A", status: "Đã hoàn thành" },
-];
+  const fakeTasks = [
+    { id: 1, title: "Chuẩn bị phòng khám số 10", status: "Đang xử lý" },
+    { id: 2, title: "Kiểm tra trang thiết bị phòng mổ", status: "Chưa xử lý" },
+    { id: 3, title: "Hỗ trợ bác sĩ Nguyễn Văn A", status: "Đã hoàn thành" },
+  ];
 
-const fakeNotifications = [
-  { id: 1, content: "Lịch họp nhân viên ngày 30/06/2025", date: "28/06/2025" },
-  { id: 2, content: "Đào tạo sử dụng phần mềm quản lý mới", date: "01/07/2025" },
-];
+  const fakeNotifications = [
+    { id: 1, content: "Lịch họp nhân viên ngày 30/06/2025", date: "28/06/2025" },
+    { id: 2, content: "Đào tạo sử dụng phần mềm quản lý mới", date: "01/07/2025" },
+  ];
 
-const statusColor = {
-  "Đang xử lý": "orange",
-  "Chưa xử lý": "red",
-  "Đã hoàn thành": "green",
-};
+  const statusColor = {
+    "Đang xử lý": "orange",
+    "Chưa xử lý": "red",
+    "Đã hoàn thành": "green",
+  };
 
 
   return (
@@ -50,6 +52,32 @@ const statusColor = {
                 </List.Item>
               )}
             />
+          </Card>
+
+          <Card title="Truy cập nhanh" style={{ marginTop: 24 }}>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Button
+                  type="primary"
+                  icon={<CommentOutlined />}
+                  onClick={() => navigate('/staff/review-feedback')}
+                  block
+                  size="large"
+                >
+                  Quản lý Đánh giá
+                </Button>
+              </Col>
+              <Col span={12}>
+                <Button
+                  type="default"
+                  icon={<StarOutlined />}
+                  block
+                  size="large"
+                >
+                  Báo cáo chất lượng
+                </Button>
+              </Col>
+            </Row>
           </Card>
 
           <Card
