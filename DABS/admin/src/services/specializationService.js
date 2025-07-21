@@ -2,7 +2,7 @@ import { deleteAuth, get, postAuth, putAuth } from "../utils/request";
 
 export const getSpecializationList = async () => {
     try {
-        const result = await get('/specialization');
+        const result = await get('/specializations');
        
         if (!result || !result.result) {
             throw new Error('Specialization data is missing in the response.');
@@ -17,7 +17,7 @@ export const getSpecializationList = async () => {
 
 export const updateSpecialization = async (specializationData) => {
   try {
-    const result = await putAuth(`/specialization/update`, specializationData);
+    const result = await putAuth(`/specializations/update`, specializationData);
     console.log(`User updated successfully:`, result);
     return result;
   } catch (error) {
@@ -28,7 +28,7 @@ export const updateSpecialization = async (specializationData) => {
 
 export const createSpecialization = async (specializationData) => {
   try {
-    const result = await postAuth(`/specialization/create`, specializationData);
+    const result = await postAuth(`/specializations/create`, specializationData);
     console.log(`User created successfully:`, result);
     return result;
   } catch (error) {
@@ -39,7 +39,7 @@ export const createSpecialization = async (specializationData) => {
 
 export const deleteSpecialization = async (specializationId) => {
   try {
-    const result = await deleteAuth(`/specialization`, specializationId);
+    const result = await deleteAuth(`/specializations`, specializationId);
     console.log(`User created successfully:`, result);
     return result;
   } catch (error) {

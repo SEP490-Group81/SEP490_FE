@@ -53,9 +53,10 @@ export const createUser = async (userData) => {
     throw error;
   }
 };
-// Update user
+
 export const updateUser = async (userData) => {
   try {
+    console.log("update user : " + JSON.stringify(userData));
     const result = await putAuth(`/user/update`, userData);
     console.log(`User updated successfully:`, result);
     return result;

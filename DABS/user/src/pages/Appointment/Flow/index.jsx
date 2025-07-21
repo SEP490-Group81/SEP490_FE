@@ -4,10 +4,9 @@ import { Steps, Button, message } from "antd";
 import AppointmentSpecialty from "../Specialty";
 import AppointmentDoctor from "../Doctor";
 import AppointmentSchedule from "../Schedule";
-import { getStepByServiceId } from "../../../services/userService";
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { getStepByServiceId } from "../../../services/appointmentService";
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import PaymentMethod from "../PaymentMethod";
-import { useSelector } from "react-redux";
 
 const { Step } = Steps;
 
@@ -17,10 +16,22 @@ export default function UserBookingFlow() {
   const [stepData, setStepData] = useState({});
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const hospitalId = searchParams.get("hospitalId");
   const serviceId = searchParams.get("serviceId");
   const serviceName = searchParams.get("serviceName");
   const hospitalName = searchParams.get("hospitalName");
-  const user = useSelector((state) => state.user.user);
+ 
+  const location = useLocation();
+  useEffect(() => {
+    console.log("Location: ", location);
+    if (location.state?.stepData) {
+      setStepData(location.state.stepData);
+    }
+    if (location.state?.backToStepIndex !== undefined) {
+      setCurrentStepIndex(location.state.backToStepIndex);
+    }
+  }, [location.state]);
+
   useEffect(() => {
     const fetchSteps = async () => {
       const rawSteps = await getStepByServiceId(serviceId);
@@ -32,21 +43,21 @@ export default function UserBookingFlow() {
 
     fetchSteps();
   }, [serviceId]);
+
   const handlePrevStep = () => {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(prev => prev - 1);
     }
   };
+
   const handleNextStep = (result) => {
-    const key = steps[currentStepIndex].steps.stepType;
     const updatedStepData = {
       ...stepData,
-      [key]: result,
+      ...result,
       serviceId,
       serviceName,
       hospitalName,
-      hospitalId: stepData?.[1]?.hospitalId || null,
-
+      hospitalId
     };
 
     setStepData(updatedStepData);
@@ -54,13 +65,11 @@ export default function UserBookingFlow() {
     if (currentStepIndex < steps.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
     } else {
-
       navigate("/appointment/accept-infomation", {
         state: {
           hospitalName,
           stepData: {
-            ...updatedStepData,
-            user: user
+            ...updatedStepData
           }
         }
       });
@@ -70,13 +79,13 @@ export default function UserBookingFlow() {
   const renderCurrentStep = () => {
     const currentStep = steps[currentStepIndex];
     if (!currentStep) return null;
-
     const stepType = currentStep.steps.stepType;
     const commonProps = {
       onNext: handleNextStep,
       onBack: handlePrevStep,
-      defaultValue: stepData[stepType],
+      defaultValue: stepData,
       infomationValue: {
+        hospitalId,
         serviceId,
         serviceName,
         hospitalName,
@@ -98,16 +107,16 @@ export default function UserBookingFlow() {
   };
 
   return (
-    <div style={{ marginTop: 50, paddingTop: 50, background: '#eaf8ff' }}>
-      <div style={{ display: "flex", justifyContent: "center"}}>
-        <Steps current={currentStepIndex} style={{width:"70%"}}>
+    <div style={{ marginTop: 50, paddingTop: 50, background: '#eaf8ff', minHeight:700 }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems:"center" }}>
+        <Steps current={currentStepIndex} style={{ width: "70%" }}>
           {steps.map((s, i) => (
             <Step key={i} title={s.steps.name} />
           ))}
         </Steps>
       </div>
 
-      <div style={{ marginTop: 32 }}>{renderCurrentStep()}</div>
+      <div>{renderCurrentStep()}</div>
     </div>
   );
 }
