@@ -224,3 +224,16 @@ export const getDoctorByHospitalId = async (id) => {
     throw error;
   }
 };
+
+export const getDoctorByUserId = async (id) => {
+  try {
+    const result = await get(`/doctors/by-user/${id}`);
+    if (!result || !result.result) {
+      throw new Error('Doctor is missing in the response.');
+    }
+    return result.result;
+  } catch (error) {
+    console.error(`Error fetching doctor with ID ${id}:`, error.message);
+    throw error;
+  }
+};
