@@ -8,55 +8,19 @@ import viVN from "antd/es/locale/vi_VN";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import "./style.scss";
+import { useSelector } from "react-redux";
+import { getDoctorByUserId } from "../../../services/doctorService";
+import { getScheduleByDoctorId } from "../../../services/scheduleService";
+import { useRef } from "react";
+
 dayjs.locale("vi");
-
-const workShiftsTest = [
-  {
-    id: "shift-1",
-    title: "Ca làm việc",
-    start: "2025-07-03T08:00:00",
-    end: "2025-07-03T12:00:00",
-    extendedProps: {
-      type: "shift",
-      department: "Khoa Nội",
-      room: "Phòng 101",
-      status: "Đang khám",
-      patients: [
-        { id: 1, name: "Nguyễn Văn A", age: 30, note: "Khám tổng quát" },
-        { id: 2, name: "Trần Thị B", age: 25, note: "Khám tim mạch" },
-      ],
-    },
-  },
-  {
-    id: "shift-2",
-    title: "Ca làm việc",
-    start: "2025-07-04T08:00:00",
-    end: "2025-07-04T12:00:00",
-  },
-  {
-    id: "shift-3",
-    title: "Ca làm việc",
-    start: "2025-07-05T08:00:00",
-    end: "2025-07-05T12:00:00",
-    extendedProps: {
-      type: "shift",
-      department: "Khoa Nội",
-      room: "Phòng 101",
-      status: "Chưa bắt đầu",
-      patients: [
-        { id: 1, name: "Nguyễn Văn A", age: 30, note: "Khám tổng quát" },
-        { id: 2, name: "Trần Thị B", age: 25, note: "Khám tim mạch" },
-      ],
-    },
-  },
-];
-
 const LegendColor = () => (
-  <div style={{ marginBottom: 24, display: "flex", justifyContent:"center", gap: 8 }}>
+  <div style={{ marginBottom: 24, display: "flex", justifyContent: "center", gap: 8 }}>
     <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
       {[
         { color: "#4caf50", border: "#388e3c", label: "Đang khám" },
         { color: "#ffd54f", border: "#ffa000", label: "Chưa bắt đầu" },
+        { color: "#e0e0e0", border: "#9e9e9e", label: "Đã khám xong" },
         { color: "#ffb3b3", border: "#ff7875", label: "Ca đặt lịch (booking)" },
         { color: "#64b5f6", border: "#1976d2", label: "Ca làm việc khác" },
       ].map(({ color, border, label }) => (
@@ -67,7 +31,6 @@ const LegendColor = () => (
             backgroundColor: color,
             border: `1px solid ${border}`,
             borderRadius: 4,
-           
           }} />
           <span>{label}</span>
         </div>
@@ -80,20 +43,114 @@ const WorkSchedule = () => {
   const [events, setEvents] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const user = useSelector((state) => state.user.user);
+  const [doctorDetail, setDoctorDetail] = useState(null);
+  const calendarRef = useRef();
+  useEffect(() => {
+    if (doctorDetail && calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      const view = calendarApi.view;
+      handleDatesSet({ start: view.activeStart, end: view.activeEnd });
+    }
+  }, [doctorDetail]);
 
   useEffect(() => {
-    setEvents([...workShiftsTest]);
-  }, []);
+    const fetchDoctor = async () => {
+      const result = await getDoctorByUserId(user.id);
+      if (result) {
+        console.log("result doctor detail : " + result);
+        setDoctorDetail(result);
+      } else {
+        console.error("Không tìm thấy thông tin bác sĩ.");
+      }
+    };
+    fetchDoctor();
+  }, [user.id]);
+
+  const handleDatesSet = async (arg) => {
+    if (!doctorDetail) return;
+
+    const from = dayjs(arg.start).toISOString();
+    const to = dayjs(arg.end).toISOString();
+    console.log("from schedule : " + from + " to Schedule : " + to);
+
+    try {
+      const result = await getScheduleByDoctorId(doctorDetail.id, from, to);
+      const now = dayjs();
+
+      const formattedEvents = result.map((item) => {
+        const dateStr = item.workDate.split("T")[0];
+        const startStr = `${dateStr}T${item.startTime}`;
+        const endStr = `${dateStr}T${item.endTime}`;
+        const start = dayjs(startStr);
+        const end = dayjs(endStr);
+
+        let status = "Ca làm việc khác";
+        const hasAppointments = item.appointment?.length > 0;
+
+        if (hasAppointments) {
+          if (now.isAfter(end)) {
+            status = "Đã khám";
+          } else if (now.isBefore(start)) {
+            status = "Chưa bắt đầu";
+          } else {
+            status = "Đang khám";
+          }
+        } else {
+          if (now.isAfter(end)) {
+            status = "Ca rỗng (đã qua)";
+          } else if (now.isBefore(start)) {
+            status = "Ca rỗng (sắp tới)";
+          } else {
+            status = "Ca rỗng (đang chờ)";
+          }
+        }
+
+        const patients =
+          item.appointment?.map((appt) => {
+            const dob = dayjs(appt.patient.dob);
+            const age = dayjs().diff(dob, "year");
+
+            return {
+              id: appt.id,
+              name: appt.patient.fullname || "Không rõ",
+              age,
+              note: appt.note || "",
+              gender: appt.patient.gender ? "Nam" : "Nữ",
+              service: appt.service?.name || "Không rõ",
+            };
+          }) || [];
+
+        return {
+          id: item.id,
+          title: item.timeShift === 1 ? "Ca sáng" : "Ca chiều",
+          start: start.toISOString(),
+          end: end.toISOString(),
+          extendedProps: {
+            type: hasAppointments ? "booking" : "shift",
+            department: item.room?.department?.name || "Không rõ",
+            room: item.room?.name || "Không rõ",
+            status,
+            patients,
+          },
+        };
+      });
+
+      setEvents(formattedEvents);
+    } catch (err) {
+      console.error("Lỗi khi tải lịch làm việc:", err);
+    }
+  };
+
 
   const handleEventClick = ({ event }) => {
     setSelectedEvent(event);
     setModalOpen(true);
   };
 
-
-
   const eventColor = (info) => {
     const { type, status } = info.event.extendedProps;
+
     if (type === "booking") {
       return {
         backgroundColor: "#ffb3b3",
@@ -103,6 +160,7 @@ const WorkSchedule = () => {
         boxShadow: "0 2px 8px rgba(255,120,117,0.12)",
       };
     }
+
     if (status === "Đang khám") {
       return {
         backgroundColor: "#4caf50",
@@ -112,6 +170,7 @@ const WorkSchedule = () => {
         boxShadow: "0 2px 8px rgba(76,175,80,0.12)",
       };
     }
+
     if (status === "Chưa bắt đầu") {
       return {
         backgroundColor: "#ffd54f",
@@ -121,6 +180,48 @@ const WorkSchedule = () => {
         boxShadow: "0 2px 8px rgba(255,213,79,0.12)",
       };
     }
+
+    if (status === "Đã khám") {
+      return {
+        backgroundColor: "#bdbdbd",
+        color: "black",
+        borderRadius: "8px",
+        border: "1px solid #9e9e9e",
+        boxShadow: "0 2px 8px rgba(189,189,189,0.12)",
+      };
+    }
+
+    if (status === "Ca rỗng (đang chờ)") {
+      return {
+        backgroundColor: "#90caf9",
+        color: "black",
+        borderRadius: "8px",
+        border: "1px solid #42a5f5",
+        boxShadow: "0 2px 8px rgba(144,202,249,0.12)",
+      };
+    }
+
+    if (status === "Ca rỗng (sắp tới)") {
+      return {
+        backgroundColor: "#ffe082",
+        color: "black",
+        borderRadius: "8px",
+        border: "1px solid #ffca28",
+        boxShadow: "0 2px 8px rgba(255,224,130,0.12)",
+      };
+    }
+
+    if (status === "Ca rỗng (đã qua)") {
+      return {
+        backgroundColor: "#e0e0e0",
+        color: "black",
+        borderRadius: "8px",
+        border: "1px solid #bdbdbd",
+        boxShadow: "0 2px 8px rgba(224,224,224,0.12)",
+      };
+    }
+
+    // fallback
     return {
       backgroundColor: "#64b5f6",
       color: "black",
@@ -129,6 +230,7 @@ const WorkSchedule = () => {
       boxShadow: "0 2px 8px rgba(100,181,246,0.12)",
     };
   };
+
 
   return (
     <ConfigProvider locale={viVN}>
@@ -142,27 +244,28 @@ const WorkSchedule = () => {
           boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
         }}
       >
-        <h2
-          style={{
-            textAlign: "center",
-            marginBottom: 32,
-            fontWeight: 700,
-            fontSize: 28,
-            letterSpacing: 1,
-            color: "#1a237e",
-            userSelect: "none",
-          }}
-        >
+        <h2 style={{
+          textAlign: "center",
+          marginBottom: 32,
+          fontWeight: 700,
+          fontSize: 28,
+          letterSpacing: 1,
+          color: "#1a237e",
+          userSelect: "none",
+        }}>
           Lịch làm việc của tôi
         </h2>
-  <LegendColor />
+
+        <LegendColor />
+
         <FullCalendar
           plugins={[timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
+          ref={calendarRef}
           locale={viLocale}
+          datesSet={handleDatesSet}
           events={events}
           height={600}
-          // eventContent={eventContent}
           eventClick={handleEventClick}
           eventDidMount={(info) => {
             Object.assign(info.el.style, eventColor(info));
@@ -177,7 +280,6 @@ const WorkSchedule = () => {
           slotMinTime="06:00:00"
           slotMaxTime="20:00:00"
         />
-      
 
         <Modal
           open={modalOpen}
@@ -199,38 +301,29 @@ const WorkSchedule = () => {
           width={600}
         >
           {selectedEvent ? (
-            selectedEvent.extendedProps?.type === "booking" ? (
-              <div>
-                <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
-                <p><b>👤 Bệnh nhân:</b> {selectedEvent.extendedProps.patientName}</p>
-                <p><b>📝 Ghi chú:</b> {selectedEvent.extendedProps.note || "Không có"}</p>
-              </div>
-            ) : (
-              <>
-                <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
-                <p><b>👥 Số bệnh nhân:</b> {selectedEvent.extendedProps?.patients?.length || 0}</p>
-                <p><b>📌 Trạng thái:</b> {selectedEvent.extendedProps?.status || "Không rõ"}</p>
+            <>
+              <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
+              <p><b>👥 Số bệnh nhân:</b> {selectedEvent.extendedProps?.patients?.length || 0}</p>
+              <p><b>📌 Trạng thái:</b> {selectedEvent.extendedProps?.status || "Không rõ"}</p>
 
-                <List
-                  dataSource={selectedEvent.extendedProps?.patients || []}
-                  renderItem={(p) => (
-                    <List.Item key={p.id}>
-                      <List.Item.Meta
-                        title={<b>{p.name}</b>}
-                        description={`Tuổi: ${p.age} | Ghi chú: ${p.note || "Không có"}`}
-                      />
-                    </List.Item>
-                  )}
-                  locale={{ emptyText: "Chưa có bệnh nhân nào." }}
-                  style={{ marginTop: 16 }}
-                />
-              </>
-            )
+              <List
+                dataSource={selectedEvent.extendedProps?.patients || []}
+                renderItem={(p) => (
+                  <List.Item key={p.id}>
+                    <List.Item.Meta
+                      title={<b>{p.name}</b>}
+                      description={`Tuổi: ${p.age} | Giới tính: ${p.gender} | Dịch vụ: ${p.service} | Ghi chú: ${p.note || "Không có"}`}
+                    />
+                  </List.Item>
+                )}
+                locale={{ emptyText: "Chưa có bệnh nhân nào." }}
+                style={{ marginTop: 16 }}
+              />
+            </>
           ) : (
             <div>Không có dữ liệu lịch làm việc.</div>
           )}
         </Modal>
-
       </div>
     </ConfigProvider>
   );

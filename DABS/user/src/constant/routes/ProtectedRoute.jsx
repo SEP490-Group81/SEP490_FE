@@ -1,33 +1,38 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { setMessage } from '../../redux/slices/messageSlice';
+import { useEffect, useState } from 'react';
 
-const ProtectedRoute = (
-    { allowedRoles }
-) => {
+const ProtectedRoute = ({ allowedRoles }) => {
+    const dispatch = useDispatch();
     const { accessToken, isInitializing, user } = useSelector((state) => state.user);
-    try {
-        console.log("user in protected route : " + user?.role.name + " accessToken : " + accessToken);
-        if (isInitializing) {
-            return <div>...Loading</div>;  // sau dùng skeleton
+    const [redirectToLogin, setRedirectToLogin] = useState(false);
+
+    useEffect(() => {
+        if (!isInitializing && (!user || !accessToken)) {
+            dispatch(setMessage({
+                type: 'error',
+                content: 'Vui lòng đăng nhập trước khi thực hiện thao tác này!'
+            }));
+            setTimeout(() => {
+                setRedirectToLogin(true);
+            }, 1000); 
         }
-        // console.log("in priavate Route : " + accessToken);
-        // if (!accessToken) {
-        //     return <Navigate to="/login" replace />;
-        // }
-        console.log("allowRoles : " + allowedRoles);
-        console.log("user role : " + user.role);
+    }, [isInitializing, user, accessToken, dispatch]);
 
-        if (allowedRoles && !allowedRoles.includes(user?.role.name)) {
-
-            return <Navigate to="/unauthorized" replace />;
-        }
-
-        return <Outlet />;
+    if (isInitializing) {
+        return <div>...Loading</div>; 
     }
-    catch (error) {
-        return <Navigate to="/login" replace />;
-    };
 
+    if (redirectToLogin) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (!user || !accessToken) {
+        return <div></div>; 
+    }
+
+    return <Outlet />;
 };
 
 export default ProtectedRoute;

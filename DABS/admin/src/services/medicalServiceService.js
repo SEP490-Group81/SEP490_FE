@@ -2,7 +2,7 @@ import { deleteAuth, get, getAuth, postAuth, putAuth } from "../utils/request";
 
 export const getSteps = async () => {
     try {
-        const result = await getAuth('/step');
+        const result = await getAuth('/steps');
 
         if (!result || !result.result) {
             throw new Error('Step data is missing in the response.');
@@ -17,7 +17,7 @@ export const getSteps = async () => {
 
 export const getServices = async () => {
     try {
-        const result = await get('/service');
+        const result = await get('/services');
         console.log("API raw result:", result);
 
         return result;
@@ -29,7 +29,7 @@ export const getServices = async () => {
 
 export const updateService = async (serviceData) => {
   try {
-    const result = await putAuth(`/service/update`, serviceData);
+    const result = await putAuth(`/services/update`, serviceData);
     console.log(`User updated successfully:`, result);
     return result;
   } catch (error) {
@@ -40,7 +40,7 @@ export const updateService = async (serviceData) => {
 
 export const createService= async (service) => {
   try {
-    const result = await postAuth(`/service/create`, service);
+    const result = await postAuth(`/services/create`, service);
     console.log(`service created successfully:`, result);
     return result;
   } catch (error) {
@@ -63,7 +63,7 @@ export const getHospitalServices = async (hospitalId) => {
 
 export const getStepByServiceId = async (serviceId ) => {
   try {
-    const result = await getAuth(`/service/${serviceId}/servicesteps`);
+    const result = await getAuth(`/services/${serviceId}/servicesteps`);
     console.log(`Fetched services step for hospital ${serviceId}:`, result);
     return result;
   } catch (error) {
@@ -82,7 +82,7 @@ export const updateServiceSteps = async (serviceId, steps) => {
   }));
 
   try {
-    const result = await putAuth(`/service/${serviceId}/servicesteps`, payload);
+    const result = await putAuth(`/services/${serviceId}/servicesteps`, payload);
     return result;
   } catch (error) {
     console.error(`Error updating service steps for ID ${serviceId}:`, error.message);
@@ -92,7 +92,7 @@ export const updateServiceSteps = async (serviceId, steps) => {
 
 export const deleteService = async (serviceId) => {
   try {
-    const result = await deleteAuth(`/service`, serviceId);
+    const result = await deleteAuth(`/services`, serviceId);
     console.log(`service created successfully:`, result);
     return result;
   } catch (error) {

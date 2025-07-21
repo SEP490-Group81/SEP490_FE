@@ -25,6 +25,8 @@ import StaffShiftManagement from "../../pages/AdminHospital/StaffShiftManagement
 import ManageRoom from "../../pages/AdminHospital/RoomManagement";
 import ManageSpecialist from "../../pages/AdminHospital/SpecialistManagement";
 import HospitalManagement from "../../pages/AdminHospital/HospitalManagement/HospitalManagement";
+import AppointmentOverview from "../../pages/Nurse/NurseHome/AppointmentOverview/AppointmentOverview";
+import ReviewFeedback from "../../pages/HospitalStaff/ReviewFeedback/ReviewFeedback";
 import MedicalServiceManagement from "../../pages/AdminHospital/MedicalServiceManagement";
 import LeaveRequestManagement from "../../pages/AdminHospital/LeaveRequestManagement";
 import HospitalStatisticPage from "../../pages/AdminHospital/HospitalStatisticPage";
@@ -32,6 +34,8 @@ import NurseProfile from "../../pages/Nurse/NurseProfile";
 import WorkScheduleNurse from "../../pages/Nurse/WorkSchedule";
 import StaffProfile from "../../pages/HospitalStaff/StaffProfile";
 import AdjustBookingSchedule from "../../pages/Nurse/AdjustAppointmentSchedule";
+import StaffPaymentConfirmation from "../../pages/HospitalStaff/StaffPaymentAdjust/ConfirmPayment";
+import StaffUnpaidBookingList from "../../pages/HospitalStaff/StaffPaymentAdjust/UnpaidBookingList";
 
 
 export const routes = [
@@ -87,7 +91,7 @@ export const routes = [
           <StaffShiftManagement />
       },
       {
-        path: "room-depart-management",
+        path: "room-management",
         element:
           <ManageRoom />
       },
@@ -140,7 +144,7 @@ export const routes = [
         element: <WorkSchedule />
       },
       {
-        path: "doctor-profile",
+        path: "profile",
         element: <DoctorProfile />
       },
       {
@@ -158,8 +162,20 @@ export const routes = [
         element: <HospitalStaffHome />
       },
       {
+        path: 'review-feedback',
+        element: <ReviewFeedback />,
+      },
+      {
         path: "staff-profile",
         element: <StaffProfile />
+      },
+      {
+        path: "payment-confirm",
+        element: <StaffPaymentConfirmation />
+      },
+      {
+        path: "payment-list",
+        element: <StaffUnpaidBookingList />
       },
     ]
   },
@@ -170,6 +186,10 @@ export const routes = [
       {
         index: true,
         element: <NurseHome />
+      },
+      {
+        path: 'appointment',
+        element: <AppointmentOverview />,
       },
       {
         path: "nurse-profile",
