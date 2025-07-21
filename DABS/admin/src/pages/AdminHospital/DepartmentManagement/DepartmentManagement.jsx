@@ -26,6 +26,9 @@ const DepartmentManagement = () => {
     });
 
     const fetchDepartments = async (page = 1, pageSize = 10, search = '', status = 'all') => {
+        console.log('DepartmentManagement: fetchDepartments called with:', { page, pageSize, search, status });
+        console.log('Current token in localStorage:', localStorage.getItem('accessToken'));
+
         setLoading(true);
         try {
             const params = {
@@ -35,7 +38,10 @@ const DepartmentManagement = () => {
                 status: status !== 'all' ? status : undefined
             };
 
+            console.log('DepartmentManagement: Calling getAllDepartments with params:', params);
             const data = await getAllDepartments(params);
+            console.log('DepartmentManagement: getAllDepartments response:', data);
+
             if (data) {
                 setDepartments(data.items || []);
                 setPagination({

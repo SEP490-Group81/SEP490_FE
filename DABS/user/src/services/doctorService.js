@@ -2,7 +2,7 @@ import { get } from "../utils/request";
 
 export const getDoctorByHospitalId = async (id) => {
   try {
-    const result = await get(`/doctor/by-hospital/${id}`);
+    const result = await get(`/doctors/by-hospital/${id}`);
     if (!result || !result.result) {
       throw new Error('User data is missing in the response.');
     }
