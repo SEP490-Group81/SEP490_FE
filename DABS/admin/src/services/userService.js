@@ -1,24 +1,14 @@
 import axios from 'axios';
 import { API_DOMAIN } from '../constants/api/api';
-import { getAuth, postAuth, putAuth, deleteAuth } from '../utils/request';
+import { deleteAuth, getAuth, postAuth, putAuth, } from '../utils/request';
 
-// Token cho authorization
-const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWRlbnRpZmllciI6IjEiLCJlbWFpbCI6ImFkbWluQGhvc3RuYW1lLmNvbSIsImZ1bGxOYW1lIjoiU3VwZXIgVXNlciIsIm5hbWUiOiJTdXBlciIsInN1cm5hbWUiOiJVc2VyIiwiaXBBZGRyZXNzIjoiMC4wLjAuMSIsImF2YXRhclVybCI6IiIsIm1vYmlsZXBob25lIjoiIiwiZXhwIjoxNzgxMjcwNDgzLCJpc3MiOiJodHRwczovL0JFLlNFUDQ5MC5uZXQiLCJhdWQiOiJCRS5TRVA0OTAifQ.kQIX9uvjN9UOPiBitp9JsO2DlPlFyIU4VTP1ZyM4k3Y";
 
-// Cấu hình axios với headers mặc định
-const api = axios.create({
-  baseURL: 'https://localhost:8175/api/v1',
-  headers: {
-    'Authorization': `Bearer ${AUTH_TOKEN}`,
-    'Content-Type': 'application/json'
-  }
-});
 
 // Get all users with pagination and optional filters
 export const getAllUsers = async (params) => {
   try {
-    const response = await api.get(`/user`);;
-    return response.data;
+    const response = await getAuth(`/user`);;
+    return response;
   } catch (error) {
     console.error('Error fetching users:', error);
     return null;
@@ -44,24 +34,62 @@ export const getUserById = async (id) => {
 
 // Create new user
 export const createUser = async (userData) => {
+  console.log('🚀 userService: Creating user with data:', userData);
+
   try {
-    const result = await postAuth(`/user/create`, userData);
-    console.log(`User updated successfully:`, result);
+    const result = await postAuth('/user/create', userData);
+    console.log('✅ User created successfully:', result);
     return result;
   } catch (error) {
-    console.error(`Error updating user with ID ${userData.id}:`, error.message);
+    console.error('❌ Error creating user:', error);
+
+    // ✅ Log chi tiết response để debug
+    if (error.response) {
+      console.error('❌ Status:', error.response.status);
+      console.error('❌ Response data:', error.response.data);
+      console.error('❌ Response headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('❌ Request error:', error.request);
+    } else {
+      console.error('❌ Setup error:', error.message);
+    }
+
     throw error;
   }
 };
-
-export const updateUser = async (userData) => {
+// Update user
+// Update user
+export const updateUser = async (userId, userData) => {
+  
+  
   try {
-    console.log("update user : " + JSON.stringify(userData));
-    const result = await putAuth(`/user/update`, userData);
-    console.log(`User updated successfully:`, result);
+   
+    const updatePayload = {
+      id: userId,
+      ...userData
+    };
+    
+    
+    
+    const result = await putAuth('/user/update', updatePayload);
+    
+    
+    // ✅ Return the response as-is, let component handle it
     return result;
   } catch (error) {
-    console.error(`Error updating user with ID ${userData.id}:`, error.message);
+    console.error('❌ Error updating user with ID', userId, ':', error);
+    
+    // Log chi tiết response để debug
+    if (error.response) {
+      console.error('❌ Status:', error.response.status);
+      console.error('❌ Response data:', error.response.data);
+      console.error('❌ Response headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('❌ Request error:', error.request);
+    } else {
+      console.error('❌ Setup error:', error.message);
+    }
+    
     throw error;
   }
 };
@@ -69,7 +97,7 @@ export const updateUser = async (userData) => {
 // Delete user
 export const deleteUser = async (id) => {
   try {
-    const response = await api.deleteAuth('/user', id);
+    const response = await deleteAuth('/user', id);
     return response.data;
   } catch (error) {
     console.error(`Error deleting user ${id}:`, error);

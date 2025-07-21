@@ -44,32 +44,37 @@ const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
 
     const getRoleColor = (role) => {
         switch (role) {
-            case 'admin':
-                return '#ff4d4f';
-            case 'doctor':
-                return '#52c41a';
-            case 'staff':
-                return '#1890ff';
-            case 'hospitalAdmin':
-                return '#722ed1';
-            case 'systemAdmin':
-                return '#faad14';
-            default:
-                return '#1890ff';
+            case 'systemAdmin': return '#faad14';
+            case 'hospitalAdmin': return '#722ed1';
+            case 'doctor': return '#52c41a';
+            case 'nurse': return '#13c2c2';
+            case 'patient': return '#1890ff';
+            default: return '#8c8c8c';
         }
     };
 
+
     // Extract role from username if not provided directly
     const getUserRole = (user) => {
-        if (user.role) return user.role;
+        if (!user.role) return 'user';
 
-        const username = user.userName?.toLowerCase();
-        if (username.includes('admin')) return 'admin';
-        if (username.includes('doctor')) return 'doctor';
-        if (username.includes('staff')) return 'staff';
-        if (username.includes('hospitaladmin')) return 'hospitalAdmin';
-        if (username.includes('systemadmin')) return 'systemAdmin';
-        return 'user';
+        const roleType = user.role.roleType;
+        const roleName = user.role.name;
+
+
+
+        // Option 1: Map by roleType
+        switch (roleType) {
+            case 2: return 'doctor';
+            case 4: return 'hospitalAdmin';
+            case 5: return 'systemAdmin';
+            case 6: return 'patient';
+            case 7: return 'nurse';
+            default: return 'user';
+        }
+
+        // Option 2: Return name directly
+        // return roleName;
     };
 
     const columns = [

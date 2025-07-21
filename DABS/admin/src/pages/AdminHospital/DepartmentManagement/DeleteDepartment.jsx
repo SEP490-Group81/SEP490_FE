@@ -27,7 +27,9 @@ const DeleteDepartment = ({ visible, record, onCancel, onSuccess }) => {
     const handleDelete = async () => {
         setSpinning(true);
         try {
+            console.log(record.id);
             const response = await deleteDepartment(record.id);
+
             setSpinning(false);
 
             if (response) {
