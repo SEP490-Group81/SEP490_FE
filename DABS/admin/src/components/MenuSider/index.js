@@ -4,9 +4,7 @@ import {
     BankOutlined,
     MedicineBoxOutlined,
     InboxOutlined,
-    HeatMapOutlined,
-    AndroidOutlined,
-    LineChartOutlined ,
+    LineChartOutlined,
     ExperimentOutlined,
     DashboardOutlined,
     ReadOutlined,
@@ -17,6 +15,11 @@ import {
     TeamOutlined,
     IdcardOutlined,
     CalendarOutlined,
+    UserOutlined,
+    ClockCircleOutlined,
+    EditOutlined,
+    CheckCircleOutlined,
+    UnorderedListOutlined,
     FormOutlined,
 } from "@ant-design/icons";
 
@@ -50,7 +53,7 @@ function MenuSider() {
         {
             key: "hospital-statistic",
             label: <Link to="/admin-hospital/hospital-statistic">Thống kê</Link>,
-            icon: <LineChartOutlined  />,
+            icon: <LineChartOutlined />,
         },
         {
             key: "users",
@@ -133,6 +136,31 @@ function MenuSider() {
             key: "home",
             label: <Link to="/nurse">Dashboard</Link>,
             icon: <DashboardOutlined />,
+        },
+        {
+            key: "appointment",
+            label: <Link to="/nurse/appointment">Lịch hẹn</Link>,
+            icon: <CalendarOutlined />,
+        },
+        {
+            key: "nurse-profile",
+            label: <Link to="/nurse/nurse-profile">Hồ sơ cá nhân</Link>,
+            icon: <UserOutlined />,
+        },
+        {
+            key: "work-schedule",
+            label: <Link to="/nurse/work-schedule">Lịch làm việc</Link>,
+            icon: <ClockCircleOutlined />,
+        },
+        {
+            key: "adjust-appointment-schedule",
+            label: <Link to="/nurse/adjust-appointment-schedule">Điều chỉnh lịch hẹn</Link>,
+            icon: <EditOutlined />,
+        },
+        {
+            key: "payment-list",
+            label: <Link to="/nurse/payment-list">Danh sách chưa thanh toán</Link>,
+            icon: <UnorderedListOutlined />,
         },
     ];
 

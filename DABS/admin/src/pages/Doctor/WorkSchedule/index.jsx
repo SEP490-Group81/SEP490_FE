@@ -38,7 +38,18 @@ const LegendColor = () => (
     </div>
   </div>
 );
+const renderEventContent = (eventInfo) => {
+  const { title, extendedProps } = eventInfo.event;
+  const { status, patients } = extendedProps;
 
+  return (
+    <div style={{ padding: 2 }}>
+      <div style={{ fontWeight: "bold" }}>{title.split(" - ")[0]}</div>
+      <div style={{ fontSize: 12, color: "#333" }}>{status}</div>
+      <div style={{ fontSize: 12 }}>👥 {patients.length} bệnh nhân</div>
+    </div>
+  );
+};
 const WorkSchedule = () => {
   const [events, setEvents] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -56,6 +67,7 @@ const WorkSchedule = () => {
 
   useEffect(() => {
     const fetchDoctor = async () => {
+      if(!user.id) return;
       const result = await getDoctorByUserId(user.id);
       if (result) {
         console.log("result doctor detail : " + result);
@@ -76,6 +88,7 @@ const WorkSchedule = () => {
 
     try {
       const result = await getScheduleByDoctorId(doctorDetail.id, from, to);
+      console.log("result doctor schedule: " + JSON.stringify(result));
       const now = dayjs();
 
       const formattedEvents = result.map((item) => {
@@ -124,10 +137,11 @@ const WorkSchedule = () => {
         return {
           id: item.id,
           title: item.timeShift === 1 ? "Ca sáng" : "Ca chiều",
+          
           start: start.toISOString(),
           end: end.toISOString(),
           extendedProps: {
-            type: hasAppointments ? "booking" : "shift",
+            type: status.includes("rỗng") ? "shift" : "appointment",
             department: item.room?.department?.name || "Không rõ",
             room: item.room?.name || "Không rõ",
             status,
@@ -144,6 +158,21 @@ const WorkSchedule = () => {
 
 
   const handleEventClick = ({ event }) => {
+    // const clonedEvent = {
+    //   ...event,
+    //   extendedProps: {
+    //     ...event.extendedProps,
+    //     patients: Array.from({ length: 30 }, (_, i) => ({
+    //       id: i + 1,
+    //       name: `Bệnh nhân ${i + 1}`,
+    //       age: 25 + (i % 10),
+    //       gender: i % 2 === 0 ? "Nam" : "Nữ",
+    //       service: "Khám tổng quát",
+    //       note: `Ghi chú ${i + 1}`,
+    //     })),
+    //   },
+    // };
+
     setSelectedEvent(event);
     setModalOpen(true);
   };
@@ -262,6 +291,7 @@ const WorkSchedule = () => {
           plugins={[timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           ref={calendarRef}
+          eventContent={renderEventContent}
           locale={viLocale}
           datesSet={handleDatesSet}
           events={events}
@@ -286,6 +316,7 @@ const WorkSchedule = () => {
           onCancel={() => setModalOpen(false)}
           footer={null}
           centered
+          bodyStyle={{ maxHeight: "50vh", overflowY: "auto", paddingRight: 12 }}
           title={selectedEvent ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <span style={{ fontWeight: 700, fontSize: 20 }}>

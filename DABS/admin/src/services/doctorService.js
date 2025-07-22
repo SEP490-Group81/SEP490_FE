@@ -237,3 +237,14 @@ export const getDoctorByUserId = async (id) => {
     throw error;
   }
 };
+
+export const updateDoctorByDoctor = async (userData) => {
+  try {
+    const result = await putAuth(`/user/update`, userData);
+    console.log(`Doctor updated successfully:`, result);
+    return result;
+  } catch (error) {
+    console.error(`Error updating user with ID ${userData.id}:`, error.message);
+    throw error;
+  }
+};
