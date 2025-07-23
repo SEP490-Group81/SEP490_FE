@@ -301,8 +301,8 @@ function UpadteProfile() {
                         placeholder="Chọn giới tính ..."
                         size="large"
                       >
-                        <Option value="true">Male</Option>
-                        <Option value="false">Female</Option>
+                        <Option value="1">Male</Option>
+                        <Option value="0">Female</Option>
                       </Select>
                     </Form.Item>
                   </Col>
