@@ -100,20 +100,12 @@ export const routes = [
         element:
           <ManageSpecialist />
       },
-      {
-        path: 'hospital-detail/:id',
-        element: <HospitalDetail />,
-        // requireAuth: true,
-        // roles: ['admin', 'systemAdmin', 'hospitalAdmin'], 
-      },
+      
       {
         path: 'departments',
         element: <DepartmentManagement />,
       },
-      {
-        path: 'hospitals',
-        element: <HospitalManagement />,
-      },
+      
       {
         path: "medical-service-management",
         element:

@@ -6,7 +6,7 @@ import {
     InboxOutlined,
     HeatMapOutlined,
     AndroidOutlined,
-    LineChartOutlined ,
+    LineChartOutlined,
     ExperimentOutlined,
     DashboardOutlined,
     ReadOutlined,
@@ -50,7 +50,7 @@ function MenuSider() {
         {
             key: "hospital-statistic",
             label: <Link to="/admin-hospital/hospital-statistic">Thống kê</Link>,
-            icon: <LineChartOutlined  />,
+            icon: <LineChartOutlined />,
         },
         {
             key: "users",
@@ -87,11 +87,7 @@ function MenuSider() {
             label: <Link to="/admin-hospital/departments">Department Management</Link>,
             icon: <BankOutlined />
         },
-        {
-            key: "hospital-management",
-            label: <Link to="/admin-hospital/hospitals">Hospital Management</Link>,
-            icon: <MedicineBoxOutlined />
-        },
+
         {
             key: "medical-services",
             label: <Link to="/admin-hospital/medical-service-management">Dịch vụ y tế</Link>,
