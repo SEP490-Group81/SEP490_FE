@@ -199,7 +199,6 @@ const ManageRoom = () => {
             <Form.Item
               name="specialty"
               label="Chuyên khoa"
-              rules={[{ required: true, message: "Vui lòng chọn chuyên khoa" }]}
             >
               <Select placeholder="Chọn chuyên khoa">
                 {specialties.map(spe => (

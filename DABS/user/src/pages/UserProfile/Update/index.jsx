@@ -67,8 +67,7 @@ function UpadteProfile() {
           ? value.format('YYYY-MM-DD')
           : value;
       } else if (formField === 'gender' && value !== undefined) {
-        mapped[fieldMap[formField]] =
-          value === "1" || value === 1 || value === true;
+        mapped[fieldMap[formField]] = value === "true";
       } else if (
         ['district', 'province', 'ward'].includes(formField) &&
         value !== undefined &&
@@ -215,7 +214,7 @@ function UpadteProfile() {
                   email: userDefault?.email || "",
                   gender: userDefault?.gender !== undefined ? userDefault.gender.toString() : "",
                   job: userDefault?.job || "",
-                  province: userDefault?.province || null, 
+                  province: userDefault?.province || null,
                   ward: userDefault?.ward || null,
                   streetAddress: userDefault?.streetAddress || "",
                   cccd: userDefault?.cccd || "",
@@ -301,8 +300,8 @@ function UpadteProfile() {
                         placeholder="Chọn giới tính ..."
                         size="large"
                       >
-                        <Option value="1">Male</Option>
-                        <Option value="0">Female</Option>
+                        <Option value="true">Male</Option>
+                        <Option value="false">Female</Option>
                       </Select>
                     </Form.Item>
                   </Col>

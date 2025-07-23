@@ -91,7 +91,7 @@ function DoctorProfile() {
             if (formField === 'dob' && value) {
                 mapped[fieldMap[formField]] = value.format ? value.format('YYYY-MM-DD') : value;
             } else if (formField === 'gender' && value !== undefined) {
-                mapped[fieldMap[formField]] = value === "1" || value === 1 || value === true;
+                mapped[fieldMap[formField]] = value === "true";
             } else if (
                 ['district', 'province', 'ward'].includes(formField) &&
                 value !== undefined && value !== null && value !== ""
@@ -118,6 +118,7 @@ function DoctorProfile() {
 
         const mappedData = getMappedData(values, userDefault);
         try {
+            console.log("map data in update profile doctor " + JSON.stringify(mappedData));
             await updateDoctorByDoctor(mappedData);
             dispatch(updateUserSlice(mappedData));
             dispatch(setMessage({ type: 'success', content: 'Cập nhật thành công!' }));
@@ -239,8 +240,8 @@ function DoctorProfile() {
                                 <Col xs={24} md={12}>
                                     <Form.Item name="gender" label="Giới tính">
                                         <Select size="large">
-                                            <Option value="1">Nam</Option>
-                                            <Option value="0">Nữ</Option>
+                                            <Option value="true">Nam</Option>
+                                            <Option value="false">Nữ</Option>
                                         </Select>
                                     </Form.Item>
                                 </Col>
@@ -259,14 +260,16 @@ function DoctorProfile() {
                                     </Form.Item>
                                 </Col>
                             </Row>
-                            <Row gutter={16}>
-                                <Col xs={24} sm={24} md={24} lg={8} xl={8} xxl={8}>
+                            <Row gutter={[24, 16]}>
+                                <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
                                     <Form.Item
                                         label="Tỉnh/Thành phố"
                                         name="province"
                                         rules={[{ required: true, message: "Vui lòng chọn tỉnh/thành phố!" }]}
                                     >
+
                                         <Select
+                                            size="large"
                                             showSearch
                                             placeholder="Chọn tỉnh/thành phố"
                                             filterOption={(input, option) =>
@@ -282,7 +285,7 @@ function DoctorProfile() {
                                     </Form.Item>
                                 </Col>
 
-                                <Col xs={24} sm={24} md={24} lg={8} xl={8} xxl={8}>
+                                <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
                                     <Form.Item
                                         label="Phường/Xã"
                                         name="ward"
@@ -290,6 +293,7 @@ function DoctorProfile() {
                                     >
                                         <Select
                                             showSearch
+                                            size="large"
                                             placeholder="Chọn phường/xã"
                                             disabled={!selectedProvince}
                                             options={wards.map(w => ({ label: w.name, value: w.name }))}
@@ -300,7 +304,15 @@ function DoctorProfile() {
                                         />
                                     </Form.Item>
                                 </Col>
-
+                            </Row>
+                            <Row>
+                                <Col span={24}>
+                                    <Form.Item label="Số nhà, đường" name="streetAddress" rules={[{ required: true, message: "Vui lòng nhập số nhà và tên đường!" }]}>
+                                        <Input
+                                            size="large"
+                                            placeholder="Nhập số nhà, tên đường" />
+                                    </Form.Item>
+                                </Col>
                             </Row>
                             <Row gutter={[24, 16]}>
                                 <Col xs={24} md={12}>

@@ -27,7 +27,6 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
   const handleSubmit = async (values) => {
     setSpinning(true);
     try {
-      // Giả sử có hàm gửi dữ liệu lên server, thay bằng hàm thực tế của bạn
       // await sendLeaveRequest(values);
       setSpinning(false);
       form.resetFields();
