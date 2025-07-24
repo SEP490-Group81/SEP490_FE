@@ -166,19 +166,7 @@ const ManageSpecialist = () => {
             sorter: (a, b) => a.id - b.id
         },
         {
-            title: (
-                <div>
-                    Tên chuyên khoa
-                    <Input.Search
-                        placeholder="Tìm kiếm..."
-                        enterButton={<SearchOutlined />}
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        style={{ marginTop: 8 }}
-                        allowClear
-                    />
-                </div>
-            ),
+            title: ("Tên chuyên khoa"),
             width: 380,
             dataIndex: "name",
             key: "name"
@@ -240,6 +228,18 @@ const ManageSpecialist = () => {
                     </Row>
 
                     <Card>
+                        <Row style={{ marginBottom: 25 }}>
+                            <Col span={8}>
+                                <Input.Search
+                                    placeholder="Tìm kiếm..."
+                                    enterButton={<SearchOutlined />}
+                                    value={searchText}
+                                    onChange={(e) => setSearchText(e.target.value)}
+                                    style={{ marginTop: 8 }}
+                                    allowClear
+                                />
+                            </Col>
+                        </Row>
                         <Table
                             columns={columns}
                             dataSource={filteredData}
@@ -283,13 +283,13 @@ const ManageSpecialist = () => {
                                 label="Tên chuyên khoa"
                                 rules={[{ required: true, message: "Vui lòng nhập tên chuyên khoa" }]}
                             >
-                                <Input placeholder="Tên chuyên khoa"/>
+                                <Input placeholder="Tên chuyên khoa" />
                             </Form.Item>
                             <Form.Item
                                 name="description"
                                 label="Mô tả"
                             >
-                                <Input placeholder="Mô tả"/>
+                                <Input placeholder="Mô tả" />
                             </Form.Item>
                             <Form.Item
                                 name="image"

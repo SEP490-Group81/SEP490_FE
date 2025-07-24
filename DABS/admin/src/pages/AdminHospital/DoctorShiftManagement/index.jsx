@@ -30,6 +30,9 @@ import {
   PauseCircleOutlined,
   StopOutlined,
 } from "@ant-design/icons";
+import { getDoctorByHospitalId, getDoctorByUserId } from "../../../services/doctorService";
+import { useRef } from "react";
+import { getScheduleByDoctorId } from "../../../services/scheduleService";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -47,12 +50,6 @@ const weekdayOptions = [
 dayjs.extend(customParseFormat);
 dayjs.locale("vi");
 
-const doctors = [
-  { id: 10, name: "Nguyễn Văn A" },
-  { id: 11, name: "Trần Thị B" },
-  { id: 12, name: "Lê Văn C" },
-  { id: 13, name: "Nguyễn Lập" },
-];
 
 const eventColor = (info) => {
   const { type, status, patients } = info.event.extendedProps;
@@ -109,6 +106,19 @@ const eventColor = (info) => {
   }
 };
 
+const renderEventContent = (eventInfo) => {
+  const { title, extendedProps } = eventInfo.event;
+  const { status, patients } = extendedProps;
+
+  return (
+    <div style={{ padding: 2 }}>
+      <div style={{ fontWeight: "bold" }}>{title.split(" - ")[0]}</div>
+      <div style={{ fontSize: 12, color: "#333" }}>{status}</div>
+      <div style={{ fontSize: 12 }}>👥 {patients.length} bệnh nhân</div>
+    </div>
+  );
+};
+
 const AdminDoctorShiftManagement = () => {
   const [shifts, setShifts] = useState([]);
   const [filteredShifts, setFilteredShifts] = useState([]);
@@ -119,94 +129,142 @@ const AdminDoctorShiftManagement = () => {
   const [bulkForm] = Form.useForm();
   const [modalDetail, setModalDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [doctors, setDoctors] = useState([]);
+  const [doctorDetail, setDoctorDetail] = useState(null);
+  const [events, setEvents] = useState([]);
   const dispatch = useDispatch();
+  const { confirm } = Modal;
+  const calendarRef = useRef();
   const user = useSelector((state) => state.user.user);
-  console.log("hospital admin id is: " + JSON.stringify(user));
-  const caTimes = {
-    morning: { start: "08:00:00", end: "12:00:00", label: "Ca sáng" },
-    afternoon: { start: "13:00:00", end: "17:00:00", label: "Ca chiều" },
-  };
-  useEffect(() => {
-    fetchShifts();
-  }, []);
+  console.log("hospital admin id is: " + user.hospitals[0]?.id);
 
-  const fetchShifts = async () => {
-    const data = [
-      {
-        id: 1,
-        doctorId: 10,
-        doctorName: "Nguyễn Văn A",
-        workDate: "2025-07-04",
-        startTime: "08:00:00",
-        endTime: "12:00:00",
-        roomName: "Phòng 101",
-        departmentName: "Khoa Nội",
-        status: "Đang khám",
-        type: "shift",
-        patients: [
-          { id: 1, name: "Nguyễn Văn A", age: 30, note: "Khám tổng quát" },
-          { id: 2, name: "Trần Thị B", age: 25, note: "Khám tim mạch" },
-        ],
-      },
-      {
-        id: 2,
-        doctorId: 11,
-        doctorName: "Trần Thị B",
-        workDate: "2025-07-04",
-        startTime: "08:00:00",
-        endTime: "12:00:00",
-        roomName: "Phòng 101",
-        departmentName: "Khoa Nội",
-        status: "booking",
-        type: "shift",
-        patients: [
-          { id: 1, name: "Nguyễn Văn A", age: 30, note: "Khám tổng quát" },
-          { id: 2, name: "Trần Thị B", age: 25, note: "Khám tim mạch" },
-        ],
-      },
-      {
-        id: 3,
-        doctorId: 12,
-        doctorName: "Lê Văn C",
-        workDate: "2025-07-04",
-        startTime: "08:00:00",
-        endTime: "12:00:00",
-        roomName: "Phòng 101",
-        departmentName: "Khoa Nội",
-        status: "Chưa có ca khám",
-        type: "shift",
-      },
-      {
-        id: 4,
-        doctorId: 13,
-        doctorName: "Nguyễn Lập",
-        workDate: "2025-07-05",
-        startTime: "08:00:00",
-        endTime: "12:00:00",
-        roomName: "Phòng 101",
-        departmentName: "Khoa Nội",
-        status: "Chưa bắt đầu",
-        type: "shift",
-        patients: [
-          { id: 1, name: "Nguyễn Văn A", age: 30, note: "Khám tổng quát" },
-          { id: 2, name: "Trần Thị B", age: 25, note: "Khám tim mạch" },
-        ],
-      },
-      {
-        id: 5,
-        doctorId: 13,
-        doctorName: "Nguyễn Lập",
-        workDate: "2025-07-04",
-        startTime: "08:00:00",
-        endTime: "12:00:00",
-        roomName: "Phòng 101",
-        departmentName: "Khoa Nội",
-        status: "Chưa có ca khám",
-        type: "shift",
-      },
-    ];
-    setShifts(data);
-    setFilteredShifts(data);
+  const isShiftDisabled = (event) => {
+    if (!event) return true;
+
+    const now = dayjs();
+    const eventEnd = dayjs(event.end);
+
+    const patients = event.extendedProps?.patients || [];
+
+    if (patients.length > 0) return true;
+
+    if (eventEnd.isBefore(now)) return true;
+
+    return false;
+  };
+
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      if (!user.id) return;
+      const result = await getDoctorByUserId(selectedDoctorId);
+      if (result) {
+        console.log("result doctor detail : " + result);
+        setDoctorDetail(result);
+      } else {
+        console.error("Không tìm thấy thông tin bác sĩ.");
+      }
+    };
+    fetchDoctor();
+  }, [selectedDoctorId]);
+
+  useEffect(() => {
+    if (doctorDetail && calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      const view = calendarApi.view;
+      handleDatesSet({ start: view.activeStart, end: view.activeEnd });
+    }
+  }, [doctorDetail]);
+
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      if (!user.id) return;
+      const result = await getDoctorByHospitalId(user.hospitals[0]?.id);
+      if (result) {
+        console.log("result doctor list : " + JSON.stringify(result));
+        setDoctors(result);
+      } else {
+        console.error("Không tìm thấy thông tin bác sĩ.");
+      }
+    };
+    fetchDoctor();
+  }, [user.hospitals[0]?.id]);
+
+
+  const handleDatesSet = async (arg) => {
+    if (!doctorDetail) return;
+
+    const from = dayjs(arg.start).toISOString();
+    const to = dayjs(arg.end).toISOString();
+    console.log("from schedule : " + from + " to Schedule : " + to);
+
+    try {
+      const result = await getScheduleByDoctorId(doctorDetail.id, from, to);
+      console.log("result doctor schedule: " + JSON.stringify(result));
+      const now = dayjs();
+
+      const formattedEvents = result.map((item) => {
+        const dateStr = item.workDate.split("T")[0];
+        const startStr = `${dateStr}T${item.startTime}`;
+        const endStr = `${dateStr}T${item.endTime}`;
+        const start = dayjs(startStr);
+        const end = dayjs(endStr);
+
+        let status = "Ca làm việc khác";
+        const hasAppointments = item.appointment?.length > 0;
+
+        if (hasAppointments) {
+          if (now.isAfter(end)) {
+            status = "Đã khám";
+          } else if (now.isBefore(start)) {
+            status = "Chưa bắt đầu";
+          } else {
+            status = "Đang khám";
+          }
+        } else {
+          if (now.isAfter(end)) {
+            status = "Ca rỗng (đã qua)";
+          } else if (now.isBefore(start)) {
+            status = "Ca rỗng (sắp tới)";
+          } else {
+            status = "Ca rỗng (đang chờ)";
+          }
+        }
+
+        const patients =
+          item.appointment?.map((appt) => {
+            const dob = dayjs(appt.patient.dob);
+            const age = dayjs().diff(dob, "year");
+
+            return {
+              id: appt.id,
+              name: appt.patient.fullname || "Không rõ",
+              age,
+              note: appt.note || "",
+              gender: appt.patient.gender ? "Nam" : "Nữ",
+              service: appt.service?.name || "Không rõ",
+            };
+          }) || [];
+
+        return {
+          id: item.id,
+          title: item.timeShift === 1 ? "Ca sáng" : "Ca chiều",
+
+          start: start.toISOString(),
+          end: end.toISOString(),
+          extendedProps: {
+            type: status.includes("rỗng") ? "shift" : "appointment",
+            department: item.room?.department?.name || "Không rõ",
+            room: item.room?.name || "Không rõ",
+            status,
+            patients,
+          },
+        };
+      });
+
+      setEvents(formattedEvents);
+    } catch (err) {
+      console.error("Lỗi khi tải lịch làm việc:", err);
+    }
   };
 
   useEffect(() => {
@@ -214,13 +272,7 @@ const AdminDoctorShiftManagement = () => {
     else setFilteredShifts(shifts.filter((s) => s.doctorId === selectedDoctorId));
   }, [selectedDoctorId, shifts]);
 
-  const events = filteredShifts.map((shift) => ({
-    id: shift.id,
-    title: `Bác sĩ ${shift.doctorName} - ${shift.roomName}`,
-    start: `${shift.workDate}T${shift.startTime}`,
-    end: `${shift.workDate}T${shift.endTime}`,
-    extendedProps: { ...shift },
-  }));
+
 
   const onAddShift = (dateStr = null) => {
     setEditingShift(null);
@@ -229,16 +281,31 @@ const AdminDoctorShiftManagement = () => {
     setModalVisible(true);
   };
 
-  const onEditShift = (shift) => {
-    setSelectedEvent(shift);
+  const handleEventClick = ({ event }) => {
+    // const clonedEvent = {
+    //   ...event,
+    //   extendedProps: {
+    //     ...event.extendedProps,
+    //     patients: Array.from({ length: 30 }, (_, i) => ({
+    //       id: i + 1,
+    //       name: `Bệnh nhân ${i + 1}`,
+    //       age: 25 + (i % 10),
+    //       gender: i % 2 === 0 ? "Nam" : "Nữ",
+    //       service: "Khám tổng quát",
+    //       note: `Ghi chú ${i + 1}`,
+    //     })),
+    //   },
+    // };
+
+    setSelectedEvent(event);
+    console.log("Selected even in doctor shift management " + JSON.stringify(selectedEvent));
     setModalDetail(true);
   };
-
   const onDeleteShift = (id) => {
-    Modal.confirm({
+    confirm({
       title: "Xác nhận xóa ca làm việc?",
       onOk: () => {
-        const newData = shifts.filter((s) => s.id !== id);
+        const newData = shifts.filter((s) => String(s.id) !== String(id));
         setShifts(newData);
         setFilteredShifts(newData);
         setModalDetail(false);
@@ -418,8 +485,8 @@ const AdminDoctorShiftManagement = () => {
               value={selectedDoctorId}
             >
               {doctors.map((doc) => (
-                <Option key={doc.id} value={doc.id}>
-                  {doc.name}
+                <Option key={doc?.user?.id} value={doc?.user?.id}>
+                  {doc?.user?.fullname}
                 </Option>
               ))}
             </Select>
@@ -465,7 +532,7 @@ const AdminDoctorShiftManagement = () => {
                       placeholder="Chọn bác sĩ"
                       onChange={(value) => {
                         if (value.includes("all")) {
-                          const allIds = doctors.map((n) => n.id);
+                          const allIds = doctors.map((n) => n.user?.id);
                           bulkForm.setFieldsValue({ doctorIds: allIds });
                         }
                       }}
@@ -475,8 +542,8 @@ const AdminDoctorShiftManagement = () => {
                         Tất cả
                       </Option>
                       {doctors.map((doc) => (
-                        <Option key={doc.id} value={doc.id}>
-                          {doc.name}
+                        <Option key={doc?.user?.id} value={doc?.user?.id}>
+                          {doc?.user?.fullname}
                         </Option>
                       ))}
                     </Select>
@@ -522,7 +589,6 @@ const AdminDoctorShiftManagement = () => {
               </div>
             </Col>
 
-            {/* Right column: calendar & "Tạo sự kiện" button */}
             <Col md={16} xs={24}>
               <div
                 style={{
@@ -555,6 +621,9 @@ const AdminDoctorShiftManagement = () => {
                 <FullCalendar
                   plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                   initialView="timeGridWeek"
+                  ref={calendarRef}
+                  eventContent={renderEventContent}
+                  datesSet={handleDatesSet}
                   headerToolbar={{
                     start: "prev,next today",
                     center: "title",
@@ -563,16 +632,9 @@ const AdminDoctorShiftManagement = () => {
                   locale="vi"
                   events={events}
                   height={600}
-                  eventClick={(info) => onEditShift(info.event.extendedProps)}
+                  eventClick={handleEventClick}
                   eventDidMount={eventColor}
                   dateClick={(info) => onAddShift(info.dateStr)}
-                  datesSet={(arg) => {
-                    const from = dayjs(arg.start).format("YYYY-MM-DDTHH:mm:ss");
-                    const to = dayjs(arg.end).format("YYYY-MM-DDTHH:mm:ss");
-                    console.log("Ngày bắt đầu của view:", from);
-                    console.log("Ngày kết thúc của view:", to);
-                    console.log("View hiện tại:", arg.view.type);
-                  }}
                   firstDay={1}
                   allDaySlot={false}
                   slotMinTime="06:00:00"
@@ -584,14 +646,6 @@ const AdminDoctorShiftManagement = () => {
                   }}
                   contentHeight={550}
                   expandRows
-                  eventContent={(eventInfo) => (
-                    <b
-                      title={eventInfo.event.title}
-                      style={{ whiteSpace: "normal", cursor: "pointer" }}
-                    >
-                      {eventInfo.event.title}
-                    </b>
-                  )}
                 />
               </div>
             </Col>
@@ -636,8 +690,23 @@ const AdminDoctorShiftManagement = () => {
                   >
                     <Select placeholder="Chọn bác sĩ" style={{ borderRadius: 8 }}>
                       {doctors.map((doc) => (
-                        <Option key={doc.id} value={doc.id}>
-                          {doc.name}
+                        <Option key={doc?.user?.id} value={doc?.user?.id}>
+                          {doc?.user?.fullname}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="nurseId"
+                    label="Y tá"
+                    rules={[{ required: true, message: "Vui lòng chọn y tá" }]}
+                  >
+                    <Select placeholder="Chọn Y tá" style={{ borderRadius: 8 }}>
+                      {doctors.map((doc) => (
+                        <Option key={doc?.user?.id} value={doc?.user?.id}>
+                          {doc?.user?.fullname}
                         </Option>
                       ))}
                     </Select>
@@ -653,34 +722,16 @@ const AdminDoctorShiftManagement = () => {
                     <DatePicker format="YYYY-MM-DD" style={{ width: "100%", borderRadius: 8 }} />
                   </Form.Item>
                 </Col>
-              </Row>
-
-              <Row gutter={16}>
                 <Col span={12}>
                   <Form.Item
-                    name="startTime"
-                    label="Giờ bắt đầu"
-                    rules={[{ required: true, message: "Vui lòng chọn giờ bắt đầu" }]}
+                    name="shift"
+                    label="Ca làm"
+                    rules={[{ required: true, message: "Vui lòng chọn ca làm." }]}
                   >
-                    <TimePicker
-                      format="HH:mm"
-                      style={{ width: "100%", borderRadius: 8 }}
-                      minuteStep={5}
-                    />
-                  </Form.Item>
-                </Col>
-
-                <Col span={12}>
-                  <Form.Item
-                    name="endTime"
-                    label="Giờ kết thúc"
-                    rules={[{ required: true, message: "Vui lòng chọn giờ kết thúc" }]}
-                  >
-                    <TimePicker
-                      format="HH:mm"
-                      style={{ width: "100%", borderRadius: 8 }}
-                      minuteStep={5}
-                    />
+                    <Select mode="multiple" style={{ borderRadius: 8 }}>
+                      <Option value="morning">Sáng</Option>
+                      <Option value="afternoon">Chiều</Option>
+                    </Select>
                   </Form.Item>
                 </Col>
               </Row>
@@ -711,99 +762,87 @@ const AdminDoctorShiftManagement = () => {
             </Form>
           </Modal>
 
-          {/* Modal: Chi tiết ca */}
           <Modal
             open={modalDetail}
             onCancel={() => setModalDetail(false)}
-            footer={null}
-            title={
-              selectedEvent && (
-                <div>
-                  <span
-                    style={{
-                      fontWeight: 700,
-                      fontSize: 22,
-                      color: "#3575d3",
-                      userSelect: "none",
-                    }}
-                  >
-                    {selectedEvent.title}
-                  </span>
-                  {selectedEvent.departmentName && (
-                    <div
-                      style={{ fontSize: 15, color: "#1976d2", marginTop: 6, userSelect: "none" }}
-                    >
-                      {selectedEvent.departmentName} - Phòng {selectedEvent.roomName}
-                    </div>
-                  )}
-                </div>
-              )
-            }
-            width={620}
+            footer={[
+              <Button
+                key="edit"
+                type="primary"
+                disabled={isShiftDisabled(selectedEvent)}
+                onClick={() => {
+                  setEditingShift(selectedEvent);
+                  form.setFieldsValue({
+                    doctorId: selectedEvent.extendedProps?.doctorId || selectedDoctorId, // nếu có
+                    workDate: selectedEvent.start ? dayjs(selectedEvent.start) : null,
+                    startTime: selectedEvent.start ? dayjs(selectedEvent.start) : null,
+                    endTime: selectedEvent.end ? dayjs(selectedEvent.end) : null,
+                    roomName: selectedEvent.extendedProps?.room || "",
+                    departmentName: selectedEvent.extendedProps?.department || "",
+
+                  });
+                  setModalVisible(true);
+                  setModalDetail(false);
+                }}
+                style={{ borderRadius: 8 }}
+              >
+                Sửa
+              </Button>,
+              <Button
+                key="delete"
+                danger
+                disabled={isShiftDisabled(selectedEvent)}
+                onClick={() => onDeleteShift(selectedEvent.id)}
+                style={{ borderRadius: 8 }}
+              >
+                Xoá
+              </Button>,
+              <Button
+                key="close"
+                onClick={() => setModalDetail(false)}
+                style={{ borderRadius: 8 }}
+              >
+                Đóng
+              </Button>,
+            ]}
             centered
-            bodyStyle={{
-              borderRadius: 18,
-              background: "#fcfcfe",
-              padding: 28,
-              minHeight: 280,
-            }}
+            bodyStyle={{ maxHeight: "50vh", overflowY: "auto", paddingRight: 12 }}
+            title={selectedEvent ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <span style={{ fontWeight: 700, fontSize: 20 }}>
+                  {selectedEvent.title}
+                </span>
+                {selectedEvent.extendedProps?.department && (
+                  <span style={{ fontSize: 15, color: "#1a73e8" }}>
+                    {selectedEvent.extendedProps.department} - {selectedEvent.extendedProps.room}
+                  </span>
+                )}
+              </div>
+            ) : null}
+            width={600}
           >
-            {selectedEvent && (
+            {selectedEvent ? (
               <>
-                <div style={{ marginBottom: 18, fontSize: 15, userSelect: "none" }}>
-                  <b>Thời gian:</b> {selectedEvent.startTime} - {selectedEvent.endTime}
-                  <br />
-                  <b>Số bệnh nhân:</b> {(selectedEvent.patients && selectedEvent.patients.length) || 0}
-                  <br />
-                  <b>Trạng thái:</b> {selectedEvent.status || "Không rõ"}
-                </div>
+                <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
+                <p><b>👥 Số bệnh nhân:</b> {selectedEvent.extendedProps?.patients?.length || 0}</p>
+                <p><b>📌 Trạng thái:</b> {selectedEvent.extendedProps?.status || "Không rõ"}</p>
+
                 <List
-                  bordered
-                  dataSource={selectedEvent.patients || []}
+                  dataSource={selectedEvent.extendedProps?.patients || []}
                   renderItem={(p) => (
-                    <List.Item key={p.id} style={{ borderRadius: 10 }}>
+                    <List.Item key={p.id}>
                       <List.Item.Meta
                         title={<b>{p.name}</b>}
-                        description={`Tuổi: ${p.age} | Ghi chú: ${p.note || "Không có"}`}
+                        description={`Tuổi: ${p.age} | Giới tính: ${p.gender} | Dịch vụ: ${p.service} | Ghi chú: ${p.note || "Không có"}`}
                       />
                     </List.Item>
                   )}
-                  locale={{ emptyText: "Chưa có bệnh nhân nào trong ca này." }}
-                  style={{ marginBottom: 22, borderRadius: 12, background: "#fff" }}
+                  locale={{ emptyText: "Chưa có bệnh nhân nào." }}
+                  style={{ marginTop: 16 }}
                 />
-                <div
-                  style={{
-                    marginTop: 16,
-                    textAlign: "right",
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Button
-                    type="primary"
-                    style={{ borderRadius: 8 }}
-                    onClick={() => {
-                      setEditingShift(selectedEvent);
-                      form.setFieldsValue({
-                        doctorId: selectedEvent.doctorId,
-                        workDate: dayjs(selectedEvent.workDate),
-                        startTime: dayjs(selectedEvent.startTime, "HH:mm:ss"),
-                        endTime: dayjs(selectedEvent.endTime, "HH:mm:ss"),
-                        roomName: selectedEvent.roomName,
-                        departmentName: selectedEvent.departmentName,
-                        status: selectedEvent.status,
-                      });
-                      setModalVisible(true);
-                      setModalDetail(false);
-                    }}
-                  >
-                    Chỉnh sửa
-                  </Button>
-                  <Button danger style={{ borderRadius: 8 }} onClick={() => onDeleteShift(selectedEvent.id)}>
-                    Xóa
-                  </Button>
-                </div>
               </>
+            ) : (
+              <div>Không có dữ liệu lịch làm việc.</div>
             )}
           </Modal>
         </div>
