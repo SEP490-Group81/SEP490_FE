@@ -23,6 +23,8 @@ function NurseProfile() {
     const [messageApi, contextHolder] = message.useMessage();
     const messageState = useSelector((state) => state.message);
 
+    console.log("NurseProfile userDefault:", userDefault);
+
     useEffect(() => {
         if (messageState) {
             messageApi.open({

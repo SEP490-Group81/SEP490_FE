@@ -15,3 +15,14 @@ export const getScheduleByDoctorId = async (doctorId, from, to) => {
     throw error;
   }
 };
+
+export const createSchedule = async (scheduleData) => {
+  try {
+    const result = await postAuth("/schedules", scheduleData);
+    console.log("Schedule created successfully:", result);
+    return result;
+  } catch (error) {
+    console.error("Error creating schedule:", error.message);
+    throw error;
+  }
+};

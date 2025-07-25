@@ -109,6 +109,7 @@ const ManageRoom = () => {
     setEditing(record);
     form.setFieldsValue({
       name: record.name || "",
+      roomCode: record.roomCode || "",
       specialty: record.specialization?.id || null,
       department: record.department?.id || null,
       description: record.description || "",
@@ -145,14 +146,14 @@ const ManageRoom = () => {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      const { name, specialty, department, description } = values;
+       const { name, roomCode, specialty, department, description } = values;
 
       const payload = {
         specializationId: specialty,
         departmentId: department,
         hospitalId: hospitalId,
         roomName: name,
-        roomCode: editing?.roomCode || `R${Date.now()}`,
+        roomCode: editing?.roomCode|| roomCode,
         description: description || "",
       };
 
@@ -323,10 +324,16 @@ const ManageRoom = () => {
               >
                 <Input placeholder="Tên phòng khám" />
               </Form.Item>
+              <Form.Item
+                name="roomCode"
+                label="Mã phòng"
+              >
+                <Input placeholder="Mã phòng" />
+              </Form.Item>
               <Form.Item name="specialty" label="Chuyên khoa"  >
                 <Select
                   showSearch
-                  allowClear 
+                  allowClear
                   optionFilterProp="children"
                   filterOption={(input, option) =>
                     option.children.toLowerCase().includes(input.toLowerCase())
@@ -343,7 +350,7 @@ const ManageRoom = () => {
               <Form.Item name="department" label="Khoa" rules={[{ required: true, message: "Vui lòng chọn khoa" }]}>
                 <Select
                   showSearch
-                  optionFilterProp="children" 
+                  optionFilterProp="children"
                   filterOption={(input, option) =>
                     option.children.toLowerCase().includes(input.toLowerCase())
                   }

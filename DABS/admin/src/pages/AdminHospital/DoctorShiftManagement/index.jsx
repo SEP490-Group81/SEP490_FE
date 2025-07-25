@@ -32,19 +32,19 @@ import {
 } from "@ant-design/icons";
 import { getDoctorByHospitalId, getDoctorByUserId } from "../../../services/doctorService";
 import { useRef } from "react";
-import { getScheduleByDoctorId } from "../../../services/scheduleService";
+import { createSchedule, getScheduleByDoctorId } from "../../../services/scheduleService";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 const weekdayOptions = [
+  // { label: "Chủ nhật", value: 0 },
   { label: "Thứ 2", value: 1 },
   { label: "Thứ 3", value: 2 },
   { label: "Thứ 4", value: 3 },
   { label: "Thứ 5", value: 4 },
   { label: "Thứ 6", value: 5 },
-  { label: "Thứ 7", value: 6 },
-  { label: "Chủ nhật", value: 0 },
+  //  { label: "Thứ 7", value: 6 },
 ];
 
 dayjs.extend(customParseFormat);
@@ -104,6 +104,11 @@ const eventColor = (info) => {
       padding: "6px 5px",
     });
   }
+};
+
+const shiftTimesMap = {
+  morning: { startTime: "07:30:00", endTime: "11:30:00" },
+  afternoon: { startTime: "12:30:00", endTime: "16:30:00" }
 };
 
 const renderEventContent = (eventInfo) => {
@@ -195,7 +200,7 @@ const AdminDoctorShiftManagement = () => {
 
     const from = dayjs(arg.start).toISOString();
     const to = dayjs(arg.end).toISOString();
-    console.log("from schedule : " + from + " to Schedule : " + to);
+    console.log("from schedule : " + from + " to Schedule : " + to + " doctor id : " + doctorDetail.id);
 
     try {
       const result = await getScheduleByDoctorId(doctorDetail.id, from, to);
@@ -336,8 +341,9 @@ const AdminDoctorShiftManagement = () => {
     message.success(editingShift ? "Cập nhật ca làm việc thành công" : "Thêm ca làm việc thành công");
   };
 
-  const onFinishBulk = (values) => {
+  const onFinishBulk = async (values) => {
     const { doctorIds, weekdays, shift, dateRange } = values;
+
     if (!doctorIds || doctorIds.length === 0) {
       message.error("Vui lòng chọn bác sĩ");
       return;
@@ -354,43 +360,29 @@ const AdminDoctorShiftManagement = () => {
       message.error("Vui lòng chọn khoảng thời gian");
       return;
     }
-    const shiftTimes = {
-      morning: { start: "08:00:00", end: "12:00:00" },
-      afternoon: { start: "13:00:00", end: "17:00:00" },
-      evening: { start: "18:00:00", end: "21:00:00" },
+
+    const shiftsPayload = shift.map((sh) => shiftTimesMap[sh]);
+
+    const payload = {
+      doctorIds: doctorIds,
+      daysOfWeek: weekdays,
+      shifts: shiftsPayload,
+      startDate: dateRange[0].format("YYYY-MM-DD"),
+      endDate: dateRange[1].format("YYYY-MM-DD"),
+      isAvailable: false,
+      reasonOfUnavailability: "",
     };
 
-    const [startDate, endDate] = dateRange;
-    const shiftsToAdd = [];
-    let current = dayjs(startDate);
+    console.log("Payload gửi đi:", JSON.stringify(payload));
 
-    while (current.isSameOrBefore(endDate, "day")) {
-      if (weekdays.includes(current.day())) {
-        shift.forEach((sh) => {
-          doctorIds.forEach((id) => {
-            const doctor = doctors.find((d) => d.id === id);
-            shiftsToAdd.push({
-              id: Date.now() + Math.random(),
-              doctorId: id,
-              doctorName: doctor.name,
-              workDate: current.format("YYYY-MM-DD"),
-              startTime: shiftTimes[sh].start,
-              endTime: shiftTimes[sh].end,
-              roomName: "Phòng mặc định",
-              departmentName: "Khoa mặc định",
-              status: "Chưa bắt đầu",
-              type: "shift",
-              patients: [],
-            });
-          });
-        });
-      }
-      current = current.add(1, "day");
+    try {
+      await createSchedule(payload);
+      message.success("Tạo lịch mẫu thành công!");
+      bulkForm.resetFields();
+    } catch (error) {
+      console.error("Lỗi khi tạo lịch mẫu:", error);
+      message.error("Tạo lịch mẫu thất bại, vui lòng thử lại sau.");
     }
-
-    setShifts((prev) => [...prev, ...shiftsToAdd]);
-    message.success("Tạo lịch mẫu thành công!");
-    bulkForm.resetFields();
   };
 
   const Legend = () => (
