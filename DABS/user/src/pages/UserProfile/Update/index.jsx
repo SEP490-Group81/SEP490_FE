@@ -206,7 +206,9 @@ function UpadteProfile() {
             <ConfigProvider locale={viVN}>
               <Form style={{ width: "100%", maxWidth: 800, margin: "0 auto" }}
                 form={form}
-                name="createUserProfile" onFinish={handleFinish} layout="vertical"
+                name="createUserProfile" 
+                onFinish={handleFinish} 
+                layout="vertical"
                 initialValues={{
                   fullname: userDefault?.fullname?.trim() || "",
                   dob: userDefault?.dob ? dayjs(userDefault.dob, "YYYY-MM-DD") : null,

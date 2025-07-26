@@ -61,7 +61,6 @@ export const createUser = async (userData) => {
 // Update user
 export const updateUser = async (userId, userData) => {
   
-  
   try {
    
     const updatePayload = {
@@ -106,3 +105,14 @@ export const deleteUser = async (id) => {
 };
 
 
+export const updateNurseStaff = async (userData) => {
+  try {
+    console.log('userService: Updating nurse staff with data:', JSON.stringify(userData));
+    const result = await putAuth(`/user/update`, userData);
+    console.log(`User updated successfully:`, result);
+    return result;
+  } catch (error) {
+    console.error(`Error updating user with ID ${userData.id}:`, error.message);
+    throw error;
+  }
+};
