@@ -174,7 +174,11 @@ function MenuSider() {
             label: <Link to="/staff">Dashboard</Link>,
             icon: <DashboardOutlined />,
         },
-
+        {
+            key: "staff-profile",
+            label: <Link to="/staff/staff-profile">Hồ sơ cá nhân</Link>,
+            icon: <UserOutlined />,
+        },
     ];
     const getMenuItems = (role) => {
         switch (role) {

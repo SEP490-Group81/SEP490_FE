@@ -38,7 +38,6 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 const weekdayOptions = [
-  // { label: "Chủ nhật", value: 0 },
   { label: "Thứ 2", value: 1 },
   { label: "Thứ 3", value: 2 },
   { label: "Thứ 4", value: 3 },
@@ -142,7 +141,7 @@ const AdminDoctorShiftManagement = () => {
   const calendarRef = useRef();
   const user = useSelector((state) => state.user.user);
   console.log("hospital admin id is: " + user.hospitals[0]?.id);
-
+  console.log("hospital admin is: " + JSON.stringify(user));
   const isShiftDisabled = (event) => {
     if (!event) return true;
 
@@ -165,6 +164,7 @@ const AdminDoctorShiftManagement = () => {
       if (result) {
         console.log("result doctor detail : " + result);
         setDoctorDetail(result);
+        console.log("doctor detail: " + JSON.stringify(doctorDetail));
       } else {
         console.error("Không tìm thấy thông tin bác sĩ.");
       }
@@ -184,6 +184,7 @@ const AdminDoctorShiftManagement = () => {
     const fetchDoctor = async () => {
       if (!user.id) return;
       const result = await getDoctorByHospitalId(user.hospitals[0]?.id);
+
       if (result) {
         console.log("result doctor list : " + JSON.stringify(result));
         setDoctors(result);
@@ -319,26 +320,63 @@ const AdminDoctorShiftManagement = () => {
     });
   };
 
-  const onFinish = (values) => {
-    const newShift = {
-      id: editingShift ? editingShift.id : Date.now(),
-      doctorId: values.doctorId,
-      doctorName: doctors.find((d) => d.id === values.doctorId)?.name || "",
-      workDate: values.workDate.format("YYYY-MM-DD"),
-      startTime: values.startTime.format("HH:mm:ss"),
-      endTime: values.endTime.format("HH:mm:ss"),
-      roomName: values.roomName,
-      departmentName: values.departmentName,
-      status: values.status || "pending",
-      type: "shift",
-      patients: [],
-    };
-    const updated = editingShift
-      ? shifts.map((s) => (s.id === editingShift.id ? newShift : s))
-      : [...shifts, newShift];
-    setShifts(updated);
-    setModalVisible(false);
-    message.success(editingShift ? "Cập nhật ca làm việc thành công" : "Thêm ca làm việc thành công");
+  const onFinish = async (values) => {
+    try {
+      const scheduleId = editingShift?.id || 0;
+      const hospitalAffiliationId = doctorDetail?.hospitalAffiliations?.[0]?.id || 0;
+
+      const roomId = 0; 
+
+      const daysOfWeek = Array.isArray(values.weekday) && values.weekday.length > 0 ? values.weekday[0] : dayjs(values.workDate).day();
+
+      const shiftKey = Array.isArray(values.shift) && values.shift.length > 0 ? values.shift[0] : null;
+      const shiftTime = shiftTimesMap[shiftKey] || { startTime: "00:00:00", endTime: "00:00:00" };
+
+      const workDate = values.workDate?.toISOString();
+
+      const isAvailable = true;  
+      const reasonOfUnavailability = "";  
+
+      const payload = {
+        id: scheduleId,
+        hospitalAffiliationId,
+        roomId,
+        daysOfWeek,
+        startTime: shiftTime.startTime,
+        endTime: shiftTime.endTime,
+        workDate,
+        isAvailable,
+        reasonOfUnavailability,
+      };
+      console.log("Payload gửi đi in update:", JSON.stringify(payload));
+    //  await updateSchedule(payload, scheduleId);
+
+      message.success(editingShift ? "Cập nhật ca làm việc thành công" : "Thêm ca làm việc thành công");
+
+      setModalVisible(false);
+      setEditingShift(null);
+      form.resetFields();
+    } catch (error) {
+      console.error("Lỗi khi lưu ca làm việc:", error);
+      message.error("Lưu ca làm việc thất bại, vui lòng thử lại.");
+    }
+  };
+
+  const fetchStaffIdsForDoctorUserIds = async (userIds) => {
+    const staffIdsSet = new Set();
+    await Promise.all(
+      userIds.map(async (userId) => {
+        const doctor = await getDoctorByUserId(userId);
+        if (doctor?.hospitalAffiliations) {
+          doctor.hospitalAffiliations.forEach((aff) => {
+            if (aff.id) {
+              staffIdsSet.add(aff.id);
+            }
+          });
+        }
+      })
+    );
+    return Array.from(staffIdsSet);
   };
 
   const onFinishBulk = async (values) => {
@@ -360,11 +398,12 @@ const AdminDoctorShiftManagement = () => {
       message.error("Vui lòng chọn khoảng thời gian");
       return;
     }
-
+    const staffIds = await fetchStaffIdsForDoctorUserIds(doctorIds);
     const shiftsPayload = shift.map((sh) => shiftTimesMap[sh]);
 
     const payload = {
       doctorIds: doctorIds,
+      staffIds: staffIds.length > 0 ? staffIds : [0],
       daysOfWeek: weekdays,
       shifts: shiftsPayload,
       startDate: dateRange[0].format("YYYY-MM-DD"),
@@ -373,7 +412,7 @@ const AdminDoctorShiftManagement = () => {
       reasonOfUnavailability: "",
     };
 
-    console.log("Payload gửi đi:", JSON.stringify(payload));
+    console.log("Payload gửi đi in create:", JSON.stringify(payload));
 
     try {
       await createSchedule(payload);
@@ -506,7 +545,7 @@ const AdminDoctorShiftManagement = () => {
                     textAlign: "center",
                   }}
                 >
-                  Tạo lịch mẫu cho bác sĩ
+                  Tạo lịch cho bác sĩ
                 </h2>
                 <Form
                   layout="vertical"
@@ -575,7 +614,7 @@ const AdminDoctorShiftManagement = () => {
                     size="large"
                     style={{ borderRadius: 8 }}
                   >
-                    Tạo lịch mẫu
+                    Tạo lịch
                   </Button>
                 </Form>
               </div>
@@ -676,17 +715,17 @@ const AdminDoctorShiftManagement = () => {
               <Row gutter={16}>
                 <Col span={12}>
                   <Form.Item
-                    name="doctorId"
                     label="Bác sĩ"
-                    rules={[{ required: true, message: "Vui lòng chọn bác sĩ" }]}
                   >
-                    <Select placeholder="Chọn bác sĩ" style={{ borderRadius: 8 }}>
-                      {doctors.map((doc) => (
-                        <Option key={doc?.user?.id} value={doc?.user?.id}>
-                          {doc?.user?.fullname}
-                        </Option>
-                      ))}
-                    </Select>
+                    <Input
+                      value={
+                        (() => {
+                          return doctorDetail?.user?.fullname || '';
+                        })()
+                      }
+                      disabled
+                      style={{ borderRadius: 8 }}
+                    />
                   </Form.Item>
                 </Col>
                 <Col span={12}>

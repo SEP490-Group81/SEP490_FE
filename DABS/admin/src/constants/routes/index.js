@@ -195,7 +195,7 @@ export const routes = [
         element: <AdjustBookingSchedule />
       },
       {
-        path: "payment-confirm",
+        path: "payment-confirm/:id",
         element: <NursePaymentConfirmation />
       },
       {

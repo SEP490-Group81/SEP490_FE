@@ -26,3 +26,14 @@ export const createSchedule = async (scheduleData) => {
     throw error;
   }
 };
+
+export const updateSchedule = async (scheduleData,scheduleId) => {
+  try {
+    const result = await putAuth(`/schedules/${scheduleId}`, scheduleData);
+    console.log("Schedule created successfully:", result);
+    return result;
+  } catch (error) {
+    console.error("Error creating schedule:", error.message);
+    throw error;
+  }
+};

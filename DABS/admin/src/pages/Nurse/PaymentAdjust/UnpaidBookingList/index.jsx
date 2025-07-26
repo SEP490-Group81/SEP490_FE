@@ -17,7 +17,6 @@ import { useNavigate } from 'react-router-dom';
 import viVN from 'antd/es/locale/vi_VN';
 import { getPayments } from '../../../../services/paymentService';
 
-
 const { Title } = Typography;
 const { TabPane } = Tabs;
 
@@ -28,11 +27,13 @@ const NurseUnpaidBookingList = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(false);
   const [bookingList, setBookingList] = useState([]);
-  const statusMap = {
+
+    const statusMap = {
     1: { text: 'Đang chờ', color: 'gold' },
-    2: { text: 'Đã xác nhận', color: 'blue' },
-    3: { text: 'Đã hủy', color: 'red' },
-    4: { text: 'Hoàn thành', color: 'green' },
+    2: { text: 'Hoàn thành', color: 'green' },
+    3: { text: 'Lỗi', color: 'red' },
+    4: { text: 'Đã hoàn tiền', color: 'purple' },
+    5: { text: 'Đã huỷ', color: 'grey' },
   };
 
   const formatDateTime = (dateStr) => {
@@ -45,9 +46,10 @@ const NurseUnpaidBookingList = () => {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
-      timeZone: 'Asia/Ho_Chi_Minh'
+      timeZone: 'Asia/Ho_Chi_Minh',
     });
   };
+
   useEffect(() => {
     const fetchPayments = async () => {
       setLoading(true);
@@ -59,6 +61,7 @@ const NurseUnpaidBookingList = () => {
           patientName: item.user?.fullname || '',
           phoneNumber: item.user?.phoneNumber || '',
           serviceName: item.serviceName,
+          doctorName: item.doctorName,
           amount: item.amount,
           appointmentTime: formatDateTime(item.appointmentTime),
           createdOn: formatDateTime(item.createdOn),
@@ -77,7 +80,6 @@ const NurseUnpaidBookingList = () => {
     fetchPayments();
   }, []);
 
-
   const filteredBookings = useMemo(() => {
     return bookingList.filter(
       (item) =>
@@ -91,9 +93,9 @@ const NurseUnpaidBookingList = () => {
 
   const statusCounts = useMemo(() => {
     const counts = { all: 0 };
-    Object.keys(statusMap).forEach(key => counts[key] = 0);
+    Object.keys(statusMap).forEach((key) => (counts[key] = 0));
 
-    bookingList.forEach(item => {
+    bookingList.forEach((item) => {
       if (item.paymentMethod !== 'offline') return;
 
       counts.all += 1;
@@ -116,7 +118,7 @@ const NurseUnpaidBookingList = () => {
       key: 'status',
       render: (_, record) => {
         const st = statusMap[record.status];
-        return st ? (<Tag color={st.color}>{st.text}</Tag>) : (<Tag color="default">Không rõ</Tag>);
+        return st ? <Tag color={st.color}>{st.text}</Tag> : <Tag color="default">Không rõ</Tag>;
       },
     },
     {
@@ -126,15 +128,14 @@ const NurseUnpaidBookingList = () => {
         <Button
           type="primary"
           icon={<EyeOutlined />}
-          onClick={() => navigate('/nurse/payment-confirm', { state: record })}
+          onClick={() => navigate(`/nurse/payment-confirm/${record.id}`)}
         >
           Xác nhận
         </Button>
       ),
-    },
+    }
+
   ];
-
-
 
   return (
     <ConfigProvider locale={viVN}>
@@ -168,10 +169,11 @@ const NurseUnpaidBookingList = () => {
 
               <Tabs activeKey={activeTab} onChange={setActiveTab}>
                 <TabPane key="all" tab={<span>Tất cả <Badge count={statusCounts.all} /></span>} />
-                <TabPane key="1" tab={<span>Đang chờ <Badge count={statusCounts[1]} style={{ backgroundColor: 'gold' }} /></span>} />
-                <TabPane key="2" tab={<span>Đã xác nhận <Badge count={statusCounts[2]} style={{ backgroundColor: 'blue' }} /></span>} />
-                <TabPane key="3" tab={<span>Đã hủy <Badge count={statusCounts[3]} style={{ backgroundColor: 'red' }} /></span>} />
-                <TabPane key="4" tab={<span>Hoàn thành <Badge count={statusCounts[4]} style={{ backgroundColor: 'green' }} /></span>} />
+                <TabPane key="1" tab={<span>Pending <Badge count={statusCounts[1]} style={{ backgroundColor: 'gold' }} /></span>} />
+                <TabPane key="2" tab={<span>Completed <Badge count={statusCounts[2]} style={{ backgroundColor: 'green' }} /></span>} />
+                <TabPane key="3" tab={<span>Failed <Badge count={statusCounts[3]} style={{ backgroundColor: 'red' }} /></span>} />
+                <TabPane key="4" tab={<span>Refunded <Badge count={statusCounts[4]} style={{ backgroundColor: 'purple' }} /></span>} />
+                <TabPane key="5" tab={<span>Cancel <Badge count={statusCounts[5]} style={{ backgroundColor: 'grey' }} /></span>} />
               </Tabs>
 
               <Table
