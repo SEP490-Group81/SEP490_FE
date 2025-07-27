@@ -12,7 +12,7 @@ const DoctorRequestLeave = () => {
         {
             key: '1',
             fullName: 'Nguyễn Văn A',
-            position: 'Bác sĩ nội trú',
+            position: 'Bác sĩ chuyên khoa',
             department: 'Khoa Nội',
             startDate: '2025-07-01',
             endDate: '2025-07-05',
@@ -20,7 +20,7 @@ const DoctorRequestLeave = () => {
         },
         {
             key: '2',
-            fullName: 'Trần Thị B',
+            fullName: 'Nguyễn Văn A',
             position: 'Bác sĩ chuyên khoa',
             department: 'Khoa Ngoại',
             startDate: '2025-06-15',
@@ -29,8 +29,8 @@ const DoctorRequestLeave = () => {
         },
         {
             key: '3',
-            fullName: 'Lê Văn C',
-            position: 'Bác sĩ đa khoa',
+            fullName: 'Nguyễn Văn A',
+            position: 'Bác sĩ chuyên khoa',
             department: 'Khoa Sản',
             startDate: '2025-05-01',
             endDate: '2025-05-03',

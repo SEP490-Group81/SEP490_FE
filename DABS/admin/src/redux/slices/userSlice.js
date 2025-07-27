@@ -54,7 +54,7 @@ export const loginUser = createAsyncThunk(
                     localStorage.setItem('accessToken', tokenData.token);
                     dispatch(updateAccessToken(tokenData.token));
                     const user = await getUserById(decoded.nameidentifier);
-                    console.log("user in login sucess : " + user);
+                    console.log("user in login sucess : " + JSON.stringify(user));
                     console.log('User fetched:', user);
 
                     return { accessToken: tokenData.token, user };
