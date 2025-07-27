@@ -30,8 +30,10 @@ import {
   PauseCircleOutlined,
   StopOutlined,
 } from "@ant-design/icons";
+import { useSelector } from "react-redux";
+import { getStaffNurseList } from "../../../services/staffNurseService";
 
-const { Option } = Select;
+const { Option,OptGroup  } = Select;
 const { RangePicker } = DatePicker;
 
 const weekdayOptions = [
@@ -40,8 +42,6 @@ const weekdayOptions = [
   { label: "Thứ 4", value: 3 },
   { label: "Thứ 5", value: 4 },
   { label: "Thứ 6", value: 5 },
-  { label: "Thứ 7", value: 6 },
-  { label: "Chủ nhật", value: 0 },
 ];
 
 dayjs.extend(customParseFormat);
@@ -119,14 +119,38 @@ const StaffShiftManagement = () => {
   const [bulkForm] = Form.useForm();
   const [modalDetail, setModalDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const caTimes = {
-    morning: { start: "08:00:00", end: "12:00:00", label: "Ca sáng" },
-    afternoon: { start: "13:00:00", end: "17:00:00", label: "Ca chiều" },
-  };
+  const user = useSelector((state) => state.user.user);
+  console.log("hospital nurse id is: " + user.hospitals[0]?.id);
+  const [allStaffs, setAllStaffs] = useState([]);
+  const [nurses, setNurses] = useState([]);
+    const [selectedPersonId, setSelectedPersonId] = useState(null);
+  useEffect(() => {
+    const fetchStaffs = async () => {
+      if (!user?.hospitals?.[0]?.id) return;
+
+      try {
+        const staffList = await getStaffNurseList(user.hospitals[0].id);
+        setAllStaffs(staffList || []);
+
+        const nurseList = (staffList || []).filter((s) => s.role?.name === 'Nurse');
+        setNurses(nurseList);
+        console.log("Fetched nurses:", nurseList);
+        console.log("Fetched all staff:", staffList);
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách nhân viên:", error);
+        setAllStaffs([]);
+        setNurses([]);
+      }
+    };
+
+    fetchStaffs();
+  }, [user?.hospitals]);
   useEffect(() => {
     fetchShifts();
   }, []);
-
+  const normalStaffs = allStaffs.filter(
+    (s) => !nurses.find((n) => n.id === s.id)
+  );
   const fetchShifts = async () => {
     const data = [
       {
@@ -194,10 +218,7 @@ const StaffShiftManagement = () => {
     setFilteredShifts(data);
   };
 
-  useEffect(() => {
-    if (!selectedstaffId) setFilteredShifts(shifts);
-    else setFilteredShifts(shifts.filter((s) => s.staffId === selectedstaffId));
-  }, [selectedstaffId, shifts]);
+
 
   const events = filteredShifts.map((shift) => ({
     id: shift.id,
@@ -274,8 +295,7 @@ const StaffShiftManagement = () => {
     }
     const shiftTimes = {
       morning: { start: "08:00:00", end: "12:00:00" },
-      afternoon: { start: "13:00:00", end: "17:00:00" },
-      evening: { start: "18:00:00", end: "21:00:00" },
+      afternoon: { start: "13:00:00", end: "17:00:00" }
     };
 
     const [startDate, endDate] = dateRange;
@@ -383,25 +403,23 @@ const StaffShiftManagement = () => {
             <Select
               allowClear
               showSearch
-              placeholder="Lọc theo Nhân viên"
-              style={{
-                width: 320,
-                fontWeight: 600,
-                background: "#f6fafd",
-                borderRadius: 8,
-              }}
+              placeholder="Chọn nhân viên hoặc y tá"
+              style={{ width: 300 }}
               optionFilterProp="children"
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
-              onChange={(value) => setSelectedstaffId(value)}
-              value={selectedstaffId}
+              filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+              onChange={setSelectedPersonId}
+              value={selectedPersonId}
             >
-              {staffs.map((doc) => (
-                <Option key={doc.id} value={doc.id}>
-                  {doc.name}
-                </Option>
-              ))}
+              <OptGroup label="Y tá (Nurse)">
+                {nurses.map(n => (
+                  <Option key={`nurse-${n.id}`} value={n.id}>{n.fullname}</Option>
+                ))}
+              </OptGroup>
+              <OptGroup label="Nhân viên (Staff)">
+                {normalStaffs.map(s => (
+                  <Option key={`staff-${s.id}`} value={s.id}>{s.fullname}</Option>
+                ))}
+              </OptGroup>
             </Select>
           </Row>
 

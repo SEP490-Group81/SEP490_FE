@@ -44,6 +44,19 @@ export const putAuth = async (path, data) => {
   }
 };
 
+export const putAuthNum = async (path, data, headers = {}) => {
+  try {
+    console.log('PUT request to:', path);
+    console.log('Payload:', data);
+    console.log('Headers:', headers);
+
+    const response = await api.put(path, data, { headers });
+    return response.data;
+  } catch (error) {
+    console.error(`Error in PUT request to ${path}:`, error.message);
+    throw error;
+  }
+};
 
 export const deleteAuth = async (path, id) => {
   try {

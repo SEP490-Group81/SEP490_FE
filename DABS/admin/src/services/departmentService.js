@@ -4,7 +4,7 @@ const sampleDepartments = []
 
 export const getAllDepartments = async (hospitalId) => {
   try {
-    const result = await getAuth(`/department`);
+    const result = await getAuth(`/departments`);
     console.log(`Fetched services for department :`, result);
     return result.result;
   } catch (error) {
