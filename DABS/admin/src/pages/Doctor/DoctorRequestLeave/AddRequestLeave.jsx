@@ -27,7 +27,6 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
   const handleSubmit = async (values) => {
     setSpinning(true);
     try {
-      // await sendLeaveRequest(values);
       setSpinning(false);
       form.resetFields();
       success();
