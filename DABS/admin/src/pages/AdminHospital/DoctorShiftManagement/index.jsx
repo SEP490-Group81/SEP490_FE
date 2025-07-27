@@ -32,7 +32,11 @@ import {
 } from "@ant-design/icons";
 import { getDoctorByHospitalId, getDoctorByUserId } from "../../../services/doctorService";
 import { useRef } from "react";
-import { createSchedule, getScheduleByDoctorId } from "../../../services/scheduleService";
+import { createSchedule, getScheduleByDoctorId, updateSchedule } from "../../../services/scheduleService";
+import { getHospitalDepartments } from "../../../services/departmentService";
+import { getHospitalRooms } from "../../../services/roomService";
+import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
+import { getStaffNurseList } from "../../../services/staffNurseService";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -125,7 +129,6 @@ const renderEventContent = (eventInfo) => {
 
 const AdminDoctorShiftManagement = () => {
   const [shifts, setShifts] = useState([]);
-  const [filteredShifts, setFilteredShifts] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState(10);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingShift, setEditingShift] = useState(null);
@@ -137,11 +140,17 @@ const AdminDoctorShiftManagement = () => {
   const [doctorDetail, setDoctorDetail] = useState(null);
   const [events, setEvents] = useState([]);
   const dispatch = useDispatch();
+  const [messageApi, contextHolder] = message.useMessage();
+  const messageState = useSelector((state) => state.message)
+  const [rooms, setRooms] = useState([]);
   const { confirm } = Modal;
   const calendarRef = useRef();
+  const [flag, setFlag] = useState(false);
+  const [nurses, setNurses] = useState([]);
   const user = useSelector((state) => state.user.user);
   console.log("hospital admin id is: " + user.hospitals[0]?.id);
   console.log("hospital admin is: " + JSON.stringify(user));
+  console.log("doctor detail: " + JSON.stringify(doctorDetail));
   const isShiftDisabled = (event) => {
     if (!event) return true;
 
@@ -156,6 +165,48 @@ const AdminDoctorShiftManagement = () => {
 
     return false;
   };
+
+  useEffect(() => {
+    const fetchStaffs = async () => {
+      if (!user?.hospitals?.[0]?.id) return;
+
+      try {
+        const staffList = await getStaffNurseList(user.hospitals[0].id);
+
+        const nurseList = (staffList || []).filter((s) => s.role?.name === 'Nurse');
+        setNurses(nurseList);
+        console.log("Nurse list: ", JSON.stringify(nurses));
+      } catch (error) {
+        console.error("Lỗi khi tải danh sách nhân viên:", error);
+
+        setNurses([]);
+      }
+    };
+
+    fetchStaffs();
+  }, [user?.hospitals]);
+
+
+  useEffect(() => {
+    if (messageState) {
+      messageApi.open({
+        type: messageState.type,
+        content: messageState.content,
+
+      });
+      dispatch(clearMessage());
+    }
+  }, [messageState, dispatch]);
+
+  useEffect(() => {
+    const hospitalId = user.hospitals[0]?.id;
+    if (!hospitalId) return;
+    const fetchData = async () => {
+      const roomData = await getHospitalRooms(hospitalId);
+      setRooms(roomData || []);
+    };
+    fetchData();
+  }, [user.hospitals[0]?.id]);
 
   useEffect(() => {
     const fetchDoctor = async () => {
@@ -178,7 +229,7 @@ const AdminDoctorShiftManagement = () => {
       const view = calendarApi.view;
       handleDatesSet({ start: view.activeStart, end: view.activeEnd });
     }
-  }, [doctorDetail]);
+  }, [doctorDetail, flag]);
 
   useEffect(() => {
     const fetchDoctor = async () => {
@@ -259,7 +310,6 @@ const AdminDoctorShiftManagement = () => {
           end: end.toISOString(),
           extendedProps: {
             type: status.includes("rỗng") ? "shift" : "appointment",
-            department: item.room?.department?.name || "Không rõ",
             room: item.room?.name || "Không rõ",
             status,
             patients,
@@ -273,13 +323,6 @@ const AdminDoctorShiftManagement = () => {
     }
   };
 
-  useEffect(() => {
-    if (!selectedDoctorId) setFilteredShifts(shifts);
-    else setFilteredShifts(shifts.filter((s) => s.doctorId === selectedDoctorId));
-  }, [selectedDoctorId, shifts]);
-
-
-
   const onAddShift = (dateStr = null) => {
     setEditingShift(null);
     form.resetFields();
@@ -288,21 +331,6 @@ const AdminDoctorShiftManagement = () => {
   };
 
   const handleEventClick = ({ event }) => {
-    // const clonedEvent = {
-    //   ...event,
-    //   extendedProps: {
-    //     ...event.extendedProps,
-    //     patients: Array.from({ length: 30 }, (_, i) => ({
-    //       id: i + 1,
-    //       name: `Bệnh nhân ${i + 1}`,
-    //       age: 25 + (i % 10),
-    //       gender: i % 2 === 0 ? "Nam" : "Nữ",
-    //       service: "Khám tổng quát",
-    //       note: `Ghi chú ${i + 1}`,
-    //     })),
-    //   },
-    // };
-
     setSelectedEvent(event);
     console.log("Selected even in doctor shift management " + JSON.stringify(selectedEvent));
     setModalDetail(true);
@@ -313,97 +341,105 @@ const AdminDoctorShiftManagement = () => {
       onOk: () => {
         const newData = shifts.filter((s) => String(s.id) !== String(id));
         setShifts(newData);
-        setFilteredShifts(newData);
         setModalDetail(false);
-        message.success("Xóa ca làm việc thành công");
+        dispatch(setMessage({ type: 'success', content: 'Xóa ca làm việc thành công!' }));
       },
     });
   };
 
-  const onFinish = async (values) => {
+  const onFinishAddOrUpdate = async (values) => {
     try {
-      const scheduleId = editingShift?.id || 0;
       const hospitalAffiliationId = doctorDetail?.hospitalAffiliations?.[0]?.id || 0;
+      const doctorId = doctorDetail?.id || 0;
 
-      const roomId = 0; 
+      const { roomId, shift, weekday, workDate } = values;
 
-      const daysOfWeek = Array.isArray(values.weekday) && values.weekday.length > 0 ? values.weekday[0] : dayjs(values.workDate).day();
+      if (!shift || shift.length === 0) {
+        dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ca làm!' }));
+        return;
+      }
 
-      const shiftKey = Array.isArray(values.shift) && values.shift.length > 0 ? values.shift[0] : null;
-      const shiftTime = shiftTimesMap[shiftKey] || { startTime: "00:00:00", endTime: "00:00:00" };
+      const daysOfWeekArr = Array.isArray(weekday) && weekday.length > 0 ? weekday : [dayjs(workDate).day()];
+      const shiftsPayload = shift.map((sh) => shiftTimesMap[sh]);
 
-      const workDate = values.workDate?.toISOString();
+      if (editingShift) {
 
-      const isAvailable = true;  
-      const reasonOfUnavailability = "";  
+        const scheduleId = editingShift.id || 0;
+        const daysOfWeek = typeof values.weekday === "number" ? values.weekday : daysOfWeekArr[0];
+        const shiftKey = shift[0];
 
-      const payload = {
-        id: scheduleId,
-        hospitalAffiliationId,
-        roomId,
-        daysOfWeek,
-        startTime: shiftTime.startTime,
-        endTime: shiftTime.endTime,
-        workDate,
-        isAvailable,
-        reasonOfUnavailability,
-      };
-      console.log("Payload gửi đi in update:", JSON.stringify(payload));
-    //  await updateSchedule(payload, scheduleId);
+        const payload = {
+          id: scheduleId,
+          hospitalAffiliationId,
+          staffId: doctorId,
+          roomId,
+          daysOfWeek,
+          startTime: shiftTimesMap[shiftKey]?.startTime || "00:00:00",
+          endTime: shiftTimesMap[shiftKey]?.endTime || "00:00:00",
+          workDate: workDate?.toISOString(),
+          isAvailable: true,
+          reasonOfUnavailability: "",
+        };
 
-      message.success(editingShift ? "Cập nhật ca làm việc thành công" : "Thêm ca làm việc thành công");
+        console.log("Payload cập nhật:", JSON.stringify(payload) + " scheduleId: " + scheduleId);
+        await updateSchedule(scheduleId, payload);
+        setFlag(prev => !prev);
+        dispatch(setMessage({ type: 'success', content: 'Cập nhật ca làm việc thành công!' }));
+      } else {
+
+        const payload = {
+          doctorIds: [doctorId],
+          daysOfWeek: daysOfWeekArr,
+          shifts: shiftsPayload,
+          startDate: workDate ? workDate.startOf("day").toISOString() : dayjs().toISOString(),
+          endDate: workDate ? workDate.startOf("day").toISOString() : dayjs().toISOString(),
+          isAvailable: false,
+          reasonOfUnavailability: "",
+        };
+
+        console.log("Payload tạo mới:", payload);
+        await createSchedule(payload);
+        setFlag(prev => !prev);
+        dispatch(setMessage({ type: 'success', content: 'Tạo ca làm việc thành công!' }));
+      }
 
       setModalVisible(false);
       setEditingShift(null);
       form.resetFields();
+
     } catch (error) {
       console.error("Lỗi khi lưu ca làm việc:", error);
-      message.error("Lưu ca làm việc thất bại, vui lòng thử lại.");
+      dispatch(setMessage({ type: 'error', content: 'Lưu ca làm việc thất bại, vui lòng thử lại!' }));
+
     }
   };
 
-  const fetchStaffIdsForDoctorUserIds = async (userIds) => {
-    const staffIdsSet = new Set();
-    await Promise.all(
-      userIds.map(async (userId) => {
-        const doctor = await getDoctorByUserId(userId);
-        if (doctor?.hospitalAffiliations) {
-          doctor.hospitalAffiliations.forEach((aff) => {
-            if (aff.id) {
-              staffIdsSet.add(aff.id);
-            }
-          });
-        }
-      })
-    );
-    return Array.from(staffIdsSet);
-  };
+
+
 
   const onFinishBulk = async (values) => {
     const { doctorIds, weekdays, shift, dateRange } = values;
 
     if (!doctorIds || doctorIds.length === 0) {
-      message.error("Vui lòng chọn bác sĩ");
+      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn bác sĩ!' }));
       return;
     }
     if (!weekdays || weekdays.length === 0) {
-      message.error("Vui lòng chọn ngày trong tuần");
+      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ngày trong tuần!' }));
       return;
     }
     if (!shift || shift.length === 0) {
-      message.error("Vui lòng chọn ca làm");
+      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ca làm!' }));
       return;
     }
     if (!dateRange || dateRange.length !== 2) {
-      message.error("Vui lòng chọn khoảng thời gian");
+      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn khoảng thời gian!' }));
       return;
     }
-    const staffIds = await fetchStaffIdsForDoctorUserIds(doctorIds);
     const shiftsPayload = shift.map((sh) => shiftTimesMap[sh]);
 
     const payload = {
       doctorIds: doctorIds,
-      staffIds: staffIds.length > 0 ? staffIds : [0],
       daysOfWeek: weekdays,
       shifts: shiftsPayload,
       startDate: dateRange[0].format("YYYY-MM-DD"),
@@ -416,11 +452,12 @@ const AdminDoctorShiftManagement = () => {
 
     try {
       await createSchedule(payload);
-      message.success("Tạo lịch mẫu thành công!");
+      setFlag(prev => !prev);
+      dispatch(setMessage({ type: 'success', content: 'Tạo lịch mẫu thành công!!' }));
       bulkForm.resetFields();
     } catch (error) {
       console.error("Lỗi khi tạo lịch mẫu:", error);
-      message.error("Tạo lịch mẫu thất bại, vui lòng thử lại sau.");
+      dispatch(setMessage({ type: 'error', content: 'Tạo lịch mẫu thất bại, vui lòng thử lại sau!' }));
     }
   };
 
@@ -459,426 +496,421 @@ const AdminDoctorShiftManagement = () => {
   );
 
   return (
-    <ConfigProvider locale={viVN}>
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(120deg, #fafbfc 0%, #eef5f9 100%)",
-          padding: "32px 0",
-        }}
-      >
+    <>
+      {contextHolder}
+      <ConfigProvider locale={viVN}>
         <div
           style={{
-            maxWidth: 1220,
-            margin: "auto",
-            background: "#fff",
-            borderRadius: 18,
-            boxShadow: "0 4px 32px #3575d324",
-            padding: 32,
+            minHeight: "100vh",
+            background: "linear-gradient(120deg, #fafbfc 0%, #eef5f9 100%)",
+            padding: "32px 0",
           }}
         >
-          <Row justify="center">
-            <Col>
-              <h1
-                style={{
-                  fontSize: 32,
-                  fontWeight: 800,
-                  padding: "12px 40px",
-                  borderRadius: 14,
-                  background: "linear-gradient(90deg,#358cfb,#38c484 85%)",
-                  color: "#fff",
-                  marginBottom: 32,
-                  userSelect: "none",
-                }}
-              >
-                <CalendarOutlined style={{ marginRight: 16 }} />
-                Quản lý lịch làm việc bác sĩ
-              </h1>
-            </Col>
-          </Row>
-
-          <Row justify="center" style={{ marginBottom: 32 }}>
-            <Select
-              allowClear
-              showSearch
-              placeholder="Lọc theo bác sĩ"
-              style={{
-                width: 320,
-                fontWeight: 600,
-                background: "#f6fafd",
-                borderRadius: 8,
-              }}
-              optionFilterProp="children"
-              filterOption={(input, option) =>
-                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-              }
-              onChange={(value) => setSelectedDoctorId(value)}
-              value={selectedDoctorId}
-            >
-              {doctors.map((doc) => (
-                <Option key={doc?.user?.id} value={doc?.user?.id}>
-                  {doc?.user?.fullname}
-                </Option>
-              ))}
-            </Select>
-          </Row>
-
-          <Legend />
-
-          <Row gutter={28}>
-            {/* Left column: Bulk create form */}
-            <Col md={8} xs={24} style={{ marginBottom: 24 }}>
-              <div
-                style={{
-                  background: "#f8fafc",
-                  borderRadius: 14,
-                  boxShadow: "0 1px 8px #3575d311",
-                  padding: "24px 18px",
-                  height: '100%',
-                }}
-              >
-                <h2
+          <div
+            style={{
+              maxWidth: 1220,
+              margin: "auto",
+              background: "#fff",
+              borderRadius: 18,
+              boxShadow: "0 4px 32px #3575d324",
+              padding: 32,
+            }}
+          >
+            <Row justify="center">
+              <Col>
+                <h1
                   style={{
-                    fontWeight: 700,
-                    marginBottom: 24,
-                    color: "#3575d3",
-                    textAlign: "center",
+                    fontSize: 32,
+                    fontWeight: 800,
+                    padding: "12px 40px",
+                    borderRadius: 14,
+                    background: "linear-gradient(90deg,#358cfb,#38c484 85%)",
+                    color: "#fff",
+                    marginBottom: 32,
+                    userSelect: "none",
                   }}
                 >
-                  Tạo lịch cho bác sĩ
-                </h2>
-                <Form
-                  layout="vertical"
-                  form={bulkForm}
-                  onFinish={onFinishBulk}
-                  scrollToFirstError
+                  <CalendarOutlined style={{ marginRight: 16 }} />
+                  Quản lý lịch làm việc bác sĩ
+                </h1>
+              </Col>
+            </Row>
+
+            <Row justify="center" style={{ marginBottom: 32 }}>
+              <Select
+                allowClear
+                showSearch
+                placeholder="Lọc theo bác sĩ"
+                style={{
+                  width: 320,
+                  fontWeight: 600,
+                  background: "#f6fafd",
+                  borderRadius: 8,
+                }}
+                optionFilterProp="children"
+                filterOption={(input, option) =>
+                  option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                }
+                onChange={(value) => setSelectedDoctorId(value)}
+                value={selectedDoctorId}
+              >
+                {doctors.map((doc) => (
+                  <Option key={doc?.user?.id} value={doc?.user?.id}>
+                    {doc?.user?.fullname}
+                  </Option>
+                ))}
+              </Select>
+            </Row>
+
+            <Legend />
+
+            <Row gutter={28}>
+              <Col md={8} xs={24} style={{ marginBottom: 24 }}>
+                <div
+                  style={{
+                    background: "#f8fafc",
+                    borderRadius: 14,
+                    boxShadow: "0 1px 8px #3575d311",
+                    padding: "24px 18px",
+                    height: '100%',
+                  }}
                 >
-                  <Form.Item
-                    name="doctorIds"
-                    label="Bác sĩ"
-                    rules={[{ required: true, message: "Vui lòng chọn bác sĩ." }]}
+                  <h2
+                    style={{
+                      fontWeight: 700,
+                      marginBottom: 24,
+                      color: "#3575d3",
+                      textAlign: "center",
+                    }}
                   >
-                    <Select
-                      mode="multiple"
-                      placeholder="Chọn bác sĩ"
-                      onChange={(value) => {
-                        if (value.includes("all")) {
-                          const allIds = doctors.map((n) => n.user?.id);
-                          bulkForm.setFieldsValue({ doctorIds: allIds });
-                        }
-                      }}
+                    Tạo lịch cho bác sĩ
+                  </h2>
+                  <Form
+                    layout="vertical"
+                    form={bulkForm}
+                    onFinish={onFinishBulk}
+                    scrollToFirstError
+                  >
+                    <Form.Item
+                      name="doctorIds"
+                      label="Bác sĩ"
+                      rules={[{ required: true, message: "Vui lòng chọn bác sĩ." }]}
+                    >
+                      <Select
+                        mode="multiple"
+                        placeholder="Chọn bác sĩ"
+                        onChange={(value) => {
+                          if (value.includes("all")) {
+                            const allIds = doctors.map((n) => n.user?.id);
+                            bulkForm.setFieldsValue({ doctorIds: allIds });
+                          }
+                        }}
+                        style={{ borderRadius: 8 }}
+                      >
+                        <Option key="all" value="all">
+                          Tất cả
+                        </Option>
+                        {doctors.map((doc) => (
+                          <Option key={doc?.user?.id} value={doc?.id}>
+                            {doc?.user?.fullname}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                      name="weekdays"
+                      label="Ngày trong tuần"
+                      rules={[{ required: true, message: "Vui lòng chọn ngày trong tuần." }]}
+                    >
+                      <Checkbox.Group options={weekdayOptions} />
+                    </Form.Item>
+
+                    <Form.Item
+                      name="shift"
+                      label="Ca làm"
+                      rules={[{ required: true, message: "Vui lòng chọn ca làm." }]}
+                    >
+                      <Select mode="multiple" style={{ borderRadius: 8 }}>
+                        <Option value="morning">Sáng</Option>
+                        <Option value="afternoon">Chiều</Option>
+                      </Select>
+                    </Form.Item>
+
+                    <Form.Item
+                      name="dateRange"
+                      label="Khoảng thời gian"
+                      rules={[{ required: true, message: "Vui lòng chọn khoảng thời gian." }]}
+                    >
+                      <RangePicker style={{ width: "100%", borderRadius: 8 }} />
+                    </Form.Item>
+
+                    <Button
+                      type="primary"
+                      htmlType="submit"
+                      block
+                      size="large"
                       style={{ borderRadius: 8 }}
                     >
-                      <Option key="all" value="all">
-                        Tất cả
-                      </Option>
-                      {doctors.map((doc) => (
-                        <Option key={doc?.user?.id} value={doc?.user?.id}>
-                          {doc?.user?.fullname}
-                        </Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
+                      Tạo lịch
+                    </Button>
+                  </Form>
+                </div>
+              </Col>
 
-                  <Form.Item
-                    name="weekdays"
-                    label="Ngày trong tuần"
-                    rules={[{ required: true, message: "Vui lòng chọn ngày trong tuần." }]}
-                  >
-                    <Checkbox.Group options={weekdayOptions} />
-                  </Form.Item>
+              <Col md={16} xs={24}>
+                <div
+                  style={{
+                    background: "#fff",
+                    borderRadius: 15,
+                    boxShadow: "0 2px 10px #2196f310",
+                    padding: 12,
+                    minHeight: 630,
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <Row justify="end" style={{ marginBottom: 8 }}>
+                    <Button
+                      type="primary"
+                      icon={<PlusOutlined />}
+                      size="large"
+                      style={{
+                        background: "#2188ff",
+                        border: "none",
+                        borderRadius: 8,
+                        boxShadow: "0 2px 10px #3575d322",
+                      }}
+                      onClick={() => onAddShift()}
+                    >
+                      Tạo sự kiện
+                    </Button>
+                  </Row>
 
-                  <Form.Item
-                    name="shift"
-                    label="Ca làm"
-                    rules={[{ required: true, message: "Vui lòng chọn ca làm." }]}
-                  >
-                    <Select mode="multiple" style={{ borderRadius: 8 }}>
-                      <Option value="morning">Sáng</Option>
-                      <Option value="afternoon">Chiều</Option>
-                    </Select>
-                  </Form.Item>
-
-                  <Form.Item
-                    name="dateRange"
-                    label="Khoảng thời gian"
-                    rules={[{ required: true, message: "Vui lòng chọn khoảng thời gian." }]}
-                  >
-                    <RangePicker style={{ width: "100%", borderRadius: 8 }} />
-                  </Form.Item>
-
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    block
-                    size="large"
-                    style={{ borderRadius: 8 }}
-                  >
-                    Tạo lịch
-                  </Button>
-                </Form>
-              </div>
-            </Col>
-
-            <Col md={16} xs={24}>
-              <div
-                style={{
-                  background: "#fff",
-                  borderRadius: 15,
-                  boxShadow: "0 2px 10px #2196f310",
-                  padding: 12,
-                  minHeight: 630,
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <Row justify="end" style={{ marginBottom: 8 }}>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    size="large"
-                    style={{
-                      background: "#2188ff",
-                      border: "none",
-                      borderRadius: 8,
-                      boxShadow: "0 2px 10px #3575d322",
+                  <FullCalendar
+                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                    initialView="timeGridWeek"
+                    ref={calendarRef}
+                    eventContent={renderEventContent}
+                    datesSet={handleDatesSet}
+                    headerToolbar={{
+                      start: "prev,next today",
+                      center: "title",
+                      end: "dayGridMonth,timeGridWeek,timeGridDay",
                     }}
-                    onClick={() => onAddShift()}
-                  >
-                    Tạo sự kiện
-                  </Button>
-                </Row>
+                    locale="vi"
+                    events={events}
+                    height={600}
+                    eventClick={handleEventClick}
+                    eventDidMount={eventColor}
+                    dateClick={(info) => onAddShift(info.dateStr)}
+                    firstDay={1}
+                    allDaySlot={false}
+                    slotMinTime="06:00:00"
+                    slotMaxTime="18:00:00"
+                    eventTimeFormat={{
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    }}
+                    contentHeight={550}
+                    expandRows
+                  />
+                </div>
+              </Col>
+            </Row>
 
-                <FullCalendar
-                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                  initialView="timeGridWeek"
-                  ref={calendarRef}
-                  eventContent={renderEventContent}
-                  datesSet={handleDatesSet}
-                  headerToolbar={{
-                    start: "prev,next today",
-                    center: "title",
-                    end: "dayGridMonth,timeGridWeek,timeGridDay",
-                  }}
-                  locale="vi"
-                  events={events}
-                  height={600}
-                  eventClick={handleEventClick}
-                  eventDidMount={eventColor}
-                  dateClick={(info) => onAddShift(info.dateStr)}
-                  firstDay={1}
-                  allDaySlot={false}
-                  slotMinTime="06:00:00"
-                  slotMaxTime="18:00:00"
-                  eventTimeFormat={{
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false,
-                  }}
-                  contentHeight={550}
-                  expandRows
-                />
-              </div>
-            </Col>
-          </Row>
-
-          <Modal
-            open={modalVisible}
-            onCancel={() => setModalVisible(false)}
-            title={editingShift ? "Chỉnh sửa ca làm việc" : "Thêm ca làm việc"}
-            footer={[
-              <Button key="cancel" onClick={() => setModalVisible(false)} style={{ borderRadius: 8 }}>
-                Hủy
-              </Button>,
-              <Button
-                key="ok"
-                type="primary"
-                onClick={() => form.submit()}
-                style={{ borderRadius: 8 }}
-              >
-                Lưu
-              </Button>,
-            ]}
-            destroyOnClose
-            centered
-            bodyStyle={{ borderRadius: 14, padding: 24 }}
-          >
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={onFinish}
-              initialValues={{
-                status: "pending",
-              }}
-              scrollToFirstError
+            <Modal
+              open={modalVisible}
+              onCancel={() => setModalVisible(false)}
+              title={editingShift ? "Chỉnh sửa ca làm việc" : "Thêm ca làm việc"}
+              footer={[
+                <Button key="cancel" onClick={() => setModalVisible(false)} style={{ borderRadius: 8 }}>
+                  Hủy
+                </Button>,
+                <Button
+                  key="ok"
+                  type="primary"
+                  onClick={() => form.submit()}
+                  style={{ borderRadius: 8 }}
+                >
+                  Lưu
+                </Button>,
+              ]}
+              destroyOnClose
+              centered
+              bodyStyle={{ borderRadius: 14, padding: 24 }}
             >
-              <Row gutter={16}>
-                <Col span={12}>
+              <Form
+                form={form}
+                layout="vertical"
+                onFinish={onFinishAddOrUpdate}
+                initialValues={{
+                  status: "pending",
+                }}
+                scrollToFirstError
+              >
+                <Row gutter={16}>
+                  <Col span={12}>
+                    <Form.Item
+                      label="Bác sĩ"
+                    >
+                      <Input
+                        value={
+                          (() => {
+                            return doctorDetail?.user?.fullname || '';
+                          })()
+                        }
+                        disabled
+                        style={{ borderRadius: 8 }}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    {editingShift && (
+                      <Form.Item
+                        name="nurseId"
+                        label="Y tá"
+                        rules={[{ required: true, message: "Vui lòng chọn y tá" }]}
+                      >
+                        <Select placeholder="Chọn Y tá" style={{ borderRadius: 8 }}>
+                          {nurses.map((nurse) => (
+                            <Option key={nurse?.id} value={nurse?.id}>
+                              {nurse?.fullname}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                    )}
+                  </Col>
+
+                  <Col span={12}>
+                    <Form.Item
+                      name="workDate"
+                      label="Ngày làm việc"
+                      rules={[{ required: true, message: "Vui lòng chọn ngày làm việc" }]}
+                    >
+                      <DatePicker format="YYYY-MM-DD" style={{ width: "100%", borderRadius: 8 }} />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="shift"
+                      label="Ca làm"
+                      rules={[{ required: true, message: "Vui lòng chọn ca làm." }]}
+                    >
+                      <Select mode="multiple" style={{ borderRadius: 8 }}>
+                        <Option value="morning">Sáng</Option>
+                        <Option value="afternoon">Chiều</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+                {editingShift && (
                   <Form.Item
-                    label="Bác sĩ"
+                    name="roomId"
+                    label="Phòng khám"
+                    rules={[{ required: true, message: "Vui lòng chọn phòng khám" }]}
                   >
-                    <Input
-                      value={
-                        (() => {
-                          return doctorDetail?.user?.fullname || '';
-                        })()
-                      }
-                      disabled
-                      style={{ borderRadius: 8 }}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="nurseId"
-                    label="Y tá"
-                    rules={[{ required: true, message: "Vui lòng chọn y tá" }]}
-                  >
-                    <Select placeholder="Chọn Y tá" style={{ borderRadius: 8 }}>
-                      {doctors.map((doc) => (
-                        <Option key={doc?.user?.id} value={doc?.user?.id}>
-                          {doc?.user?.fullname}
-                        </Option>
+                    <Select placeholder="Chọn phòng khám" style={{ borderRadius: 8 }}>
+                      {rooms.map(room => (
+                        <Option key={room.id} value={room.id}>{room.name}</Option>
                       ))}
                     </Select>
                   </Form.Item>
-                </Col>
-
-                <Col span={12}>
-                  <Form.Item
-                    name="workDate"
-                    label="Ngày làm việc"
-                    rules={[{ required: true, message: "Vui lòng chọn ngày làm việc" }]}
-                  >
-                    <DatePicker format="YYYY-MM-DD" style={{ width: "100%", borderRadius: 8 }} />
-                  </Form.Item>
-                </Col>
-                <Col span={12}>
-                  <Form.Item
-                    name="shift"
-                    label="Ca làm"
-                    rules={[{ required: true, message: "Vui lòng chọn ca làm." }]}
-                  >
-                    <Select mode="multiple" style={{ borderRadius: 8 }}>
-                      <Option value="morning">Sáng</Option>
-                      <Option value="afternoon">Chiều</Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Form.Item
-                name="roomName"
-                label="Phòng khám"
-                rules={[{ required: true, message: "Vui lòng nhập phòng khám" }]}
-              >
-                <Input placeholder="Nhập tên phòng khám" style={{ borderRadius: 8 }} />
-              </Form.Item>
-
-              <Form.Item
-                name="departmentName"
-                label="Khoa"
-                rules={[{ required: true, message: "Vui lòng nhập khoa" }]}
-              >
-                <Input placeholder="Nhập tên khoa" style={{ borderRadius: 8 }} />
-              </Form.Item>
-
-              <Form.Item name="status" label="Trạng thái">
-                <Select style={{ borderRadius: 8 }} placeholder="Chọn trạng thái">
-                  <Option value="pending">Đang chờ</Option>
-                  <Option value="approved">Đã duyệt</Option>
-                  <Option value="canceled">Đã hủy</Option>
-                </Select>
-              </Form.Item>
-            </Form>
-          </Modal>
-
-          <Modal
-            open={modalDetail}
-            onCancel={() => setModalDetail(false)}
-            footer={[
-              <Button
-                key="edit"
-                type="primary"
-                disabled={isShiftDisabled(selectedEvent)}
-                onClick={() => {
-                  setEditingShift(selectedEvent);
-                  form.setFieldsValue({
-                    doctorId: selectedEvent.extendedProps?.doctorId || selectedDoctorId, // nếu có
-                    workDate: selectedEvent.start ? dayjs(selectedEvent.start) : null,
-                    startTime: selectedEvent.start ? dayjs(selectedEvent.start) : null,
-                    endTime: selectedEvent.end ? dayjs(selectedEvent.end) : null,
-                    roomName: selectedEvent.extendedProps?.room || "",
-                    departmentName: selectedEvent.extendedProps?.department || "",
-
-                  });
-                  setModalVisible(true);
-                  setModalDetail(false);
-                }}
-                style={{ borderRadius: 8 }}
-              >
-                Sửa
-              </Button>,
-              <Button
-                key="delete"
-                danger
-                disabled={isShiftDisabled(selectedEvent)}
-                onClick={() => onDeleteShift(selectedEvent.id)}
-                style={{ borderRadius: 8 }}
-              >
-                Xoá
-              </Button>,
-              <Button
-                key="close"
-                onClick={() => setModalDetail(false)}
-                style={{ borderRadius: 8 }}
-              >
-                Đóng
-              </Button>,
-            ]}
-            centered
-            bodyStyle={{ maxHeight: "50vh", overflowY: "auto", paddingRight: 12 }}
-            title={selectedEvent ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ fontWeight: 700, fontSize: 20 }}>
-                  {selectedEvent.title}
-                </span>
-                {selectedEvent.extendedProps?.department && (
-                  <span style={{ fontSize: 15, color: "#1a73e8" }}>
-                    {selectedEvent.extendedProps.department} - {selectedEvent.extendedProps.room}
-                  </span>
                 )}
-              </div>
-            ) : null}
-            width={600}
-          >
-            {selectedEvent ? (
-              <>
-                <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
-                <p><b>👥 Số bệnh nhân:</b> {selectedEvent.extendedProps?.patients?.length || 0}</p>
-                <p><b>📌 Trạng thái:</b> {selectedEvent.extendedProps?.status || "Không rõ"}</p>
+              </Form>
+            </Modal>
 
-                <List
-                  dataSource={selectedEvent.extendedProps?.patients || []}
-                  renderItem={(p) => (
-                    <List.Item key={p.id}>
-                      <List.Item.Meta
-                        title={<b>{p.name}</b>}
-                        description={`Tuổi: ${p.age} | Giới tính: ${p.gender} | Dịch vụ: ${p.service} | Ghi chú: ${p.note || "Không có"}`}
-                      />
-                    </List.Item>
+            <Modal
+              open={modalDetail}
+              onCancel={() => setModalDetail(false)}
+              footer={[
+                <Button
+                  key="edit"
+                  type="primary"
+                  disabled={isShiftDisabled(selectedEvent)}
+                  onClick={() => {
+                    setEditingShift(selectedEvent);
+                    form.setFieldsValue({
+                      workDate: selectedEvent.start ? dayjs(selectedEvent.start) : null,
+                      shift: selectedEvent.title?.toLowerCase().includes("sáng") ? ["morning"] : ["afternoon"],
+                      roomId: rooms.find(r => r.name === selectedEvent.extendedProps?.room)?.id || null,
+                      weekday: [dayjs(selectedEvent.start).day()],
+                      nurseId: selectedEvent.extendedProps?.nurseId || null,
+                    });
+                    setModalVisible(true);
+                    setModalDetail(false);
+                  }}
+                  style={{ borderRadius: 8 }}
+                >
+                  Sửa
+                </Button>,
+                <Button
+                  key="delete"
+                  danger
+                  disabled={isShiftDisabled(selectedEvent)}
+                  onClick={() => onDeleteShift(selectedEvent.id)}
+                  style={{ borderRadius: 8 }}
+                >
+                  Xoá
+                </Button>,
+                <Button
+                  key="close"
+                  onClick={() => setModalDetail(false)}
+                  style={{ borderRadius: 8 }}
+                >
+                  Đóng
+                </Button>,
+              ]}
+              centered
+              bodyStyle={{ maxHeight: "50vh", overflowY: "auto", paddingRight: 12 }}
+              title={selectedEvent ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <span style={{ fontWeight: 700, fontSize: 20 }}>
+                    {selectedEvent.title}
+                  </span>
+                  {selectedEvent.extendedProps?.department && (
+                    <span style={{ fontSize: 15, color: "#1a73e8" }}>
+                      {selectedEvent.extendedProps.department} - {selectedEvent.extendedProps.room}
+                    </span>
                   )}
-                  locale={{ emptyText: "Chưa có bệnh nhân nào." }}
-                  style={{ marginTop: 16 }}
-                />
-              </>
-            ) : (
-              <div>Không có dữ liệu lịch làm việc.</div>
-            )}
-          </Modal>
+                </div>
+              ) : null}
+              width={600}
+            >
+              {selectedEvent ? (
+                <>
+                  {selectedEvent.extendedProps?.room && (
+                    <p><b>🏥 Phòng khám:</b> {selectedEvent.extendedProps.room}</p>
+                  )}
+                  <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
+                  <p><b>👥 Số bệnh nhân:</b> {selectedEvent.extendedProps?.patients?.length || 0}</p>
+                  <p><b>📌 Trạng thái:</b> {selectedEvent.extendedProps?.status || "Không rõ"}</p>
+
+                  <List
+                    dataSource={selectedEvent.extendedProps?.patients || []}
+                    renderItem={(p) => (
+                      <List.Item key={p.id}>
+                        <List.Item.Meta
+                          title={<b>{p.name}</b>}
+                          description={`Tuổi: ${p.age} | Giới tính: ${p.gender} | Dịch vụ: ${p.service} | Ghi chú: ${p.note || "Không có"}`}
+                        />
+                      </List.Item>
+                    )}
+                    locale={{ emptyText: "Chưa có bệnh nhân nào." }}
+                    style={{ marginTop: 16 }}
+                  />
+                </>
+              ) : (
+                <div>Không có dữ liệu lịch làm việc.</div>
+              )}
+            </Modal>
+          </div>
         </div>
-      </div>
-    </ConfigProvider>
+      </ConfigProvider>
+    </>
+
   );
 };
 

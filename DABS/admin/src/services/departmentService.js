@@ -135,3 +135,15 @@ export const getDepartmentStatistics = async () => {
     }
   }
 };
+
+
+export const getHospitalDepartments = async (hospitalId) => {
+  try {
+    const result = await getAuth(`/departments?hospitalId=${hospitalId}`);
+    console.log(`Fetched departments for hospital ${hospitalId}:`, result);
+    return result.result;
+  } catch (error) {
+    console.error(`Error fetching departments for hospital ID ${hospitalId}:`, error.message);
+    throw error;
+  }
+};
