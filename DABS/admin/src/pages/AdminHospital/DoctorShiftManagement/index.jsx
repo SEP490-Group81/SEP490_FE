@@ -42,12 +42,14 @@ const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 const weekdayOptions = [
+
   { label: "Thứ 2", value: 1 },
   { label: "Thứ 3", value: 2 },
   { label: "Thứ 4", value: 3 },
   { label: "Thứ 5", value: 4 },
   { label: "Thứ 6", value: 5 },
-  //  { label: "Thứ 7", value: 6 },
+  { label: "Thứ 7", value: 6 },
+  { label: "Chủ nhật", value: 0 }
 ];
 
 dayjs.extend(customParseFormat);
@@ -116,20 +118,81 @@ const shiftTimesMap = {
 
 const renderEventContent = (eventInfo) => {
   const { title, extendedProps } = eventInfo.event;
-  const { status, patients } = extendedProps;
+  const { status, patients, department, room } = extendedProps;
+  console.log("Event info:", eventInfo);
+  console.log("Extended props:", extendedProps);
 
   return (
-    <div style={{ padding: 2 }}>
-      <div style={{ fontWeight: "bold" }}>{title.split(" - ")[0]}</div>
-      <div style={{ fontSize: 12, color: "#333" }}>{status}</div>
-      <div style={{ fontSize: 12 }}>👥 {patients.length} bệnh nhân</div>
+    <div
+      style={{
+        padding: 8,
+        borderRadius: 6,
+        backgroundColor: "#f9f9f9",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        lineHeight: 1.3,
+      }}
+    >
+      {(department) && (
+        <div
+          style={{
+            fontWeight: "600",
+            color: "#2c3e50",
+            marginBottom: 4,
+          }}
+        >
+          {department}
+        </div>
+      )}
+      {(room) && (
+        <div
+          style={{
+            fontWeight: "600",
+            color: "#2c3e50",
+            marginBottom: 4,
+          }}
+        >
+          {room}
+        </div>
+      )}
+      <div
+        style={{
+          fontWeight: "700",
+          fontSize: 14,
+          color: "#34495e",
+          marginBottom: 6,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+        title={title}
+      >
+        {title.split(" - ")[0]}
+      </div>
+
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "6px 0" }} />
+
+      <div
+        style={{
+          fontSize: 12,
+          color: status === "Completed" ? "green" : "#e67e22",
+          fontWeight: "600",
+          marginBottom: 4,
+        }}
+      >
+        {status}
+      </div>
+
+      <div style={{ fontSize: 12, color: "#555" }}>
+        👥 <strong>{patients.length}</strong> bệnh nhân
+      </div>
     </div>
   );
 };
 
 const AdminDoctorShiftManagement = () => {
   const [shifts, setShifts] = useState([]);
-  const [selectedDoctorId, setSelectedDoctorId] = useState(10);
+  const [selectedDoctorId, setSelectedDoctorId] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingShift, setEditingShift] = useState(null);
   const [form] = Form.useForm();
@@ -148,6 +211,7 @@ const AdminDoctorShiftManagement = () => {
   const [flag, setFlag] = useState(false);
   const [nurses, setNurses] = useState([]);
   const user = useSelector((state) => state.user.user);
+  console.log("user is: " + JSON.stringify(user));
   console.log("hospital admin id is: " + user.hospitals[0]?.id);
   console.log("hospital admin is: " + JSON.stringify(user));
   console.log("doctor detail: " + JSON.stringify(doctorDetail));
@@ -165,6 +229,21 @@ const AdminDoctorShiftManagement = () => {
 
     return false;
   };
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      if (!user.id) return;
+      const result = await getDoctorByHospitalId(user.hospitals[0]?.id);
+      setSelectedDoctorId(result?.[0]?.user?.id || null);
+      if (result) {
+        console.log("result doctor list : " + JSON.stringify(result));
+        setDoctors(result);
+      } else {
+        console.error("Không tìm thấy thông tin bác sĩ.");
+      }
+    };
+    fetchDoctor();
+  }, [user.hospitals[0]?.id]);
+
 
   useEffect(() => {
     const fetchStaffs = async () => {
@@ -210,7 +289,7 @@ const AdminDoctorShiftManagement = () => {
 
   useEffect(() => {
     const fetchDoctor = async () => {
-      if (!user.id) return;
+      if (!selectedDoctorId) return;
       const result = await getDoctorByUserId(selectedDoctorId);
       if (result) {
         console.log("result doctor detail : " + result);
@@ -231,20 +310,7 @@ const AdminDoctorShiftManagement = () => {
     }
   }, [doctorDetail, flag]);
 
-  useEffect(() => {
-    const fetchDoctor = async () => {
-      if (!user.id) return;
-      const result = await getDoctorByHospitalId(user.hospitals[0]?.id);
 
-      if (result) {
-        console.log("result doctor list : " + JSON.stringify(result));
-        setDoctors(result);
-      } else {
-        console.error("Không tìm thấy thông tin bác sĩ.");
-      }
-    };
-    fetchDoctor();
-  }, [user.hospitals[0]?.id]);
 
 
   const handleDatesSet = async (arg) => {
@@ -376,7 +442,7 @@ const AdminDoctorShiftManagement = () => {
           daysOfWeek,
           startTime: shiftTimesMap[shiftKey]?.startTime || "00:00:00",
           endTime: shiftTimesMap[shiftKey]?.endTime || "00:00:00",
-          workDate: workDate?.toISOString(),
+          workDate: workDate ? workDate.format("YYYY-MM-DD") : null,
           isAvailable: true,
           reasonOfUnavailability: "",
         };
@@ -391,8 +457,8 @@ const AdminDoctorShiftManagement = () => {
           doctorIds: [doctorId],
           daysOfWeek: daysOfWeekArr,
           shifts: shiftsPayload,
-          startDate: workDate ? workDate.startOf("day").toISOString() : dayjs().toISOString(),
-          endDate: workDate ? workDate.startOf("day").toISOString() : dayjs().toISOString(),
+          startDate: workDate ? workDate.format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
+          endDate: workDate ? workDate.format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
           isAvailable: false,
           reasonOfUnavailability: "",
         };

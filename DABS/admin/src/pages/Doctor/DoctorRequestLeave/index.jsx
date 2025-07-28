@@ -4,8 +4,9 @@ import { PlusOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
 import AddUser from './AddRequestLeave';
 import UpdateRequestLeave from './UpdateRequestLeave';
 import './styles.scss';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { getRequestsByHospital, createRequest, updateRequest } from '../../../services/requestService';
+import { clearMessage, setMessage } from '../../../redux/slices/messageSlice';
 
 const DoctorRequestLeave = () => {
     const { Title, Text } = Typography;
@@ -18,6 +19,19 @@ const DoctorRequestLeave = () => {
     const [showUpdateModal, setShowUpdateModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
     const [searchText, setSearchText] = useState('');
+    const messageState = useSelector((state) => state.message);
+    const [messageApi, contextHolder] = message.useMessage();
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        if (messageState) {
+            messageApi.open({
+                type: messageState.type,
+                content: messageState.content,
+            });
+            dispatch(clearMessage());
+        }
+    }, [dispatch, messageApi]);
 
     useEffect(() => {
         const fetchRequests = async () => {
@@ -28,7 +42,7 @@ const DoctorRequestLeave = () => {
                 const mappedData = allRequests.map((item) => ({
                     key: item.id.toString(),
                     fullName: item.requesterName,
-                    position: 'Bác sĩ chuyên khoa',
+                    position: 'Bác sĩ',
                     department: item.department || '',
                     startDate: item.startDate ? item.startDate.split('T')[0] : '',
                     endDate: item.endDate ? item.endDate.split('T')[0] : '',
@@ -60,24 +74,24 @@ const DoctorRequestLeave = () => {
 
     const handleAddUserSuccess = (newRequest) => {
         setShowAddModal(false);
-        message.success("Thêm đơn nghỉ phép thành công");
+         dispatch(setMessage({ type: "success", content: "Thêm đơn nghỉ phép thành công!" }));
     };
     const handleUpdateSuccess = (updatedRecord) => {
         setShowUpdateModal(false);
         setEditingRecord(null);
-        message.success("Cập nhật đơn nghỉ phép thành công");
+         dispatch(setMessage({ type: "success", content: "Cập nhật đơn nghỉ phép thành công!" }));
     };
 
     const mapReasonToRequestType = (reason) => {
         switch (reason) {
             case 'Nghỉ phép':
-                return 1; 
+                return 1;
             case 'Nghỉ ốm':
-                return 2; 
+                return 2;
             case 'Đi công tác':
-                return 3; 
+                return 3;
             case 'Khác':
-                return 4; 
+                return 4;
             default:
                 return 4;
         }
@@ -97,12 +111,8 @@ const DoctorRequestLeave = () => {
                         status: 4,
                     };
                     await updateRequest(payload);
-                    message.success('Hủy đơn thành công');
-                    setDataSource(prev =>
-                        prev.map(item =>
-                            item.key === record.key ? { ...item, status: 'cancelled' } : item
-                        )
-                    );
+                    dispatch(setMessage({ type: "success", content: "Hủy đơn thành công!" }));
+            
                 } catch (error) {
                     console.error("Lỗi khi hủy đơn:", error);
                     message.error('Hủy đơn thất bại');
@@ -121,11 +131,6 @@ const DoctorRequestLeave = () => {
             title: 'Chức vụ',
             dataIndex: 'position',
             key: 'position',
-        },
-        {
-            title: 'Phòng ban',
-            dataIndex: 'department',
-            key: 'department',
         },
         {
             title: 'Ngày bắt đầu',
@@ -192,128 +197,131 @@ const DoctorRequestLeave = () => {
     ];
 
     return (
-        <div className="user-management-container">
-            <Row gutter={24} style={{ marginBottom: 24, justifyContent: 'space-between' }}>
-                <Col xs={24}>
-                    <Row justify="space-between" align="middle">
-                        <Col>
-                            <Title level={2}>
-                                <UserOutlined style={{ marginRight: 12 }} />
-                                Đơn xin nghỉ phép của bác sĩ
-                            </Title>
-                        </Col>
-                        <Col>
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={handleAddUser}
-                                size="large"
-                            >
-                                Tạo đơn xin nghỉ phép
-                            </Button>
-                        </Col>
-                    </Row>
-                </Col>
-            </Row>
-
-            <Row gutter={24} style={{ marginBottom: 24, justifyContent: 'space-between' }}>
-                <Col xs={24} sm={8}>
-                    <Card style={{ textAlign: 'center' }}>
-                        <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
-                            {/* Bạn có thể tính toán số ngày nghỉ từ API hoặc update sau */}
-                            8/15
-                        </Title>
-                        <Text style={{ fontFamily: "Roboto", fontSize: 20, fontWeight: 500 }}>Số ngày đã nghỉ</Text>
-                    </Card>
-                </Col>
-
-                <Col xs={24} sm={8}>
-                    <Card style={{ textAlign: 'center' }}>
-                        <Title level={2} style={{ margin: 0, color: '#faad14' }}>
-                            0/3
-                        </Title>
-                        <Text style={{ fontFamily: "Roboto", fontSize: 20, fontWeight: 500 }}>Số ngày nghỉ lễ</Text>
-                    </Card>
-                </Col>
-            </Row>
-
-            <Row gutter={[0, 24]}>
-                <Col span={24}>
-                    <Card>
-                        <Row className="actions-row" gutter={[16, 16]}>
-                            <Col xs={24} sm={12} md={8} lg={6} className="search-container">
-                                <Input.Search
-                                    placeholder="Tìm theo họ tên..."
-                                    value={searchText}
-                                    onChange={(e) => setSearchText(e.target.value)}
-                                    enterButton={<SearchOutlined />}
-                                    size="middle"
-                                    allowClear
-                                />
+        <>
+            {contextHolder}
+            <div className="user-management-container">
+                <Row gutter={24} style={{ marginBottom: 24, justifyContent: 'space-between' }}>
+                    <Col xs={24}>
+                        <Row justify="space-between" align="middle">
+                            <Col>
+                                <Title level={2}>
+                                    <UserOutlined style={{ marginRight: 12 }} />
+                                    Đơn xin nghỉ phép của bác sĩ
+                                </Title>
+                            </Col>
+                            <Col>
+                                <Button
+                                    type="primary"
+                                    icon={<PlusOutlined />}
+                                    onClick={handleAddUser}
+                                    size="large"
+                                >
+                                    Tạo đơn xin nghỉ phép
+                                </Button>
                             </Col>
                         </Row>
-                    </Card>
-                </Col>
-                <Col span={24}>
-                    <Table
-                        columns={columns}
-                        dataSource={filteredData}
-                        pagination={{ pageSize: 5 }}
-                        rowKey="key"
-                        style={{ marginTop: 24 }}
+                    </Col>
+                </Row>
+
+                <Row gutter={24} style={{ marginBottom: 24, justifyContent: 'space-between' }}>
+                    <Col xs={24} sm={8}>
+                        <Card style={{ textAlign: 'center' }}>
+                            <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
+                                {/* Bạn có thể tính toán số ngày nghỉ từ API hoặc update sau */}
+                                8/15
+                            </Title>
+                            <Text style={{ fontFamily: "Roboto", fontSize: 20, fontWeight: 500 }}>Số ngày đã nghỉ</Text>
+                        </Card>
+                    </Col>
+
+                    <Col xs={24} sm={8}>
+                        <Card style={{ textAlign: 'center' }}>
+                            <Title level={2} style={{ margin: 0, color: '#faad14' }}>
+                                0/3
+                            </Title>
+                            <Text style={{ fontFamily: "Roboto", fontSize: 20, fontWeight: 500 }}>Số ngày nghỉ lễ</Text>
+                        </Card>
+                    </Col>
+                </Row>
+
+                <Row gutter={[0, 24]}>
+                    <Col span={24}>
+                        <Card>
+                            <Row className="actions-row" gutter={[16, 16]}>
+                                <Col xs={24} sm={12} md={8} lg={6} className="search-container">
+                                    <Input.Search
+                                        placeholder="Tìm theo họ tên..."
+                                        value={searchText}
+                                        onChange={(e) => setSearchText(e.target.value)}
+                                        enterButton={<SearchOutlined />}
+                                        size="middle"
+                                        allowClear
+                                    />
+                                </Col>
+                            </Row>
+                        </Card>
+                    </Col>
+                    <Col span={24}>
+                        <Table
+                            columns={columns}
+                            dataSource={filteredData}
+                            pagination={{ pageSize: 5 }}
+                            rowKey="key"
+                            style={{ marginTop: 24 }}
+                        />
+                    </Col>
+                </Row>
+
+                {showAddModal && (
+                    <AddUser
+                        visible={showAddModal}
+                        onCancel={() => setShowAddModal(false)}
+                        onSuccess={(newRequestRaw) => {
+                            const newMapped = {
+                                key: newRequestRaw.id.toString(),
+                                fullName: newRequestRaw.requesterName,
+                                position: 'Bác sĩ chuyên khoa',
+                                department: newRequestRaw.department || '',
+                                startDate: newRequestRaw.startDate ? newRequestRaw.startDate.split('T')[0] : '',
+                                endDate: newRequestRaw.endDate ? newRequestRaw.endDate.split('T')[0] : '',
+                                status: newRequestRaw.status === 1 ? 'pending' : newRequestRaw.status === 2 ? 'approved' : 'completed',
+                                rawData: newRequestRaw,
+                            };
+                            handleAddUserSuccess(newMapped);
+                        }}
+                        userId={doctorUserId}
+                        hospitalId={hospitalId}
                     />
-                </Col>
-            </Row>
+                )}
 
-            {showAddModal && (
-                <AddUser
-                    visible={showAddModal}
-                    onCancel={() => setShowAddModal(false)}
-                    onSuccess={(newRequestRaw) => {
-                        // Map lại dữ liệu mới tương tự
-                        const newMapped = {
-                            key: newRequestRaw.id.toString(),
-                            fullName: newRequestRaw.requesterName,
-                            position: 'Bác sĩ chuyên khoa',
-                            department: newRequestRaw.department || '',
-                            startDate: newRequestRaw.startDate ? newRequestRaw.startDate.split('T')[0] : '',
-                            endDate: newRequestRaw.endDate ? newRequestRaw.endDate.split('T')[0] : '',
-                            status: newRequestRaw.status === 1 ? 'pending' : newRequestRaw.status === 2 ? 'approved' : 'completed',
-                            rawData: newRequestRaw,
-                        };
-                        handleAddUserSuccess(newMapped);
-                    }}
-                    userId={doctorUserId}
-                    hospitalId={hospitalId}
-                />
-            )}
+                {showUpdateModal && editingRecord && (
+                    <UpdateRequestLeave
+                        visible={showUpdateModal}
+                        onCancel={() => {
+                            setShowUpdateModal(false);
+                            setEditingRecord(null);
+                        }}
+                        onSuccess={(updatedRequestRaw) => {
+                            const updatedMapped = {
+                                key: updatedRequestRaw.id.toString(),
+                                fullName: updatedRequestRaw.requesterName,
+                                position: 'Bác sĩ chuyên khoa',
+                                department: updatedRequestRaw.department || '',
+                                startDate: updatedRequestRaw.startDate ? updatedRequestRaw.startDate.split('T')[0] : '',
+                                endDate: updatedRequestRaw.endDate ? updatedRequestRaw.endDate.split('T')[0] : '',
+                                status: updatedRequestRaw.status === 1 ? 'pending' : updatedRequestRaw.status === 2 ? 'approved' : 'completed',
+                                rawData: updatedRequestRaw,
+                            };
+                            handleUpdateSuccess(updatedMapped);
+                        }}
+                        initialValues={editingRecord.rawData}
+                        hospitalId={hospitalId}
+                        userId={doctorUserId}
+                    />
+                )}
+            </div>
+        </>
 
-            {showUpdateModal && editingRecord && (
-                <UpdateRequestLeave
-                    visible={showUpdateModal}
-                    onCancel={() => {
-                        setShowUpdateModal(false);
-                        setEditingRecord(null);
-                    }}
-                    onSuccess={(updatedRequestRaw) => {
-                        const updatedMapped = {
-                            key: updatedRequestRaw.id.toString(),
-                            fullName: updatedRequestRaw.requesterName,
-                            position: 'Bác sĩ chuyên khoa',
-                            department: updatedRequestRaw.department || '',
-                            startDate: updatedRequestRaw.startDate ? updatedRequestRaw.startDate.split('T')[0] : '',
-                            endDate: updatedRequestRaw.endDate ? updatedRequestRaw.endDate.split('T')[0] : '',
-                            status: updatedRequestRaw.status === 1 ? 'pending' : updatedRequestRaw.status === 2 ? 'approved' : 'completed',
-                            rawData: updatedRequestRaw,
-                        };
-                        handleUpdateSuccess(updatedMapped);
-                    }}
-                    initialValues={editingRecord.rawData}
-                    hospitalId={hospitalId}
-                    userId={doctorUserId}
-                />
-            )}
-        </div>
     );
 };
 

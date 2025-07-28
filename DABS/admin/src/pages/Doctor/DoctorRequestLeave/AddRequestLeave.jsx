@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, DatePicker, Select, Button, Spin, notification, Row, Col } from 'antd';
 import { FileTextOutlined } from '@ant-design/icons';
+import { createRequest } from '../../../services/requestService';
 
 const { Option } = Select;
 
@@ -23,14 +24,39 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
       placement: 'topRight',
     });
   };
-
+  const mapReasonToRequestType = (reason) => {
+    switch (reason) {
+      case 'Nghỉ phép':
+        return 1; 
+      case 'Nghỉ ốm':
+        return 2; 
+      case 'Đi công tác':
+        return 3;
+      case 'Khác':
+        return 4; 
+      default:
+        return 4;
+    }
+  };
   const handleSubmit = async (values) => {
     setSpinning(true);
     try {
+      const payload = {
+        type: mapReasonToRequestType(values.reason), 
+        startDate: values.startDate.format(),
+        endDate: values.endDate.format(),
+        reason: values.reason,
+        status: 1,
+       
+      };
+
+      const response = await createRequest(payload);
+
       setSpinning(false);
       form.resetFields();
       success();
-      onSuccess();
+      onSuccess(response); 
+
     } catch (err) {
       setSpinning(false);
       error();
@@ -69,10 +95,10 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
                 <Input placeholder="Nhập họ và tên bác sĩ" />
               </Form.Item>
             </Col>
-      
+
           </Row>
 
-     
+
 
           <Row gutter={16}>
             <Col xs={24} md={12}>

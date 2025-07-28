@@ -78,13 +78,13 @@ function MenuSider() {
         {
             key: "staff-shift-management",
             label: <Link to="/admin-hospital/staff-shift-management">Ca làm nhân viên</Link>,
-            icon: <UsergroupAddOutlined />,
-        },
-        {
-            key: "nurse-shift-management",
-            label: <Link to="/admin-hospital/nurse-shift-management">Ca làm y tá</Link>,
             icon: <ScheduleOutlined />,
         },
+        // {
+        //     key: "nurse-shift-management",
+        //     label: <Link to="/admin-hospital/nurse-shift-management">Ca làm y tá</Link>,
+        //     icon: <ScheduleOutlined />,
+        // },
         {
             key: "department-management",
             label: <Link to="/admin-hospital/departments">Department Management</Link>,

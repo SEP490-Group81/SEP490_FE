@@ -61,7 +61,7 @@ const UpdateRequestLeave = ({ visible, onCancel, onSuccess, initialValues }) => 
         status: initialValues.status || 1,  
       };
 
-      const response = await updateRequest(payload);
+      await updateRequest(payload);
 
       setSpinning(false);
       success();
