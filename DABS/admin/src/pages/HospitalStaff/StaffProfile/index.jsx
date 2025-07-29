@@ -88,7 +88,6 @@ function StaffProfile() {
     }
   }, [selectedProvince, provinces]);
 
-  // Show messages from messageRedux slice
   useEffect(() => {
     if (messageState) {
       messageApi.open({
@@ -99,17 +98,14 @@ function StaffProfile() {
     }
   }, [messageState, dispatch, messageApi]);
 
-  // Sync selectedProvince and reset ward on province change in form
   const onFormValuesChange = (changedValues) => {
     if ("province" in changedValues) {
       const newProvince = changedValues.province || null;
       setSelectedProvince(newProvince);
-      // Reset ward every time province changes
       form.setFieldsValue({ ward: undefined });
     }
   };
 
-  // Map form values -> API payload
   const fieldMap = {
     userName: "userName",
     fullname: "fullname",

@@ -1,4 +1,4 @@
-import { getAuth } from "../utils/request";
+import { getAuth, postAuth, putAuth } from "../utils/request";
 
 export const getRequestsByHospital = async (hospitalId, userId) => {
   if (!hospitalId) {
@@ -14,9 +14,31 @@ export const getRequestsByHospital = async (hospitalId, userId) => {
 
     const response = await getAuth(url);
 
-    return response; 
+    return response.result; 
   } catch (error) {
     console.error("Lỗi khi lấy yêu cầu theo hospital:", error);
+    throw error;
+  }
+};
+
+export const createRequest = async (requestData) => {
+  try {
+    const response = await postAuth('/requests/create', requestData);
+    console.log("Tạo yêu cầu thành công:", response);
+    return response; 
+  } catch (error) {
+    console.error("Lỗi khi tạo yêu cầu:", error);
+    throw error;
+  }
+};
+
+export const updateRequest = async (requestData) => {
+  try {
+    const response = await putAuth('/requests/update', requestData);
+    console.log("Cập nhật yêu cầu thành công:", response);
+    return response; 
+  } catch (error) {
+    console.error("Lỗi khi cập nhật yêu cầu:", error);
     throw error;
   }
 };

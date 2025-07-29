@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, DatePicker, Select, Button, Spin, notification, Row, Col } from 'antd';
 import { FileTextOutlined } from '@ant-design/icons';
 import moment from 'moment';
+import { updateRequest } from '../../../services/requestService';
 
 const { Option } = Select;
 
@@ -34,14 +35,39 @@ const UpdateRequestLeave = ({ visible, onCancel, onSuccess, initialValues }) => 
       placement: 'topRight',
     });
   };
-
+  const mapReasonToRequestType = (reason) => {
+    switch (reason) {
+      case 'Nghỉ phép':
+        return 1; 
+      case 'Nghỉ ốm':
+        return 2; 
+      case 'Đi công tác':
+        return 3; 
+      case 'Khác':
+        return 4;
+      default:
+        return 4;
+    }
+  };
   const handleSubmit = async (values) => {
     setSpinning(true);
     try {
+      const payload = {
+        requestId: initialValues.id, 
+        type: mapReasonToRequestType(values.reason),
+        startDate: values.startDate.format(),
+        endDate: values.endDate.format(),
+        reason: values.reason,
+        status: initialValues.status || 1,  
+      };
+
+      await updateRequest(payload);
+
       setSpinning(false);
       success();
       onSuccess({ ...initialValues, ...values, startDate: values.startDate.format('YYYY-MM-DD'), endDate: values.endDate.format('YYYY-MM-DD') });
       form.resetFields();
+
     } catch (err) {
       setSpinning(false);
       error();
@@ -79,7 +105,7 @@ const UpdateRequestLeave = ({ visible, onCancel, onSuccess, initialValues }) => 
                 <Input placeholder="Nhập họ và tên bác sĩ" />
               </Form.Item>
             </Col>
-     
+
           </Row>
 
           <Row gutter={16}>
