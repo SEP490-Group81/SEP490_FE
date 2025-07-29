@@ -909,6 +909,7 @@ const AdminDoctorShiftManagement = () => {
                     setModalDetail(false);
                   }}
                   style={{ borderRadius: 8 }}
+                  
                 >
                   Sửa
                 </Button>,

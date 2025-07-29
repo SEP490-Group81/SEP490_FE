@@ -69,6 +69,7 @@ const isShiftDisabled = (event) => {
 
 const eventColor = (info) => {
   const { type, status, patients } = info.event.extendedProps;
+  console.log("Event extendedProps:", info.event.extendedProps);
   if (type === "booking") {
     Object.assign(info.el.style, {
       backgroundColor: "#3575d3",
@@ -124,7 +125,9 @@ const eventColor = (info) => {
 
 
 const StaffShiftManagement = () => {
-  const [filteredShifts, setFilteredShifts] = useState([]);
+  // const [filteredShifts, setFilteredShifts] = useState([]);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [shiftToDelete, setShiftToDelete] = useState(null);
   const [staffDetail, setStaffDetail] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingShift, setEditingShift] = useState(null);
@@ -133,7 +136,7 @@ const StaffShiftManagement = () => {
   const [modalDetail, setModalDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const user = useSelector((state) => state.user.user);
-  console.log("hospital nurse id is: " + user.hospitals[0]?.id);
+  // console.log("hospital nurse id is: " + user.hospitals[0]?.id);
   const [allStaffs, setAllStaffs] = useState([]);
   const [nurses, setNurses] = useState([]);
   const [selectedPersonId, setSelectedPersonId] = useState(null);
@@ -143,6 +146,7 @@ const StaffShiftManagement = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const messageState = useSelector((state) => state.message)
   const calendarRef = useRef();
+
   console.log("Selected person ID:", selectedPersonId);
 
 
@@ -182,6 +186,7 @@ const StaffShiftManagement = () => {
       const now = dayjs();
 
       const formattedEvents = schedules.map((item) => {
+
         const dateStr = item.workDate.split("T")[0];
         const startStr = `${dateStr}T${item.startTime}`;
         const endStr = `${dateStr}T${item.endTime}`;
@@ -306,6 +311,11 @@ const StaffShiftManagement = () => {
   //   },
   // }));
 
+  const showDeleteConfirm = (shift) => {
+    setShiftToDelete(shift);
+    setDeleteConfirmVisible(true);
+  };
+
   const onAddShift = (dateStr = null) => {
     setEditingShift(null);
     form.resetFields();
@@ -319,23 +329,6 @@ const StaffShiftManagement = () => {
     setModalDetail(true);
   };
 
-  const onDeleteShift = async (id) => {
-    Modal.confirm({
-      title: "Xác nhận xóa ca làm việc?",
-      onOk: async () => {
-        try {
-          await deleteStaffSchedule(id);
-          setFlag(prev => !prev);
-          dispatch(setMessage({ type: 'success', content: 'Xóa ca làm việc thành công!' }));
-
-          setModalDetail(false);
-        } catch (error) {
-          console.error("Lỗi xóa ca làm việc:", error);
-          dispatch(setMessage({ type: 'error', content: 'Lỗi xoá ca làm việc!' }));
-        }
-      },
-    });
-  };
 
   const onFinish = async (values) => {
     const { shift } = values;
@@ -743,7 +736,7 @@ const StaffShiftManagement = () => {
                     }}
                     locale="vi"
                     height={600}
-                    eventClick={(info) => onEditShift(info.event.extendedProps)}
+                    eventClick={(info) => onEditShift(info.event)}
                     events={events}
                     eventDidMount={eventColor}
                     datesSet={handleDatesSet}
@@ -841,6 +834,33 @@ const StaffShiftManagement = () => {
             </Modal>
 
             <Modal
+              visible={deleteConfirmVisible}
+              title="Xác nhận xóa ca làm việc?"
+              onOk={async () => {
+                try {
+                  console.log("Deleting shift:", shiftToDelete.id);
+                  await deleteStaffSchedule(shiftToDelete.id);
+                  setFlag(prev => !prev);
+                  dispatch(setMessage({ type: 'success', content: 'Xóa ca làm việc thành công!' }));
+                } catch (error) {
+                  dispatch(setMessage({ type: 'error', content: 'Lỗi xoá ca làm việc!' }));
+                } finally {
+                  setDeleteConfirmVisible(false);
+                  setShiftToDelete(null);
+                  setModalDetail(false);
+                }
+              }}
+              onCancel={() => {
+                setDeleteConfirmVisible(false);
+                setShiftToDelete(null);
+              }}
+              okText="Xóa"
+              cancelText="Hủy"
+              centered
+            />
+
+
+            <Modal
               open={modalDetail}
               onCancel={() => setModalDetail(false)}
               footer={null}
@@ -871,70 +891,66 @@ const StaffShiftManagement = () => {
               centered
               bodyStyle={{
                 borderRadius: 18,
-                background: "#fcfcfe",
-                padding: 28,
                 minHeight: 280,
               }}
             >
               {selectedEvent ? (
                 <>
-                  {selectedEvent?.room && (
-                    <p><b>🏥 Phòng khám:</b> {selectedEvent.room}</p>
-                  )}
-                  <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
-                  <p><b>👥 Số bệnh nhân:</b> {selectedEvent.extendedProps?.patients?.length || 0}</p>
-                  <p><b>📌 Trạng thái:</b> {selectedEvent.extendedProps?.status || "Không rõ"}</p>
+                  {selectedEvent.extendedProps.room && <p>🏥 Phòng khám: {selectedEvent.extendedProps.room}</p>}
+                  <p>🕒 Thời gian: {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
+                  <p>👥 Số bệnh nhân: {selectedEvent.extendedProps.patients?.length || 0}</p>
+                  <p>📌 Trạng thái: {selectedEvent.extendedProps.status || "Không rõ"}</p>
 
                   <List
                     bordered
-                    dataSource={selectedEvent.patients || []}
-                    renderItem={(p) => (
-                      <List.Item key={p.id} style={{ borderRadius: 10 }}>
-                        <List.Item.Meta
-                          title={<b>{p.name}</b>}
-                          description={`Tuổi: ${p.age} | Ghi chú: ${p.note || "Không có"}`}
-                        />
+                    dataSource={selectedEvent.extendedProps.patients || []}
+                    renderItem={p => (
+                      <List.Item key={p.id}>
+                        <List.Item.Meta title={p.name} description={`Tuổi: ${p.age} | Ghi chú: ${p.note || "Không có"}`} />
                       </List.Item>
                     )}
                     locale={{ emptyText: "Chưa có bệnh nhân nào trong ca này." }}
-                    style={{ marginBottom: 22, borderRadius: 12, background: "#fff" }}
+                    style={{ marginBottom: 22 }}
                   />
-                  <div
-                    style={{
-                      marginTop: 16,
-                      textAlign: "right",
-                      display: "flex",
-                      justifyContent: "space-between",
-                    }}
-                  >
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 16 }}>
                     <Button
                       type="primary"
-                      style={{ borderRadius: 8 }}
+                      disabled={isShiftDisabled(selectedEvent)}
                       onClick={() => {
-                        setEditingShift(selectedEvent);
+                        setEditingShift(selectedEvent.extendedProps);
                         form.setFieldsValue({
-                          staffId: selectedEvent.staffId,
-                          workDate: dayjs(selectedEvent.workDate),
-                          startTime: dayjs(selectedEvent.startTime, "HH:mm:ss"),
-                          endTime: dayjs(selectedEvent.endTime, "HH:mm:ss"),
-                          roomName: selectedEvent.roomName,
-                          departmentName: selectedEvent.departmentName,
-                          status: selectedEvent.status,
+                          staffId: selectedEvent.extendedProps.staffId,
+                          workDate: dayjs(selectedEvent.start),
                         });
                         setModalVisible(true);
                         setModalDetail(false);
                       }}
                     >
-                      Chỉnh sửa
+                      Sửa
                     </Button>
-                    <Button danger style={{ borderRadius: 8 }} onClick={() => onDeleteShift(selectedEvent.id)}>
+
+                    <Button
+                      danger
+                      disabled={isShiftDisabled(selectedEvent)}
+                      style={{ borderRadius: 8 }}
+                      onClick={() => showDeleteConfirm(selectedEvent)}
+                    >
                       Xóa
+                    </Button>
+
+                    <Button
+                      onClick={() => setModalDetail(false)}
+                      style={{ borderRadius: 8 }}
+                    >
+                      Đóng
                     </Button>
                   </div>
                 </>
               ) : (
                 <div>Không có dữ liệu lịch làm việc.</div>
               )}
+
             </Modal>
           </div>
         </div>

@@ -86,7 +86,7 @@ export const updateStaffSchedule = async (scheduleData) => {
 
 export const deleteStaffSchedule = async (staffScheduleId) => {
   try {
-    const result = await deleteAuth(`/staffschedules/${staffScheduleId}`);
+    const result = await deleteAuth(`/staffschedules`, staffScheduleId);
     console.log(`StaffSchedule ${staffScheduleId} deleted successfully`, result);
     return result;
   } catch (error) {
