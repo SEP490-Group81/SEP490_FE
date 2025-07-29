@@ -259,7 +259,7 @@ const StaffShiftManagement = () => {
         const staffList = await getStaffNurseList(user.hospitals[0].id);
         setAllStaffs(staffList || []);
         console.log("Fetched all staff:", JSON.stringify(staffList));
-        setSelectedPersonId(staffList?.[0]?.id || null);
+        setSelectedPersonId(staffList?.[0]?.staffId || null);
         const nurseList = (staffList || []).filter((s) => s.role?.name === 'Nurse');
         setNurses(nurseList);
         console.log("Fetched nurses:", nurseList);
@@ -290,7 +290,7 @@ const StaffShiftManagement = () => {
   }, [selectedPersonId]);
 
   const normalStaffs = allStaffs.filter(
-    (s) => !nurses.find((n) => n.id === s.id)
+    (s) => !nurses.find((n) => n.staffId === s.staffId)
   );
 
 
@@ -355,7 +355,7 @@ const StaffShiftManagement = () => {
       } else {
         const payload = {
           userIds: [values.staffId],
-          hospitalId: user.hospitals[0]?.id,
+          hospitalId: user.hospitals[0]?.staffId,
           daysOfWeek: [dayjs(values.workDate).day()],
           shifts: shiftsPayload,
           startDate: values.workDate.format("YYYY-MM-DD"),
@@ -483,7 +483,7 @@ const StaffShiftManagement = () => {
       for (const userId of staffIds) {
         const payload = {
           userIds: [userId],
-          hospitalId: user.hospitals[0]?.id,
+          hospitalId: user.hospitals[0]?.staffId,
           daysOfWeek: weekdays,
           shifts: shiftsPayload,
           startDate: dateRange[0].format("YYYY-MM-DD"),
@@ -588,12 +588,12 @@ const StaffShiftManagement = () => {
               >
                 <OptGroup label="Y tá (Nurse)">
                   {nurses.map(n => (
-                    <Option key={`nurse-${n.id}`} value={n.id}>{n.fullname}</Option>
+                    <Option key={`nurse-${n.staffId}`} value={n.staffId}>{n.fullname}</Option>
                   ))}
                 </OptGroup>
                 <OptGroup label="Nhân viên (Staff)">
                   {normalStaffs.map(s => (
-                    <Option key={`staff-${s.id}`} value={s.id}>{s.fullname}</Option>
+                    <Option key={`staff-${s.staffId}`} value={s.staffId}>{s.fullname}</Option>
                   ))}
                 </OptGroup>
               </Select>
@@ -639,7 +639,7 @@ const StaffShiftManagement = () => {
                         placeholder="Chọn Nhân viên"
                         onChange={(value) => {
                           if (value.includes("all")) {
-                            const allIds = allStaffs.map((n) => n.id);
+                            const allIds = allStaffs.map((n) => n.staffId);
                             bulkForm.setFieldsValue({ staffIds: allIds });
                           }
                         }}
@@ -649,7 +649,7 @@ const StaffShiftManagement = () => {
                           Tất cả
                         </Option>
                         {allStaffs.map((doc) => (
-                          <Option key={doc.id} value={doc.id}>
+                          <Option key={doc.staffId} value={doc.staffId}>
                             {doc.fullname}
                           </Option>
                         ))}
@@ -798,7 +798,7 @@ const StaffShiftManagement = () => {
                     >
                       <Select placeholder="Chọn Nhân viên" style={{ borderRadius: 8 }}>
                         {allStaffs.map((doc) => (
-                          <Option key={doc?.id} value={doc?.id}>
+                          <Option key={doc?.staffId} value={doc?.staffId}>
                             {doc?.fullname}
                           </Option>
                         ))}

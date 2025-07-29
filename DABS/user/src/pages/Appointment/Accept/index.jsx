@@ -107,6 +107,8 @@ function AppointmentReviewPage() {
                 serviceId: Number(stepData.serviceId),
                 specializationId: Number(stepData.specialty?.id || 0),
                 doctorId: Number(stepData.doctor?.id || 0),
+                returnUrl: "http://localhost:3000/payment/cancelled",
+                cancelUrl: "http://localhost:3000/payment/success",
                 appointmentDate: stepData?.date,
                 bookingTime: stepData.shift === "morning" ? 1 : 2,
                 paymentMethod: stepData.paymentType === "cash" ? 1 : 2,
@@ -114,7 +116,7 @@ function AppointmentReviewPage() {
             };
             console.log("pay load in booking confirm : " + JSON.stringify(payload));
             await createBookAppointment(payload);
-
+            // navigate("/appointment/booking/success", 
             dispatch(setMessage({ type: 'success', content: 'Đặt khám thành công! ' }));
         } catch (error) {
             dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn lịch khác! Bạn đã đặt lịch này rồi hoặc lịch đã quá thời gian để đặt. ' }));

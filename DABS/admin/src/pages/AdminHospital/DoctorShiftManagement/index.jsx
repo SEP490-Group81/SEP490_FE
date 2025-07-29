@@ -866,8 +866,8 @@ const AdminDoctorShiftManagement = () => {
                       >
                         <Select placeholder="Chọn Y tá" style={{ borderRadius: 8 }}>
                           {nurses.map((nurse) => (
-                            <Option key={nurse?.id} value={nurse?.id}>
-                              {nurse?.fullname} - {nurse?.id} 
+                            <Option key={nurse?.staffId} value={nurse?.staffId}>
+                              {nurse?.fullname}
                             </Option>
                           ))}
                         </Select>
