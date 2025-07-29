@@ -36,6 +36,9 @@ import StaffProfile from "../../pages/HospitalStaff/StaffProfile";
 import AdjustBookingSchedule from "../../pages/Nurse/AdjustAppointmentSchedule";
 import NursePaymentConfirmation from "../../pages/Nurse/PaymentAdjust/ConfirmPayment";
 import NurseUnpaidBookingList from "../../pages/Nurse/PaymentAdjust/UnpaidBookingList";
+import StaffManagementPage from "../../pages/AdminHospital/DoctorManagement/StaffManagement";
+import PaymentSuccess from "../../pages/Payment/PaymentSuccess";
+import PaymentCancelled from "../../pages/Payment/PaymentCancelled";
 
 export const routes = [
   {
@@ -54,6 +57,18 @@ export const routes = [
         path: "unauthorized",
         element: <ErrorPage />
       },
+      {
+    path: '/payment/success',
+    element: <PaymentSuccess />
+  },
+  {
+    path: '/payment/cancelled',
+    element: <PaymentCancelled />
+  },
+  {
+    path: '/payment/cancel',
+    element: <PaymentCancelled />
+  }
     ],
   },
   {
@@ -73,6 +88,10 @@ export const routes = [
         ,
         // requireAuth: true,
 
+      },
+      {
+        path: "staff-management",
+        element: <StaffManagementPage />
       },
       {
         path: "doctor-shift-management",
@@ -99,12 +118,12 @@ export const routes = [
         element:
           <ManageSpecialist />
       },
-      
+
       {
         path: 'departments',
         element: <DepartmentManagement />,
       },
-      
+
       {
         path: "medical-service-management",
         element:

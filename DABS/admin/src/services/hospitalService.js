@@ -163,3 +163,27 @@ export const deleteHospital = async (hospitalId) => {
         throw error;
     }
 };
+
+
+
+export const getSpecializationsByHospitalId = async (hospitalId) => {
+  try {
+    const result = await getAuth(`/hospitals/${hospitalId}/specialization`);
+    console.log(`🩺 Fetched specializations for hospital ${hospitalId}:`, result);
+    return result.result || result;
+  } catch (error) {
+    console.error(`❌ Error fetching specializations for hospital ${hospitalId}:`, error);
+    throw error;
+  }
+};
+
+export const getDoctorsBySpecialization = async (hospitalId) => {
+  try {
+    const result = await getAuth(`/hospitals/${hospitalId}/doctors/grouped-by-specialization`);
+    console.log(`👨‍⚕️ Fetched doctors by specialization for hospital ${hospitalId}:`, result);
+    return result.result || result;
+  } catch (error) {
+    console.error(`❌ Error fetching doctors by specialization for hospital ${hospitalId}:`, error);
+    throw error;
+  }
+};
