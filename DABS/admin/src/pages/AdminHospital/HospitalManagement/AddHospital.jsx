@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, Form, Input, Select, Row, Col, Button, Spin, message, TimePicker } from 'antd';
+import { Modal, Form, Input, Select, Row, Col, Button, Spin, TimePicker } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import { useDispatch } from 'react-redux'; // ✅ Add Redux import
+import { setMessage } from '../../../redux/slices/messageSlice'; // ✅ Add message slice import
 import { createHospital } from '../../../services/hospitalService';
 import dayjs from 'dayjs';
 
@@ -9,48 +11,108 @@ const { TextArea } = Input;
 
 const AddHospital = ({ visible, onCancel, onSuccess }) => {
     const [form] = Form.useForm();
-    const [spinning, setSpinning] = useState(false);
+    const [loading, setLoading] = useState(false); // ✅ Fix: use 'loading' instead of 'spinning'
+    const dispatch = useDispatch(); // ✅ Add Redux dispatch hook
 
     const handleSubmit = async (values) => {
-        setSpinning(true);
+        setLoading(true);
+
         try {
-            console.log('🚀 Form values:', values);
-            
-            // ✅ Transform data to match API schema
+            // ✅ Get current date for time formatting
+            const currentDate = new Date().toISOString().split('T')[0]; // "2025-07-23"
+
+            // ✅ Transform data to match Swagger schema exactly
             const hospitalData = {
                 code: values.code,
                 name: values.name,
                 address: values.address,
-                image: values.image || '',
-                googleMapUri: values.googleMapUri || '',
-                banner: values.banner || '',
-                type: parseInt(values.type), // Convert to number
+                image: values.image || "image1.img", // Default or from form
+                googleMapUri: values.googleMapUri || "string",
+                banner: values.banner || "string",
+                type: parseInt(values.type) || 1,
                 phoneNumber: values.phoneNumber,
                 email: values.email,
-                openTime: values.openTime ? values.openTime.toISOString() : null,
-                closeTime: values.closeTime ? values.closeTime.toISOString() : null
+                // ✅ Convert time to ISO datetime format
+                openTime: values.openTime
+                    ? `${currentDate}T${values.openTime.format('HH:mm:ss')}.000Z`
+                    : `${currentDate}T08:00:00.000Z`,
+                closeTime: values.closeTime
+                    ? `${currentDate}T${values.closeTime.format('HH:mm:ss')}.000Z`
+                    : `${currentDate}T18:00:00.000Z`
             };
 
-            console.log('📤 Sending hospital data:', hospitalData);
-            
+            console.log('📤 Sending hospital data (Swagger format):', hospitalData);
+
             const response = await createHospital(hospitalData);
 
-            setSpinning(false);
-            if (response) {
+            if (response?.success || response?.result) {
+                dispatch(setMessage({
+                    type: 'success',
+                    content: 'Hospital created successfully! 🎉',
+                    duration: 4
+                }));
                 form.resetFields();
-                message.success('Hospital created successfully!');
                 onSuccess();
             } else {
-                message.error('Failed to create hospital');
+                throw new Error('Invalid response from server');
             }
-        } catch (err) {
-            setSpinning(false);
-            console.error("❌ Error creating hospital:", err);
-            const errorMessage = err.response?.data?.message || 
-                               err.response?.data?.error ||
-                               err.message || 
-                               'Failed to create hospital. Please try again.';
-            message.error(errorMessage);
+        } catch (error) {
+            console.error('❌ Error creating hospital:', error);
+
+            let errorMessage = 'Failed to create hospital. Please try again.';
+
+            // ✅ Handle specific error responses
+            if (error.response?.data) {
+                const errorData = error.response.data;
+
+                if (errorData.title) {
+                    switch (errorData.title) {
+                        case 'HOSPITAL_CODE_EXISTS':
+                            errorMessage = 'Hospital code already exists. Please use a different code.';
+                            break;
+                        case 'HOSPITAL_NAME_EXISTS':
+                            errorMessage = 'Hospital name already exists. Please use a different name.';
+                            break;
+                        case 'EMAIL_ALREADY_EXISTS':
+                            errorMessage = 'This email is already registered. Please use a different email.';
+                            break;
+                        case 'PHONE_ALREADY_EXISTS':
+                            errorMessage = 'This phone number is already registered. Please use a different phone number.';
+                            break;
+                        case 'VALIDATION_ERROR':
+                            errorMessage = 'Please check your input data. Some fields contain invalid information.';
+                            break;
+                        default:
+                            errorMessage = errorData.title.replace(/_/g, ' ').toLowerCase();
+                            break;
+                    }
+                }
+                else if (errorData.errors) {
+                    const validationErrors = [];
+                    Object.keys(errorData.errors).forEach(field => {
+                        const fieldErrors = errorData.errors[field];
+                        if (Array.isArray(fieldErrors)) {
+                            validationErrors.push(...fieldErrors.filter(err => typeof err === 'string'));
+                        } else if (typeof fieldErrors === 'string') {
+                            validationErrors.push(fieldErrors);
+                        }
+                    });
+                    if (validationErrors.length > 0) {
+                        errorMessage = validationErrors.join('. ');
+                    }
+                }
+                else if (errorData.message) {
+                    errorMessage = errorData.message;
+                }
+            }
+
+            dispatch(setMessage({
+                type: 'error',
+                content: `❌ ${errorMessage}`,
+                duration: 6
+            }));
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -62,13 +124,13 @@ const AddHospital = ({ visible, onCancel, onSuccess }) => {
                     Add New Hospital
                 </div>
             }
-            visible={visible}
+            open={visible} // ✅ Fix: use 'open' instead of 'visible' for newer Ant Design
             onCancel={onCancel}
             footer={null}
             width={900}
-            className="custom-modal"
+            destroyOnClose
         >
-            <Spin spinning={spinning}>
+            <Spin spinning={loading}> {/* ✅ Fix: use 'loading' state */}
                 <div className="hospital-form-container">
                     <Form
                         form={form}
@@ -160,7 +222,7 @@ const AddHospital = ({ visible, onCancel, onSuccess }) => {
                                     label="Opening Time"
                                     rules={[{ required: true, message: 'Please select opening time' }]}
                                 >
-                                    <TimePicker 
+                                    <TimePicker
                                         style={{ width: '100%' }}
                                         format="HH:mm"
                                         placeholder="Select opening time"
@@ -174,7 +236,7 @@ const AddHospital = ({ visible, onCancel, onSuccess }) => {
                                     label="Closing Time"
                                     rules={[{ required: true, message: 'Please select closing time' }]}
                                 >
-                                    <TimePicker 
+                                    <TimePicker
                                         style={{ width: '100%' }}
                                         format="HH:mm"
                                         placeholder="Select closing time"
@@ -209,21 +271,25 @@ const AddHospital = ({ visible, onCancel, onSuccess }) => {
                             name="googleMapUri"
                             label="Google Maps Embed URI"
                         >
-                            <TextArea 
+                            <TextArea
                                 rows={3}
                                 placeholder="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d..."
                             />
                         </Form.Item>
 
                         {/* Action Buttons */}
-                        <Form.Item className="button-group">
-                            <Button type="default" onClick={onCancel} style={{ marginRight: 8 }}>
-                                Cancel
-                            </Button>
-                            <Button type="primary" htmlType="submit">
-                                Create Hospital
-                            </Button>
-                        </Form.Item>
+                        <Row justify="end" gutter={8}>
+                            <Col>
+                                <Button onClick={onCancel}>
+                                    Cancel
+                                </Button>
+                            </Col>
+                            <Col>
+                                <Button type="primary" htmlType="submit" loading={loading}>
+                                    Create Hospital
+                                </Button>
+                            </Col>
+                        </Row>
                     </Form>
                 </div>
             </Spin>
