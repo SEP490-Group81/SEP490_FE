@@ -47,3 +47,14 @@ export const deleteSpecialization = async (specializationId) => {
     throw error;
   }
 };
+
+export const getSpecializationsByHospitalId = async (hospitalId) => {
+  try {
+    const result = await get(`/specializations?hospitalId=${hospitalId}`);
+    console.log(`Fetched specializations for hospital ${hospitalId}:`, result);
+    return result.result;
+  } catch (error) {
+    console.error(`Failed to fetch specializations for hospital ${hospitalId}:`, error);
+    throw error;
+  }
+};

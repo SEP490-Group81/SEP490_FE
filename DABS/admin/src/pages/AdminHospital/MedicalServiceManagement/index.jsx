@@ -25,6 +25,7 @@ const MedicalServiceManagement = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deletingRecord, setDeletingRecord] = useState(null);
   const [flag, setFlag] = useState(false);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 5 });
   const dispatch = useDispatch();
   const [messageApi, contextHolder] = message.useMessage();
   const messageState = useSelector((state) => state.message)
@@ -132,12 +133,13 @@ const MedicalServiceManagement = () => {
   const columns = [
     {
       title: "#",
-      dataIndex: "id",
-      key: "id",
+      key: "index",
       width: 80,
-      render: (id) =>
-        id ? <span style={{ color: "gray" }}>{id}</span> : <span style={{ color: "gray" }}>Không có ID</span>,
-      sorter: (a, b) => a.id - b.id
+      render: (_, __, index) => (
+        <span style={{ color: "gray" }}>
+          {(pagination.current - 1) * pagination.pageSize + index + 1}
+        </span>
+      ),
     },
     {
       title: "Tên dịch vụ",
@@ -235,7 +237,11 @@ const MedicalServiceManagement = () => {
                   dataSource={filteredData}
                   rowKey="id"
                   columns={columns}
-                  pagination={{ pageSize: 5 }}
+                   pagination={{
+                    ...pagination,
+                    onChange: (page, pageSize) =>
+                      setPagination({ current: page, pageSize }),
+                  }}
                 />
               </Card>
             </Col>

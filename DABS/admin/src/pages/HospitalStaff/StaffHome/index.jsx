@@ -2,10 +2,11 @@ import React from "react";
 import { Card, Row, Col, Button, List, Avatar, Typography, Tag } from "antd";
 import { UserOutlined, NotificationOutlined, CheckCircleOutlined, ClockCircleOutlined, CommentOutlined, StarOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 const HospitalStaffHome = () => {
   const { Title, Text } = Typography;
   const navigate = useNavigate();
-
+  const userDefault = useSelector((state) => state.user.user || null);
   const fakeTasks = [
     { id: 1, title: "Chuẩn bị phòng khám số 10", status: "Đang xử lý" },
     { id: 2, title: "Kiểm tra trang thiết bị phòng mổ", status: "Chưa xử lý" },
@@ -26,7 +27,7 @@ const HospitalStaffHome = () => {
 
   return (
     <div style={{ maxWidth: 960, margin: "0 auto", padding: 24 }}>
-      <Title level={2}>Chào nhân viên Nguyễn Thị B</Title>
+      <Title level={2}>Chào nhân viên {userDefault.fullname || "Bác sĩ"}</Title>
 
       <Row gutter={16}>
         <Col span={16}>

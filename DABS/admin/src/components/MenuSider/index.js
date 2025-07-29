@@ -4,9 +4,7 @@ import {
     BankOutlined,
     MedicineBoxOutlined,
     InboxOutlined,
-    HeatMapOutlined,
-    AndroidOutlined,
-    LineChartOutlined ,
+    LineChartOutlined,
     ExperimentOutlined,
     DashboardOutlined,
     ReadOutlined,
@@ -17,6 +15,11 @@ import {
     TeamOutlined,
     IdcardOutlined,
     CalendarOutlined,
+    UserOutlined,
+    ClockCircleOutlined,
+    EditOutlined,
+    CheckCircleOutlined,
+    UnorderedListOutlined,
     FormOutlined,
 } from "@ant-design/icons";
 
@@ -50,7 +53,7 @@ function MenuSider() {
         {
             key: "hospital-statistic",
             label: <Link to="/admin-hospital/hospital-statistic">Thống kê</Link>,
-            icon: <LineChartOutlined  />,
+            icon: <LineChartOutlined />,
         },
         {
             key: "users",
@@ -75,13 +78,13 @@ function MenuSider() {
         {
             key: "staff-shift-management",
             label: <Link to="/admin-hospital/staff-shift-management">Ca làm nhân viên</Link>,
-            icon: <UsergroupAddOutlined />,
-        },
-        {
-            key: "nurse-shift-management",
-            label: <Link to="/admin-hospital/nurse-shift-management">Ca làm y tá</Link>,
             icon: <ScheduleOutlined />,
         },
+        // {
+        //     key: "nurse-shift-management",
+        //     label: <Link to="/admin-hospital/nurse-shift-management">Ca làm y tá</Link>,
+        //     icon: <ScheduleOutlined />,
+        // },
         {
             key: "department-management",
             label: <Link to="/admin-hospital/departments">Department Management</Link>,
@@ -102,7 +105,11 @@ function MenuSider() {
             label: <Link to="/admin-hospital/leave-request-management">Đơn xin nghỉ phép</Link>,
             icon: <InboxOutlined />,
         },
-
+        {
+            key: "payment-list",
+            label: <Link to="/admin-hospital/payment-list">Thanh toán</Link>,
+            icon: <UnorderedListOutlined />,
+        },
     ];
 
     const doctorItems = [
@@ -134,6 +141,31 @@ function MenuSider() {
             label: <Link to="/nurse">Dashboard</Link>,
             icon: <DashboardOutlined />,
         },
+        {
+            key: "appointment",
+            label: <Link to="/nurse/appointment">Lịch hẹn</Link>,
+            icon: <CalendarOutlined />,
+        },
+        {
+            key: "nurse-profile",
+            label: <Link to="/nurse/nurse-profile">Hồ sơ cá nhân</Link>,
+            icon: <UserOutlined />,
+        },
+        {
+            key: "work-schedule",
+            label: <Link to="/nurse/work-schedule">Lịch làm việc</Link>,
+            icon: <ClockCircleOutlined />,
+        },
+        {
+            key: "adjust-appointment-schedule",
+            label: <Link to="/nurse/adjust-appointment-schedule">Điều chỉnh lịch hẹn</Link>,
+            icon: <EditOutlined />,
+        },
+        {
+            key: "payment-list",
+            label: <Link to="/nurse/payment-list">Xử lý thanh toán</Link>,
+            icon: <UnorderedListOutlined />,
+        },
     ];
 
     const staffItems = [
@@ -142,7 +174,11 @@ function MenuSider() {
             label: <Link to="/staff">Dashboard</Link>,
             icon: <DashboardOutlined />,
         },
-
+        {
+            key: "staff-profile",
+            label: <Link to="/staff/staff-profile">Hồ sơ cá nhân</Link>,
+            icon: <UserOutlined />,
+        },
     ];
     const getMenuItems = (role) => {
         switch (role) {

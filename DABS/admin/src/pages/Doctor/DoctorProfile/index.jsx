@@ -12,16 +12,46 @@ import { useNavigate } from 'react-router-dom';
 import { updateUser } from "../../../services/userService";
 import { setUser, updateUserSlice } from "../../../redux/slices/userSlice";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
+import { getProvinces } from "../../../services/provinceService";
+import { updateDoctorByDoctor } from "../../../services/doctorService";
 
 dayjs.locale("vi");
 const { Text } = Typography;
 
 function DoctorProfile() {
     const userDefault = useSelector((state) => state.user.user || null);
+    console.log("user default is : " + JSON.stringify(userDefault));
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [messageApi, contextHolder] = message.useMessage();
     const messageState = useSelector((state) => state.message);
+    const [provinces, setProvinces] = useState([]);
+    const [wards, setWards] = useState([]);
+    const [selectedProvince, setSelectedProvince] = useState(null);
+    const [form] = Form.useForm();
+    useEffect(() => {
+        getProvinces()
+            .then(data => {
+                console.log("Dữ liệu từ API getProvinces:", data.data);
+                setProvinces(data.data);
+            })
+            .catch(err => {
+                console.error("Error fetching provinces:", err);
+            });
+    }, []);
+
+    useEffect(() => {
+        if (selectedProvince) {
+            const provinceObj = provinces.find(p => p.province === selectedProvince);
+            if (provinceObj && provinceObj.wards) {
+                setWards(provinceObj.wards);
+            } else {
+                setWards([]);
+            }
+        } else {
+            setWards([]);
+        }
+    }, [selectedProvince, provinces]);
 
     useEffect(() => {
         if (messageState) {
@@ -61,7 +91,7 @@ function DoctorProfile() {
             if (formField === 'dob' && value) {
                 mapped[fieldMap[formField]] = value.format ? value.format('YYYY-MM-DD') : value;
             } else if (formField === 'gender' && value !== undefined) {
-                mapped[fieldMap[formField]] = value === "1" || value === 1 || value === true;
+                mapped[fieldMap[formField]] = value === "true";
             } else if (
                 ['district', 'province', 'ward'].includes(formField) &&
                 value !== undefined && value !== null && value !== ""
@@ -88,7 +118,8 @@ function DoctorProfile() {
 
         const mappedData = getMappedData(values, userDefault);
         try {
-            await updateUser(mappedData);
+            console.log("map data in update profile doctor " + JSON.stringify(mappedData));
+            await updateDoctorByDoctor(mappedData);
             dispatch(updateUserSlice(mappedData));
             dispatch(setMessage({ type: 'success', content: 'Cập nhật thành công!' }));
         } catch (error) {
@@ -98,7 +129,7 @@ function DoctorProfile() {
     };
 
     const isInitializing = useSelector((state) => state.user.isInitializing);
-      if (isInitializing) return <div>Loading...</div>;
+    if (isInitializing) return <div>Loading...</div>;
 
     return (
         <>
@@ -143,12 +174,16 @@ function DoctorProfile() {
                         <Form
                             layout="vertical"
                             onFinish={handleFinish}
+                            form={form}
                             initialValues={{
                                 fullname: userDefault?.fullname?.trim() || "Nguyễn Văn A",
                                 phoneNumber: userDefault?.phoneNumber || "0969808505",
                                 email: userDefault?.email || "lapthd2k3@gmail.com",
                                 gender: userDefault?.gender !== undefined ? userDefault.gender.toString() : "true",
                                 dob: userDefault?.dob ? dayjs(userDefault.dob, "YYYY-MM-DD") : null,
+                                province: userDefault?.province || null,
+                                ward: userDefault?.ward || null,
+                                streetAddress: userDefault?.streetAddress || "",
                                 cccd: userDefault?.cccd || "",
                                 function: "Thạc sĩ",
                                 specialty: "Bác sĩ gia đình",
@@ -225,7 +260,60 @@ function DoctorProfile() {
                                     </Form.Item>
                                 </Col>
                             </Row>
+                            <Row gutter={[24, 16]}>
+                                <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
+                                    <Form.Item
+                                        label="Tỉnh/Thành phố"
+                                        name="province"
+                                        rules={[{ required: true, message: "Vui lòng chọn tỉnh/thành phố!" }]}
+                                    >
 
+                                        <Select
+                                            size="large"
+                                            showSearch
+                                            placeholder="Chọn tỉnh/thành phố"
+                                            filterOption={(input, option) =>
+                                                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                            }
+                                            options={provinces.map(p => ({ label: p.province, value: p.province }))}
+                                            onChange={(value) => {
+                                                setSelectedProvince(value);
+                                                form.setFieldsValue({ ward: undefined });
+                                            }}
+                                            allowClear
+                                        />
+                                    </Form.Item>
+                                </Col>
+
+                                <Col xs={24} sm={24} md={24} lg={12} xl={12} xxl={12}>
+                                    <Form.Item
+                                        label="Phường/Xã"
+                                        name="ward"
+                                        rules={[{ required: true, message: "Vui lòng chọn phường/xã!" }]}
+                                    >
+                                        <Select
+                                            showSearch
+                                            size="large"
+                                            placeholder="Chọn phường/xã"
+                                            disabled={!selectedProvince}
+                                            options={wards.map(w => ({ label: w.name, value: w.name }))}
+                                            filterOption={(input, option) =>
+                                                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                            }
+                                            allowClear
+                                        />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col span={24}>
+                                    <Form.Item label="Số nhà, đường" name="streetAddress" rules={[{ required: true, message: "Vui lòng nhập số nhà và tên đường!" }]}>
+                                        <Input
+                                            size="large"
+                                            placeholder="Nhập số nhà, tên đường" />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
                             <Row gutter={[24, 16]}>
                                 <Col xs={24} md={12}>
                                     <Form.Item name="function" label="Hàm vị">
