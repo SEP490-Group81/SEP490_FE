@@ -236,6 +236,7 @@ const StaffShiftManagement = () => {
           end: end.toISOString(),
           extendedProps: {
             type: status.includes("rỗng") ? "shift" : "appointment",
+            department: item.room?.department?.name || "Không rõ",
             room: item.room?.name || "Không rõ",
             status,
             patients,
@@ -357,7 +358,7 @@ const StaffShiftManagement = () => {
           hospitalId: user.hospitals[0]?.id,
           daysOfWeek: [dayjs(values.workDate).day()],
           shifts: shiftsPayload,
-          startDate: values.workDate.format("YYYY-MM-DD"),  // ngày bắt đầu lịch (ngày làm việc)
+          startDate: values.workDate.format("YYYY-MM-DD"),
           endDate: values.workDate.format("YYYY-MM-DD"),
           isAvailable: false,
           reasonOfUnavailability: "",
@@ -863,7 +864,42 @@ const StaffShiftManagement = () => {
             <Modal
               open={modalDetail}
               onCancel={() => setModalDetail(false)}
-              footer={null}
+              footer={[
+                <Button
+                  key="edit"
+                  type="primary"
+                  disabled={isShiftDisabled(selectedEvent)}
+                  onClick={() => {
+                    setEditingShift(selectedEvent.extendedProps);
+                    form.setFieldsValue({
+                      staffId: selectedEvent.extendedProps.staffId,
+                      workDate: dayjs(selectedEvent.start),
+                    });
+                    setModalVisible(true);
+                    setModalDetail(false);
+                  }}
+                  style={{ borderRadius: 8 }}
+
+                >
+                  Sửa
+                </Button>,
+                <Button
+                  key="delete"
+                  danger
+                  disabled={isShiftDisabled(selectedEvent)}
+                  onClick={() => showDeleteConfirm(selectedEvent)}
+                  style={{ borderRadius: 8 }}
+                >
+                  Xoá
+                </Button>,
+                <Button
+                  key="close"
+                  onClick={() => setModalDetail(false)}
+                  style={{ borderRadius: 8 }}
+                >
+                  Đóng
+                </Button>,
+              ]}
               title={
                 selectedEvent && (
                   <div>
@@ -913,39 +949,7 @@ const StaffShiftManagement = () => {
                     style={{ marginBottom: 22 }}
                   />
 
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 16 }}>
-                    <Button
-                      type="primary"
-                      disabled={isShiftDisabled(selectedEvent)}
-                      onClick={() => {
-                        setEditingShift(selectedEvent.extendedProps);
-                        form.setFieldsValue({
-                          staffId: selectedEvent.extendedProps.staffId,
-                          workDate: dayjs(selectedEvent.start),
-                        });
-                        setModalVisible(true);
-                        setModalDetail(false);
-                      }}
-                    >
-                      Sửa
-                    </Button>
-
-                    <Button
-                      danger
-                      disabled={isShiftDisabled(selectedEvent)}
-                      style={{ borderRadius: 8 }}
-                      onClick={() => showDeleteConfirm(selectedEvent)}
-                    >
-                      Xóa
-                    </Button>
-
-                    <Button
-                      onClick={() => setModalDetail(false)}
-                      style={{ borderRadius: 8 }}
-                    >
-                      Đóng
-                    </Button>
-                  </div>
+                
                 </>
               ) : (
                 <div>Không có dữ liệu lịch làm việc.</div>

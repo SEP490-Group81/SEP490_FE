@@ -12,7 +12,6 @@ import "dayjs/locale/vi";
 
 dayjs.locale("vi");
 
-// Legend Component - giải thích màu sắc
 const LegendColor = () => (
   <Row justify="center" gutter={16} style={{ marginBottom: 24 }}>
     <Col>
@@ -116,7 +115,80 @@ const WorkScheduleNurse = () => {
     setModalOpen(true);
   };
 
-  // Custom màu sắc cho event (dựa trên trạng thái)
+  const renderEventContent = (eventInfo) => {
+    const { title, extendedProps } = eventInfo.event;
+    const { status, patients, department, room } = extendedProps;
+    console.log("Event info:", eventInfo);
+    console.log("Extended props:", extendedProps);
+
+    return (
+      <div
+        style={{
+          padding: 8,
+          borderRadius: 6,
+          backgroundColor: "#f9f9f9",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+          lineHeight: 1.3,
+        }}
+      >
+        {(department) && (
+          <div
+            style={{
+              fontWeight: "600",
+              color: "#2c3e50",
+              marginBottom: 4,
+            }}
+          >
+            {department}
+          </div>
+        )}
+        {(room) && (
+          <div
+            style={{
+              fontWeight: "600",
+              color: "#2c3e50",
+              marginBottom: 4,
+            }}
+          >
+            {room}
+          </div>
+        )}
+        <div
+          style={{
+            fontWeight: "700",
+            fontSize: 14,
+            color: "#34495e",
+            marginBottom: 6,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+          title={title}
+        >
+          {title.split(" - ")[0]}
+        </div>
+
+        <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "6px 0" }} />
+
+        <div
+          style={{
+            fontSize: 12,
+            color: status === "Completed" ? "green" : "#e67e22",
+            fontWeight: "600",
+            marginBottom: 4,
+          }}
+        >
+          {status}
+        </div>
+
+        <div style={{ fontSize: 12, color: "#555" }}>
+          👥 <strong>{patients.length}</strong> bệnh nhân
+        </div>
+      </div>
+    );
+  };
+
   const eventColor = (info) => {
     const { status } = info.event.extendedProps;
 
@@ -194,6 +266,7 @@ const WorkScheduleNurse = () => {
           locale={viLocale}
           events={events}
           height={600}
+          eventContent={renderEventContent}
           eventClick={handleEventClick}
           eventDidMount={eventColor}
           nowIndicator={true}

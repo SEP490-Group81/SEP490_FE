@@ -569,7 +569,6 @@ const NurseShiftManagement = () => {
             </Col>
           </Row>
 
-          {/* Modal: Add / Edit Shift */}
           <Modal
             open={modalVisible}
             onCancel={() => setModalVisible(false)}
@@ -684,7 +683,6 @@ const NurseShiftManagement = () => {
             </Form>
           </Modal>
 
-          {/* Modal: Chi tiết ca */}
           <Modal
             open={modalDetail}
             onCancel={() => setModalDetail(false)}

@@ -119,8 +119,6 @@ const shiftTimesMap = {
 const renderEventContent = (eventInfo) => {
   const { title, extendedProps } = eventInfo.event;
   const { status, patients, department, room } = extendedProps;
-  console.log("Event info:", eventInfo);
-  console.log("Extended props:", extendedProps);
 
   return (
     <div
@@ -131,44 +129,66 @@ const renderEventContent = (eventInfo) => {
         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         lineHeight: 1.3,
+        maxWidth: "100%",    
+        wordBreak: "break-word", 
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
       }}
     >
-      {(department) && (
+      {department && (
         <div
           style={{
             fontWeight: "600",
             color: "#2c3e50",
             marginBottom: 4,
+            whiteSpace: "normal",
+         
+            display: "-webkit-box",
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {department}
         </div>
       )}
-      {(room) && (
+      {room && (
         <div
           style={{
             fontWeight: "600",
             color: "#2c3e50",
             marginBottom: 4,
+            whiteSpace: "normal",
+            display: "-webkit-box",
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {room}
         </div>
       )}
-      <div
+      {/* <div
         style={{
           fontWeight: "700",
           fontSize: 14,
           color: "#34495e",
           marginBottom: 6,
-          whiteSpace: "nowrap",
+          whiteSpace: "normal",  
           overflow: "hidden",
           textOverflow: "ellipsis",
+          display: "-webkit-box",
+          WebkitLineClamp: 2,     
+          WebkitBoxOrient: "vertical",
         }}
         title={title}
       >
         {title.split(" - ")[0]}
-      </div>
+      </div> */}
 
       <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "6px 0" }} />
 
@@ -178,17 +198,21 @@ const renderEventContent = (eventInfo) => {
           color: status === "Completed" ? "green" : "#e67e22",
           fontWeight: "600",
           marginBottom: 4,
+          whiteSpace: "normal",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}
       >
         {status}
       </div>
 
-      <div style={{ fontSize: 12, color: "#555" }}>
+      <div style={{ fontSize: 12, color: "#555", whiteSpace: "normal" }}>
         👥 <strong>{patients.length}</strong> bệnh nhân
       </div>
     </div>
   );
 };
+
 
 const AdminDoctorShiftManagement = () => {
   const [shifts, setShifts] = useState([]);
@@ -251,7 +275,7 @@ const AdminDoctorShiftManagement = () => {
 
       try {
         const staffList = await getStaffNurseList(user.hospitals[0].id);
-
+        console.log("Staff nurse list: ", JSON.stringify(staffList));
         const nurseList = (staffList || []).filter((s) => s.role?.name === 'Nurse');
         setNurses(nurseList);
         console.log("Nurse list: ", JSON.stringify(nurses));
@@ -376,6 +400,7 @@ const AdminDoctorShiftManagement = () => {
           end: end.toISOString(),
           extendedProps: {
             type: status.includes("rỗng") ? "shift" : "appointment",
+            department: item.room?.department?.name || "Không rõ",
             room: item.room?.name || "Không rõ",
             status,
             patients,
@@ -418,7 +443,7 @@ const AdminDoctorShiftManagement = () => {
       const hospitalAffiliationId = doctorDetail?.hospitalAffiliations?.[0]?.id || 0;
       const doctorId = doctorDetail?.id || 0;
 
-      const { roomId, shift, weekday, workDate } = values;
+      const { roomId, shift, weekday, workDate, nurseId } = values;
 
       if (!shift || shift.length === 0) {
         dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ca làm!' }));
@@ -437,7 +462,7 @@ const AdminDoctorShiftManagement = () => {
         const payload = {
           id: scheduleId,
           hospitalAffiliationId,
-          staffId: doctorId,
+          staffId: nurseId,
           roomId,
           daysOfWeek,
           startTime: shiftTimesMap[shiftKey]?.startTime || "00:00:00",
@@ -736,7 +761,7 @@ const AdminDoctorShiftManagement = () => {
                     flexDirection: "column",
                   }}
                 >
-                  <Row justify="end" style={{ marginBottom: 8 }}>
+                  {/* <Row justify="end" style={{ marginBottom: 8 }}>
                     <Button
                       type="primary"
                       icon={<PlusOutlined />}
@@ -751,7 +776,7 @@ const AdminDoctorShiftManagement = () => {
                     >
                       Tạo sự kiện
                     </Button>
-                  </Row>
+                  </Row> */}
 
                   <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -842,7 +867,7 @@ const AdminDoctorShiftManagement = () => {
                         <Select placeholder="Chọn Y tá" style={{ borderRadius: 8 }}>
                           {nurses.map((nurse) => (
                             <Option key={nurse?.id} value={nurse?.id}>
-                              {nurse?.fullname}
+                              {nurse?.fullname} - {nurse?.id} 
                             </Option>
                           ))}
                         </Select>
@@ -909,7 +934,6 @@ const AdminDoctorShiftManagement = () => {
                     setModalDetail(false);
                   }}
                   style={{ borderRadius: 8 }}
-                  
                 >
                   Sửa
                 </Button>,

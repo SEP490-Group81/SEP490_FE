@@ -179,6 +179,11 @@ function MenuSider() {
             label: <Link to="/staff/staff-profile">Hồ sơ cá nhân</Link>,
             icon: <UserOutlined />,
         },
+        {
+            key: "work-schedule",
+            label: <Link to="/staff/work-schedule">Lịch làm việc</Link>,
+            icon: <ClockCircleOutlined />,
+        },
     ];
     const getMenuItems = (role) => {
         switch (role) {
