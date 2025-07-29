@@ -81,6 +81,26 @@ function AppointmentReviewPage() {
     };
 
     const handleConfirmBooking = async () => {
+        const requiredFields = [
+            user.fullname,
+            user.dob,
+            user.phoneNumber,
+            user.gender !== null && user.gender !== undefined,
+            user.cccd,
+            user.province,
+            user.ward,
+            user.streetAddress
+        ];
+
+        const isProfileComplete = requiredFields.every(field => !!field);
+
+        if (!isProfileComplete) {
+            dispatch(setMessage({
+                type: 'error',
+                content: 'Vui lòng hoàn thiện hồ sơ trước khi đặt khám.'
+            }));
+            return;
+        }
         try {
             const payload = {
                 hospitalId: Number(stepData.hospitalId),
@@ -94,10 +114,10 @@ function AppointmentReviewPage() {
             };
             console.log("pay load in booking confirm : " + JSON.stringify(payload));
             await createBookAppointment(payload);
-       
+
             dispatch(setMessage({ type: 'success', content: 'Đặt khám thành công! ' }));
         } catch (error) {
-             dispatch(setMessage({ type: 'error', content: 'Đặt khám thất bại. Vui lòng thử lại! ' }));
+            dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn lịch khác! Bạn đã đặt lịch này rồi hoặc lịch đã quá thời gian để đặt. ' }));
         }
     };
     return (

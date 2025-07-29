@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Form, Input, DatePicker, Select, Button, Spin, notification, Row, Col } from 'antd';
 import { FileTextOutlined } from '@ant-design/icons';
+import { createRequest } from '../../../services/requestService';
 
 const { Option } = Select;
 
@@ -23,16 +24,39 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
       placement: 'topRight',
     });
   };
-
+  const mapReasonToRequestType = (reason) => {
+    switch (reason) {
+      case 'Nghỉ phép':
+        return 1; 
+      case 'Nghỉ ốm':
+        return 2; 
+      case 'Đi công tác':
+        return 3;
+      case 'Khác':
+        return 4; 
+      default:
+        return 4;
+    }
+  };
   const handleSubmit = async (values) => {
     setSpinning(true);
     try {
-      // Giả sử có hàm gửi dữ liệu lên server, thay bằng hàm thực tế của bạn
-      // await sendLeaveRequest(values);
+      const payload = {
+        type: mapReasonToRequestType(values.reason), 
+        startDate: values.startDate.format(),
+        endDate: values.endDate.format(),
+        reason: values.reason,
+        status: 1,
+       
+      };
+
+      const response = await createRequest(payload);
+
       setSpinning(false);
       form.resetFields();
       success();
-      onSuccess();
+      onSuccess(response); 
+
     } catch (err) {
       setSpinning(false);
       error();
@@ -71,24 +95,10 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
                 <Input placeholder="Nhập họ và tên bác sĩ" />
               </Form.Item>
             </Col>
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="position"
-                label="Chức vụ"
-                rules={[{ required: true, message: 'Vui lòng nhập chức vụ' }]}
-              >
-                <Input placeholder="Nhập chức vụ" />
-              </Form.Item>
-            </Col>
+
           </Row>
 
-          <Form.Item
-            name="department"
-            label="Phòng ban công tác"
-            rules={[{ required: true, message: 'Vui lòng nhập phòng ban' }]}
-          >
-            <Input placeholder="Nhập phòng ban công tác" />
-          </Form.Item>
+
 
           <Row gutter={16}>
             <Col xs={24} md={12}>
@@ -122,14 +132,6 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
               <Option value="Đi công tác">Đi công tác</Option>
               <Option value="Khác">Khác</Option>
             </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="handover"
-            label="Người bàn giao công việc"
-            rules={[{ required: true, message: 'Vui lòng nhập người bàn giao công việc' }]}
-          >
-            <Input placeholder="Nhập tên người bàn giao công việc" />
           </Form.Item>
 
           <Form.Item

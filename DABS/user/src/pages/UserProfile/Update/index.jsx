@@ -67,8 +67,7 @@ function UpadteProfile() {
           ? value.format('YYYY-MM-DD')
           : value;
       } else if (formField === 'gender' && value !== undefined) {
-        mapped[fieldMap[formField]] =
-          value === "1" || value === 1 || value === true;
+        mapped[fieldMap[formField]] = value === "true";
       } else if (
         ['district', 'province', 'ward'].includes(formField) &&
         value !== undefined &&
@@ -207,7 +206,9 @@ function UpadteProfile() {
             <ConfigProvider locale={viVN}>
               <Form style={{ width: "100%", maxWidth: 800, margin: "0 auto" }}
                 form={form}
-                name="createUserProfile" onFinish={handleFinish} layout="vertical"
+                name="createUserProfile" 
+                onFinish={handleFinish} 
+                layout="vertical"
                 initialValues={{
                   fullname: userDefault?.fullname?.trim() || "",
                   dob: userDefault?.dob ? dayjs(userDefault.dob, "YYYY-MM-DD") : null,
@@ -215,7 +216,7 @@ function UpadteProfile() {
                   email: userDefault?.email || "",
                   gender: userDefault?.gender !== undefined ? userDefault.gender.toString() : "",
                   job: userDefault?.job || "",
-                  province: userDefault?.province || null, 
+                  province: userDefault?.province || null,
                   ward: userDefault?.ward || null,
                   streetAddress: userDefault?.streetAddress || "",
                   cccd: userDefault?.cccd || "",

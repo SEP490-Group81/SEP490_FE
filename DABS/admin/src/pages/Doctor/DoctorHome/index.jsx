@@ -47,7 +47,8 @@ const DoctorHome = () => {
 
   useEffect(() => {
     const fetchApi = async () => {
-      const result = await getDoctorByUserId(user.id);
+      if (!user?.id) return;
+      const result = await getDoctorByUserId(user?.id);
       if (result) {
         setDoctorDetail(result);
       } else {
@@ -55,7 +56,7 @@ const DoctorHome = () => {
       }
     };
     fetchApi();
-  }, [user.id]);
+  }, [user?.id]);
 
   const todaySchedules = doctorDetail?.schedules?.filter((item) =>
     isToday(new Date(item.date))

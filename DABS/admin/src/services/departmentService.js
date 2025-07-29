@@ -4,7 +4,7 @@ const sampleDepartments = []
 
 export const getAllDepartments = async (hospitalId) => {
   try {
-    const result = await getAuth(`/department`);
+    const result = await getAuth(`/departments`);
     console.log(`Fetched services for department :`, result);
     return result.result;
   } catch (error) {
@@ -133,5 +133,17 @@ export const getDepartmentStatistics = async () => {
         totalBeds: 0
       };
     }
+  }
+};
+
+
+export const getHospitalDepartments = async (hospitalId) => {
+  try {
+    const result = await getAuth(`/departments?hospitalId=${hospitalId}`);
+    console.log(`Fetched departments for hospital ${hospitalId}:`, result);
+    return result.result;
+  } catch (error) {
+    console.error(`Error fetching departments for hospital ID ${hospitalId}:`, error.message);
+    throw error;
   }
 };

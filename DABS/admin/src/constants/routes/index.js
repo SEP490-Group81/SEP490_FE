@@ -34,9 +34,8 @@ import NurseProfile from "../../pages/Nurse/NurseProfile";
 import WorkScheduleNurse from "../../pages/Nurse/WorkSchedule";
 import StaffProfile from "../../pages/HospitalStaff/StaffProfile";
 import AdjustBookingSchedule from "../../pages/Nurse/AdjustAppointmentSchedule";
-import StaffPaymentConfirmation from "../../pages/HospitalStaff/StaffPaymentAdjust/ConfirmPayment";
-import StaffUnpaidBookingList from "../../pages/HospitalStaff/StaffPaymentAdjust/UnpaidBookingList";
-
+import NursePaymentConfirmation from "../../pages/Nurse/PaymentAdjust/ConfirmPayment";
+import NurseUnpaidBookingList from "../../pages/Nurse/PaymentAdjust/UnpaidBookingList";
 
 export const routes = [
   {
@@ -168,15 +167,7 @@ export const routes = [
       {
         path: "staff-profile",
         element: <StaffProfile />
-      },
-      {
-        path: "payment-confirm",
-        element: <StaffPaymentConfirmation />
-      },
-      {
-        path: "payment-list",
-        element: <StaffUnpaidBookingList />
-      },
+      }
     ]
   },
   {
@@ -202,6 +193,14 @@ export const routes = [
       {
         path: "adjust-appointment-schedule",
         element: <AdjustBookingSchedule />
+      },
+      {
+        path: "payment-confirm/:id",
+        element: <NursePaymentConfirmation />
+      },
+      {
+        path: "payment-list",
+        element: <NurseUnpaidBookingList />
       },
     ]
   },

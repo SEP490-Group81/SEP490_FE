@@ -32,34 +32,34 @@ function Login() {
         }
     }, [messageState, dispatch]);
 
-    useEffect(() => {
-        if (user && user.role?.name) {
-            const role = user.role.name;
+    // useEffect(() => {
+    //     if (user && user.role?.name) {
+    //         const role = user.role.name;
 
-            const isInternal =
-                role === NURSE ||
-                role === DOCTOR ||
-                role === HOSPITALSTAFF ||
-                role === HOSPITALADMIN ||
-                role === SYSTEMADMIN;
+    //         const isInternal =
+    //             role === NURSE ||
+    //             role === DOCTOR ||
+    //             role === HOSPITALSTAFF ||
+    //             role === HOSPITALADMIN ||
+    //             role === SYSTEMADMIN;
 
-            if (isInternal) {
-                if (role === NURSE) {
-                    navigate('/nurse');
-                } else if (role === DOCTOR) {
-                    navigate('/doctor');
-                } else if (role === HOSPITALSTAFF) {
-                    navigate('/staff');
-                } else if (role === HOSPITALADMIN) {
-                    navigate('/admin-hospital');
-                } else if (role === SYSTEMADMIN) {
-                    navigate('/admin-system');
-                }
-            } else {
-                dispatch(setMessage({ type: 'error', content: 'Vui lòng dùng tài khoản nội bộ!' }));
-            }
-        }
-    }, [user, navigate, dispatch]);
+    //         if (isInternal) {
+    //             if (role === NURSE) {
+    //                 navigate('/nurse');
+    //             } else if (role === DOCTOR) {
+    //                 navigate('/doctor');
+    //             } else if (role === HOSPITALSTAFF) {
+    //                 navigate('/staff');
+    //             } else if (role === HOSPITALADMIN) {
+    //                 navigate('/admin-hospital');
+    //             } else if (role === SYSTEMADMIN) {
+    //                 navigate('/admin-system');
+    //             }
+    //         } else {
+    //             dispatch(setMessage({ type: 'error', content: 'Vui lòng dùng tài khoản nội bộ!' }));
+    //         }
+    //     }
+    // }, [user, navigate, dispatch]);
 
     const onFinish = async (values) => {
         try {
