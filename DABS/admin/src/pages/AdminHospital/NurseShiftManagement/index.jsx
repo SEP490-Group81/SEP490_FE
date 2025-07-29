@@ -40,8 +40,6 @@ const weekdayOptions = [
   { label: "Thứ 4", value: 3 },
   { label: "Thứ 5", value: 4 },
   { label: "Thứ 6", value: 5 },
-  { label: "Thứ 7", value: 6 },
-  { label: "Chủ nhật", value: 0 },
 ];
 
 dayjs.extend(customParseFormat);
@@ -571,7 +569,6 @@ const NurseShiftManagement = () => {
             </Col>
           </Row>
 
-          {/* Modal: Add / Edit Shift */}
           <Modal
             open={modalVisible}
             onCancel={() => setModalVisible(false)}
@@ -686,7 +683,6 @@ const NurseShiftManagement = () => {
             </Form>
           </Modal>
 
-          {/* Modal: Chi tiết ca */}
           <Modal
             open={modalDetail}
             onCancel={() => setModalDetail(false)}

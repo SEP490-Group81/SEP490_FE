@@ -12,18 +12,24 @@ import { useSelector } from "react-redux";
 import { getDoctorByUserId } from "../../../services/doctorService";
 import { getScheduleByDoctorId } from "../../../services/scheduleService";
 import { useRef } from "react";
-
+import {
+  PlusOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+  PauseCircleOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 dayjs.locale("vi");
 const LegendColor = () => (
   <div style={{ marginBottom: 24, display: "flex", justifyContent: "center", gap: 8 }}>
     <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
       {[
-        { color: "#4caf50", border: "#388e3c", label: "Đang khám" },
-        { color: "#ffd54f", border: "#ffa000", label: "Chưa bắt đầu" },
-        { color: "#e0e0e0", border: "#9e9e9e", label: "Đã khám xong" },
-        { color: "#ffb3b3", border: "#ff7875", label: "Ca đặt lịch (booking)" },
+        { icon: <CheckCircleOutlined />, color: "#4caf50", border: "#388e3c", label: "Đang khám" },
+        { icon: <PauseCircleOutlined />, color: "#ffd54f", border: "#ffa000", label: "Chưa bắt đầu" },
+        { icon: <CheckCircleOutlined />, color: "#e0e0e0", border: "#9e9e9e", label: "Đã khám xong" },
+        { icon: <CalendarOutlined />, color: "#ffb3b3", border: "#ff7875", label: "Ca đặt lịch (booking)" },
         { color: "#64b5f6", border: "#1976d2", label: "Ca làm việc khác" },
-      ].map(({ color, border, label }) => (
+      ].map(({ icon, color, border, label }) => (
         <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <div style={{
             width: 16,
@@ -32,7 +38,9 @@ const LegendColor = () => (
             border: `1px solid ${border}`,
             borderRadius: 4,
           }} />
-          <span>{label}</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {icon} {label}
+          </span>
         </div>
       ))}
     </div>
@@ -40,16 +48,78 @@ const LegendColor = () => (
 );
 const renderEventContent = (eventInfo) => {
   const { title, extendedProps } = eventInfo.event;
-  const { status, patients } = extendedProps;
+  const { status, patients, department, room } = extendedProps;
+  console.log("Event info:", eventInfo);
+  console.log("Extended props:", extendedProps);
 
   return (
-    <div style={{ padding: 2 }}>
-      <div style={{ fontWeight: "bold" }}>{title.split(" - ")[0]}</div>
-      <div style={{ fontSize: 12, color: "#333" }}>{status}</div>
-      <div style={{ fontSize: 12 }}>👥 {patients.length} bệnh nhân</div>
+    <div
+      style={{
+        padding: 8,
+        borderRadius: 6,
+        backgroundColor: "#f9f9f9",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        lineHeight: 1.3,
+      }}
+    >
+      {(department) && (
+        <div
+          style={{
+            fontWeight: "600",
+            color: "#2c3e50",
+            marginBottom: 4,
+          }}
+        >
+          {department}
+        </div>
+      )}
+    {(room) && (
+        <div
+          style={{
+            fontWeight: "600",
+            color: "#2c3e50",
+            marginBottom: 4,
+          }}
+        >
+          {room}
+        </div>
+      )}
+      <div
+        style={{
+          fontWeight: "700",
+          fontSize: 14,
+          color: "#34495e",
+          marginBottom: 6,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+        title={title}
+      >
+        {title.split(" - ")[0]}
+      </div>
+
+      <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "6px 0" }} />
+
+      <div
+        style={{
+          fontSize: 12,
+          color: status === "Completed" ? "green" : "#e67e22",
+          fontWeight: "600",
+          marginBottom: 4,
+        }}
+      >
+        {status}
+      </div>
+
+      <div style={{ fontSize: 12, color: "#555" }}>
+        👥 <strong>{patients.length}</strong> bệnh nhân
+      </div>
     </div>
   );
 };
+
 const WorkSchedule = () => {
   const [events, setEvents] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
@@ -67,7 +137,7 @@ const WorkSchedule = () => {
 
   useEffect(() => {
     const fetchDoctor = async () => {
-      if(!user.id) return;
+      if (!user.id) return;
       const result = await getDoctorByUserId(user.id);
       if (result) {
         console.log("result doctor detail : " + result);
@@ -77,7 +147,7 @@ const WorkSchedule = () => {
       }
     };
     fetchDoctor();
-  }, [user.id]);
+  }, [user?.id]);
 
   const handleDatesSet = async (arg) => {
     if (!doctorDetail) return;
@@ -87,7 +157,7 @@ const WorkSchedule = () => {
     console.log("from schedule : " + from + " to Schedule : " + to);
 
     try {
-      const result = await getScheduleByDoctorId(doctorDetail.id, from, to);
+      const result = await getScheduleByDoctorId(doctorDetail?.id, from, to);
       console.log("result doctor schedule: " + JSON.stringify(result));
       const now = dayjs();
 
@@ -137,7 +207,7 @@ const WorkSchedule = () => {
         return {
           id: item.id,
           title: item.timeShift === 1 ? "Ca sáng" : "Ca chiều",
-          
+
           start: start.toISOString(),
           end: end.toISOString(),
           extendedProps: {
@@ -158,22 +228,8 @@ const WorkSchedule = () => {
 
 
   const handleEventClick = ({ event }) => {
-    // const clonedEvent = {
-    //   ...event,
-    //   extendedProps: {
-    //     ...event.extendedProps,
-    //     patients: Array.from({ length: 30 }, (_, i) => ({
-    //       id: i + 1,
-    //       name: `Bệnh nhân ${i + 1}`,
-    //       age: 25 + (i % 10),
-    //       gender: i % 2 === 0 ? "Nam" : "Nữ",
-    //       service: "Khám tổng quát",
-    //       note: `Ghi chú ${i + 1}`,
-    //     })),
-    //   },
-    // };
-
     setSelectedEvent(event);
+    console.log("Selected event:", selectedEvent);
     setModalOpen(true);
   };
 
@@ -250,7 +306,6 @@ const WorkSchedule = () => {
       };
     }
 
-    // fallback
     return {
       backgroundColor: "#64b5f6",
       color: "black",
@@ -308,7 +363,7 @@ const WorkSchedule = () => {
           }}
           allDaySlot={false}
           slotMinTime="06:00:00"
-          slotMaxTime="20:00:00"
+          slotMaxTime="18:00:00"
         />
 
         <Modal

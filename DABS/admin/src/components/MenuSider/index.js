@@ -80,13 +80,13 @@ function MenuSider() {
         {
             key: "staff-shift-management",
             label: <Link to="/admin-hospital/staff-shift-management">Ca làm nhân viên</Link>,
-            icon: <UsergroupAddOutlined />,
-        },
-        {
-            key: "nurse-shift-management",
-            label: <Link to="/admin-hospital/nurse-shift-management">Ca làm y tá</Link>,
             icon: <ScheduleOutlined />,
         },
+        // {
+        //     key: "nurse-shift-management",
+        //     label: <Link to="/admin-hospital/nurse-shift-management">Ca làm y tá</Link>,
+        //     icon: <ScheduleOutlined />,
+        // },
         {
             key: "department-management",
             label: <Link to="/admin-hospital/departments">Department Management</Link>,
@@ -103,7 +103,11 @@ function MenuSider() {
             label: <Link to="/admin-hospital/leave-request-management">Đơn xin nghỉ phép</Link>,
             icon: <InboxOutlined />,
         },
-
+        {
+            key: "payment-list",
+            label: <Link to="/admin-hospital/payment-list">Thanh toán</Link>,
+            icon: <UnorderedListOutlined />,
+        },
     ];
 
     const doctorItems = [
@@ -157,7 +161,7 @@ function MenuSider() {
         },
         {
             key: "payment-list",
-            label: <Link to="/nurse/payment-list">Danh sách chưa thanh toán</Link>,
+            label: <Link to="/nurse/payment-list">Xử lý thanh toán</Link>,
             icon: <UnorderedListOutlined />,
         },
     ];
@@ -168,7 +172,16 @@ function MenuSider() {
             label: <Link to="/staff">Dashboard</Link>,
             icon: <DashboardOutlined />,
         },
-
+        {
+            key: "staff-profile",
+            label: <Link to="/staff/staff-profile">Hồ sơ cá nhân</Link>,
+            icon: <UserOutlined />,
+        },
+        {
+            key: "work-schedule",
+            label: <Link to="/staff/work-schedule">Lịch làm việc</Link>,
+            icon: <ClockCircleOutlined />,
+        },
     ];
     const getMenuItems = (role) => {
         switch (role) {

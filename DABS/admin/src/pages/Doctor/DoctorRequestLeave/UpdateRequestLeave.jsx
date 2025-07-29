@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, DatePicker, Select, Button, Spin, notification, Row, Col } from 'antd';
 import { FileTextOutlined } from '@ant-design/icons';
 import moment from 'moment';
+import { updateRequest } from '../../../services/requestService';
 
 const { Option } = Select;
 
@@ -34,14 +35,39 @@ const UpdateRequestLeave = ({ visible, onCancel, onSuccess, initialValues }) => 
       placement: 'topRight',
     });
   };
-
+  const mapReasonToRequestType = (reason) => {
+    switch (reason) {
+      case 'Nghỉ phép':
+        return 1; 
+      case 'Nghỉ ốm':
+        return 2; 
+      case 'Đi công tác':
+        return 3; 
+      case 'Khác':
+        return 4;
+      default:
+        return 4;
+    }
+  };
   const handleSubmit = async (values) => {
     setSpinning(true);
     try {
+      const payload = {
+        requestId: initialValues.id, 
+        type: mapReasonToRequestType(values.reason),
+        startDate: values.startDate.format(),
+        endDate: values.endDate.format(),
+        reason: values.reason,
+        status: initialValues.status || 1,  
+      };
+
+      await updateRequest(payload);
+
       setSpinning(false);
       success();
       onSuccess({ ...initialValues, ...values, startDate: values.startDate.format('YYYY-MM-DD'), endDate: values.endDate.format('YYYY-MM-DD') });
       form.resetFields();
+
     } catch (err) {
       setSpinning(false);
       error();
@@ -79,24 +105,8 @@ const UpdateRequestLeave = ({ visible, onCancel, onSuccess, initialValues }) => 
                 <Input placeholder="Nhập họ và tên bác sĩ" />
               </Form.Item>
             </Col>
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="position"
-                label="Chức vụ"
-                rules={[{ required: true, message: 'Vui lòng nhập chức vụ' }]}
-              >
-                <Input placeholder="Nhập chức vụ" />
-              </Form.Item>
-            </Col>
-          </Row>
 
-          <Form.Item
-            name="department"
-            label="Phòng ban công tác"
-            rules={[{ required: true, message: 'Vui lòng nhập phòng ban' }]}
-          >
-            <Input placeholder="Nhập phòng ban công tác" />
-          </Form.Item>
+          </Row>
 
           <Row gutter={16}>
             <Col xs={24} md={12}>
@@ -130,14 +140,6 @@ const UpdateRequestLeave = ({ visible, onCancel, onSuccess, initialValues }) => 
               <Option value="Đi công tác">Đi công tác</Option>
               <Option value="Khác">Khác</Option>
             </Select>
-          </Form.Item>
-
-          <Form.Item
-            name="handover"
-            label="Người bàn giao công việc"
-            rules={[{ required: true, message: 'Vui lòng nhập người bàn giao công việc' }]}
-          >
-            <Input placeholder="Nhập tên người bàn giao công việc" />
           </Form.Item>
 
           <Form.Item

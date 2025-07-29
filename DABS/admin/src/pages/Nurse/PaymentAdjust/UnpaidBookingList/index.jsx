@@ -11,12 +11,11 @@ import {
   Tabs,
   ConfigProvider,
   Typography,
-  Space
 } from 'antd';
 import { SearchOutlined, CreditCardOutlined, EyeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import viVN from 'antd/es/locale/vi_VN';
-import './styles.scss';
+import { getPayments } from '../../../../services/paymentService';
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -26,41 +25,66 @@ const NurseUnpaidBookingList = () => {
 
   const [searchText, setSearchText] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [bookingList, setBookingList] = useState([
-    {
-      id: 'BK-001',
-      patientName: 'Nguyễn Văn A',
-      phoneNumber: '0909123456',
-      serviceName: 'Khám nội tổng quát',
-      appointmentTime: '16/07/2025 14:00',
-      paymentMethod: 'offline',
-      paymentStatus: 'UNPAID'
-    },
-    {
-      id: 'BK-002',
-      patientName: 'Trần Thị B',
-      phoneNumber: '0911222333',
-      serviceName: 'Khám da liễu',
-      appointmentTime: '17/07/2025 09:00',
-      paymentMethod: 'offline',
-      paymentStatus: 'UNPAID'
-    },
-    {
-      id: 'BK-003',
-      patientName: 'Phạm Văn C',
-      phoneNumber: '0922333444',
-      serviceName: 'Khám tim mạch',
-      appointmentTime: '18/07/2025 10:30',
-      paymentMethod: 'online',
-      paymentStatus: 'PAID'
-    }
-  ]);
+  const [loading, setLoading] = useState(false);
+  const [bookingList, setBookingList] = useState([]);
+
+    const statusMap = {
+    1: { text: 'Đang chờ', color: 'gold' },
+    2: { text: 'Hoàn thành', color: 'green' },
+    3: { text: 'Lỗi', color: 'red' },
+    4: { text: 'Đã hoàn tiền', color: 'purple' },
+    5: { text: 'Đã huỷ', color: 'grey' },
+  };
+
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Ho_Chi_Minh',
+    });
+  };
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      setLoading(true);
+      try {
+        const response = await getPayments(105);
+        const data = response?.result || [];
+        const mapped = data.map(item => ({
+          id: String(item.id),
+          patientName: item.user?.fullname || '',
+          phoneNumber: item.user?.phoneNumber || '',
+          serviceName: item.serviceName,
+          doctorName: item.doctorName,
+          amount: item.amount,
+          appointmentTime: formatDateTime(item.appointmentTime),
+          createdOn: formatDateTime(item.createdOn),
+          paymentMethod: item.method === 1 ? 'offline' : item.method === 2 ? 'online' : 'unknown',
+          status: item.status,
+          insuranceClaimInfo: item.insuranceClaimInfo,
+        }));
+        setBookingList(mapped);
+      } catch (error) {
+        console.error('Failed to load payments:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPayments();
+  }, []);
 
   const filteredBookings = useMemo(() => {
     return bookingList.filter(
       (item) =>
         item.paymentMethod === 'offline' &&
-        (activeTab === 'all' || item.paymentStatus === activeTab) &&
+        (activeTab === 'all' || String(item.status) === activeTab) &&
         (item.patientName.toLowerCase().includes(searchText.toLowerCase()) ||
           item.phoneNumber.includes(searchText) ||
           item.id.toLowerCase().includes(searchText.toLowerCase()))
@@ -68,49 +92,34 @@ const NurseUnpaidBookingList = () => {
   }, [bookingList, searchText, activeTab]);
 
   const statusCounts = useMemo(() => {
-    const unpaid = bookingList.filter(
-      (b) => b.paymentStatus === 'UNPAID' && b.paymentMethod === 'offline'
-    ).length;
-    const paid = bookingList.filter(
-      (b) => b.paymentStatus === 'PAID' && b.paymentMethod === 'offline'
-    ).length;
-    return { all: unpaid + paid, unpaid, paid };
+    const counts = { all: 0 };
+    Object.keys(statusMap).forEach((key) => (counts[key] = 0));
+
+    bookingList.forEach((item) => {
+      if (item.paymentMethod !== 'offline') return;
+
+      counts.all += 1;
+      if (counts[item.status]) {
+        counts[item.status] += 1;
+      }
+    });
+
+    return counts;
   }, [bookingList]);
 
   const columns = [
-    {
-      title: 'Mã đặt khám',
-      dataIndex: 'id',
-      key: 'id',
-    },
-    {
-      title: 'Bệnh nhân',
-      dataIndex: 'patientName',
-      key: 'patientName'
-    },
-    {
-      title: 'SĐT',
-      dataIndex: 'phoneNumber',
-      key: 'phoneNumber'
-    },
-    {
-      title: 'Dịch vụ',
-      dataIndex: 'serviceName',
-      key: 'serviceName'
-    },
-    {
-      title: 'Thời gian',
-      dataIndex: 'appointmentTime',
-      key: 'appointmentTime'
-    },
+    { title: 'Mã đặt khám', dataIndex: 'id', key: 'id' },
+    { title: 'Bệnh nhân', dataIndex: 'patientName', key: 'patientName' },
+    { title: 'SĐT', dataIndex: 'phoneNumber', key: 'phoneNumber' },
+    { title: 'Dịch vụ', dataIndex: 'serviceName', key: 'serviceName' },
+    { title: 'Thời gian khám', dataIndex: 'appointmentTime', key: 'appointmentTime' },
     {
       title: 'Trạng thái',
-      key: 'paymentStatus',
-      render: (_, record) => (
-        <Tag color={record.paymentStatus === 'PAID' ? 'green' : 'volcano'}>
-          {record.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}
-        </Tag>
-      )
+      key: 'status',
+      render: (_, record) => {
+        const st = statusMap[record.status];
+        return st ? <Tag color={st.color}>{st.text}</Tag> : <Tag color="default">Không rõ</Tag>;
+      },
     },
     {
       title: 'Hành động',
@@ -119,12 +128,13 @@ const NurseUnpaidBookingList = () => {
         <Button
           type="primary"
           icon={<EyeOutlined />}
-          onClick={() => navigate(`/staff/payment-confirm/${record.id}`)}
+          onClick={() => navigate(`/nurse/payment-confirm/${record.id}`)}
         >
           Xác nhận
         </Button>
-      )
+      ),
     }
+
   ];
 
   return (
@@ -158,24 +168,19 @@ const NurseUnpaidBookingList = () => {
               </Row>
 
               <Tabs activeKey={activeTab} onChange={setActiveTab}>
-                <TabPane
-                  key="all"
-                  tab={<span>Tất cả <Badge count={statusCounts.all} /></span>}
-                />
-                <TabPane
-                  key="UNPAID"
-                  tab={<span>Chưa thanh toán <Badge count={statusCounts.unpaid} style={{ backgroundColor: '#fa541c' }} /></span>}
-                />
-                <TabPane
-                  key="PAID"
-                  tab={<span>Đã thanh toán <Badge count={statusCounts.paid} style={{ backgroundColor: '#52c41a' }} /></span>}
-                />
+                <TabPane key="all" tab={<span>Tất cả <Badge count={statusCounts.all} /></span>} />
+                <TabPane key="1" tab={<span>Pending <Badge count={statusCounts[1]} style={{ backgroundColor: 'gold' }} /></span>} />
+                <TabPane key="2" tab={<span>Completed <Badge count={statusCounts[2]} style={{ backgroundColor: 'green' }} /></span>} />
+                <TabPane key="3" tab={<span>Failed <Badge count={statusCounts[3]} style={{ backgroundColor: 'red' }} /></span>} />
+                <TabPane key="4" tab={<span>Refunded <Badge count={statusCounts[4]} style={{ backgroundColor: 'purple' }} /></span>} />
+                <TabPane key="5" tab={<span>Cancel <Badge count={statusCounts[5]} style={{ backgroundColor: 'grey' }} /></span>} />
               </Tabs>
 
               <Table
                 columns={columns}
                 dataSource={filteredBookings}
                 rowKey="id"
+                loading={loading}
                 pagination={{ pageSize: 5 }}
               />
             </Card>
