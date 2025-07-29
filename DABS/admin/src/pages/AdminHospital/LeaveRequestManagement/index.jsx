@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
     Table, Modal, Button, Tag, message, Space, Tabs,
     Input, Row, Col, Card, Badge, ConfigProvider
@@ -8,63 +8,44 @@ import {
 } from "@ant-design/icons";
 import "./style.scss";
 import viVN from "antd/es/locale/vi_VN";
+import { useSelector } from "react-redux";
+import { getRequestsByHospital } from "../../../services/requestService";
 
 const { TabPane } = Tabs;
 
 const LeaveRequestManagement = () => {
-    const [leaveRequests, setLeaveRequests] = useState([
-        {
-            id: 1,
-            employeeName: "Nguyễn Văn A",
-            role: "doctor",
-            reason: "Nghỉ ốm",
-            fromDate: "2025-07-10",
-            toDate: "2025-07-12",
-            status: "pending"
-        },
-        {
-            id: 2,
-            employeeName: "Trần Thị B",
-            role: "nurse",
-            reason: "Việc gia đình",
-            fromDate: "2025-07-15",
-            toDate: "2025-07-16",
-            status: "approved"
-        },
-        {
-            id: 3,
-            employeeName: "Lê Văn C",
-            role: "healthcare staff",
-            reason: "Đi du lịch",
-            fromDate: "2025-07-20",
-            toDate: "2025-07-23",
-            status: "pending"
-        }
-    ]);
-
+    const [leaveRequests, setLeaveRequests] = useState([]);
+    const user = useSelector((state) => state.user.user);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [activeTab, setActiveTab] = useState("all");
     const [searchText, setSearchText] = useState("");
 
-    const updateStatus = (newStatus) => {
-        setLeaveRequests(prev =>
-            prev.map(req =>
-                req.id === selectedRequest.id ? { ...req, status: newStatus } : req
-            )
-        );
-        message.success(`Yêu cầu đã được ${newStatus === "approved" ? "duyệt" : "từ chối"}`);
-        setSelectedRequest(null);
-    };
+    useEffect(() => {
+        const fetchStaffs = async () => {
+            if (!user?.hospitals?.[0]?.id) return;
+
+            try {
+                const result = await getRequestsByHospital(user.hospitals[0].id);
+                setLeaveRequests(result);
+
+
+            } catch (error) {
+                console.error("Lỗi khi tải danh sách xin nghỉ:", error);
+
+            }
+        };
+
+        fetchStaffs();
+    }, [user?.hospitals]);
 
     const showDetail = (record) => {
         setSelectedRequest(record);
     };
 
-    // Đếm số lượng theo vai trò
     const counts = useMemo(() => {
-        const doctor = leaveRequests.filter(r => r.role === "doctor").length;
-        const nurse = leaveRequests.filter(r => r.role === "nurse").length;
-        const staff = leaveRequests.filter(r => r.role === "healthcare staff").length;
+        const doctor = leaveRequests.filter(r => r.roleName === "Doctor").length;
+        const nurse = leaveRequests.filter(r => r.roleName === "Nurse").length;
+        const staff = leaveRequests.filter(r => r.roleName === "Hospital Staff").length;
         return {
             all: leaveRequests.length,
             doctor,
@@ -73,11 +54,10 @@ const LeaveRequestManagement = () => {
         };
     }, [leaveRequests]);
 
-    // Bộ lọc theo tab và searchText
     const filteredRequests = useMemo(() => {
         return leaveRequests.filter(req =>
-            (activeTab === "all" || req.role === activeTab) &&
-            (req.employeeName.toLowerCase().includes(searchText.toLowerCase()) ||
+            (activeTab === "all" || req.roleName.toLowerCase() === activeTab) &&
+            (req.requesterName.toLowerCase().includes(searchText.toLowerCase()) ||
                 req.reason.toLowerCase().includes(searchText.toLowerCase()))
         );
     }, [leaveRequests, activeTab, searchText]);
@@ -85,40 +65,49 @@ const LeaveRequestManagement = () => {
     const columns = [
         {
             title: "Tên nhân viên",
-            dataIndex: "employeeName",
-            key: "employeeName"
+            dataIndex: "requesterName",
+            key: "requesterName"
         },
         {
             title: "Vai trò",
-            dataIndex: "role",
-            key: "role",
-            render: (role) => {
-                if (role === "doctor") return "Bác sĩ";
-                if (role === "nurse") return "Y tá";
+            dataIndex: "roleName",
+            key: "roleName",
+            render: (roleName) => {
+                if (!roleName) return "Nhân viên y tế";
+                const roleLower = roleName.toLowerCase();
+                if (roleLower === "doctor") return "Bác sĩ";
+                if (roleLower === "nurse") return "Y tá";
                 return "Nhân viên y tế";
             }
         },
         {
             title: "Từ ngày",
-            dataIndex: "fromDate",
-            key: "fromDate"
+            dataIndex: "startDate",
+            key: "startDate",
+            render: (date) => date ? new Date(date).toLocaleDateString("vi-VN") : ""
         },
         {
             title: "Đến ngày",
-            dataIndex: "toDate",
-            key: "toDate"
+            dataIndex: "endDate",
+            key: "endDate",
+            render: (date) => date ? new Date(date).toLocaleDateString("vi-VN") : ""
+        },
+        {
+            title: "Lý do",
+            dataIndex: "reason",
+            key: "reason",
         },
         {
             title: "Trạng thái",
             dataIndex: "status",
             key: "status",
             render: (status) => {
-                const color =
-                    status === "approved" ? "green" :
-                        status === "rejected" ? "red" : "orange";
-                const label =
-                    status === "approved" ? "Đã duyệt" :
-                        status === "rejected" ? "Đã từ chối" : "Chờ duyệt";
+                const mapping = {
+                    1: { color: "orange", label: "Chờ duyệt" },
+                    2: { color: "green", label: "Đã duyệt" },
+                    3: { color: "red", label: "Đã từ chối" },
+                };
+                const { color, label } = mapping[status] || { color: "default", label: "Không rõ" };
                 return <Tag color={color}>{label}</Tag>;
             }
         },
@@ -126,15 +115,11 @@ const LeaveRequestManagement = () => {
             title: "Hành động",
             key: "actions",
             render: (_, record) => (
-                <Button
-                    icon={<EyeOutlined />}
-                    onClick={() => showDetail(record)}
-                >
-                    Xem
-                </Button>
+                <Button icon={<EyeOutlined />} onClick={() => showDetail(record)}>Xem</Button>
             )
         }
     ];
+
 
     return (
         <ConfigProvider locale={viVN}>
@@ -198,19 +183,20 @@ const LeaveRequestManagement = () => {
                     onCancel={() => setSelectedRequest(null)}
                     footer={[
                         <Button key="cancel" onClick={() => setSelectedRequest(null)}>Đóng</Button>,
-                        selectedRequest?.status === "pending" && (
+                        // Nếu status là Chờ duyệt (status === 1), hiển thị nút duyệt/từ chối
+                        selectedRequest?.status === 1 && (
                             <Space key="actions">
                                 <Button
                                     icon={<CloseOutlined />}
                                     danger
-                                    onClick={() => updateStatus("rejected")}
+                                // onClick={() => updateStatus("rejected")}
                                 >
                                     Từ chối
                                 </Button>
                                 <Button
                                     icon={<CheckOutlined />}
                                     type="primary"
-                                    onClick={() => updateStatus("approved")}
+                                // onClick={() => updateStatus("approved")}
                                 >
                                     Duyệt
                                 </Button>
@@ -220,26 +206,37 @@ const LeaveRequestManagement = () => {
                 >
                     {selectedRequest && (
                         <>
-                            <p><b>Nhân viên:</b> {selectedRequest.employeeName}</p>
+                            <p><b>Nhân viên:</b> {selectedRequest.requesterName}</p>
+
                             <p><b>Vai trò:</b> {
-                                selectedRequest.role === "doctor"
-                                    ? "Bác sĩ"
-                                    : selectedRequest.role === "nurse"
-                                        ? "Y tá"
-                                        : "Nhân viên y tế"
+                                selectedRequest.roleName ? (
+                                    selectedRequest.roleName.toLowerCase() === "doctor" ? "Bác sĩ" :
+                                        selectedRequest.roleName.toLowerCase() === "nurse" ? "Y tá" :
+                                            "Nhân viên y tế"
+                                ) : "Nhân viên y tế"
                             }</p>
-                            <p><b>Thời gian nghỉ:</b> {selectedRequest.fromDate} → {selectedRequest.toDate}</p>
+
+                            <p><b>Thời gian nghỉ:</b> {
+                                selectedRequest.startDate ?
+                                    new Date(selectedRequest.startDate).toLocaleDateString("vi-VN") : ""
+                            } → {
+                                    selectedRequest.endDate ?
+                                        new Date(selectedRequest.endDate).toLocaleDateString("vi-VN") : ""
+                                }</p>
+
                             <p><b>Lý do:</b> {selectedRequest.reason}</p>
+
                             <p><b>Trạng thái:</b> {
-                                selectedRequest.status === "approved"
-                                    ? "Đã duyệt"
-                                    : selectedRequest.status === "rejected"
-                                        ? "Đã từ chối"
-                                        : "Chờ duyệt"
+                                {
+                                    1: "Chờ duyệt",
+                                    2: "Đã duyệt",
+                                    3: "Đã từ chối"
+                                }[selectedRequest.status] || "Không rõ"
                             }</p>
                         </>
                     )}
                 </Modal>
+
             </div>
         </ConfigProvider>
     );
