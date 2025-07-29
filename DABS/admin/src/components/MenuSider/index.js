@@ -4,6 +4,8 @@ import {
     BankOutlined,
     MedicineBoxOutlined,
     InboxOutlined,
+    HeatMapOutlined,
+    AndroidOutlined,
     LineChartOutlined,
     ExperimentOutlined,
     DashboardOutlined,
@@ -90,11 +92,7 @@ function MenuSider() {
             label: <Link to="/admin-hospital/departments">Department Management</Link>,
             icon: <BankOutlined />
         },
-        {
-            key: "hospital-management",
-            label: <Link to="/admin-hospital/hospitals">Hospital Management</Link>,
-            icon: <MedicineBoxOutlined />
-        },
+
         {
             key: "medical-services",
             label: <Link to="/admin-hospital/medical-service-management">Dịch vụ y tế</Link>,
