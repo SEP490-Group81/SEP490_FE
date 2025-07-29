@@ -36,6 +36,7 @@ import StaffProfile from "../../pages/HospitalStaff/StaffProfile";
 import AdjustBookingSchedule from "../../pages/Nurse/AdjustAppointmentSchedule";
 import NursePaymentConfirmation from "../../pages/Nurse/PaymentAdjust/ConfirmPayment";
 import NurseUnpaidBookingList from "../../pages/Nurse/PaymentAdjust/UnpaidBookingList";
+import StaffWorkSchedule from "../../pages/HospitalStaff/WorkSchedule";
 
 export const routes = [
   {
@@ -167,7 +168,11 @@ export const routes = [
       {
         path: "staff-profile",
         element: <StaffProfile />
-      }
+      },
+        {
+        path: "work-schedule",
+        element: <StaffWorkSchedule />
+      },
     ]
   },
   {
