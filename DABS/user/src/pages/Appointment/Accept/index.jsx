@@ -161,7 +161,7 @@ function AppointmentReviewPage() {
             };
             console.log("pay load in booking confirm : " + JSON.stringify(payload));
             const bookingResponse = await createBookAppointment(payload);
-            // navigate(`https://pay.payos.vn/web/${latestPayment.payOsId}/`); 
+           //  navigate(`https://pay.payos.vn/web/${latestPayment.payOsId}/`); 
             dispatch(setMessage({ type: 'success', content: 'Đặt khám thành công! ' }));
             if (stepData.paymentType === 'online') {
             console.log("💳 Online payment selected, getting payment link...");
