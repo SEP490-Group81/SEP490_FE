@@ -10,18 +10,24 @@ import {
   Row,
   Col,
   message,
+  Button,
+  Typography,
+  List,
 } from "antd";
 import viVN from "antd/es/locale/vi_VN";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
-import { getDoctorByHospitalId } from "../../../services/doctorService";
-import { getSpecializationsByHospitalId } from "../../../services/specializationService";
-import { getAppointmentsByUserId } from "../../../services/appointmentService";
-import { getHospitalSpecializationSchedule } from "../../../services/scheduleService";
-import { getAllPatients } from "../../../services/userService";
 import { useSelector } from "react-redux";
 
+import { getDoctorByHospitalId } from "../../../services/doctorService";
+import { getSpecializationsByHospitalId } from "../../../services/specializationService";
+
+import { getHospitalSpecializationSchedule } from "../../../services/scheduleService";
+import { getAllPatients } from "../../../services/userService";
+import { changeAppointmentStatus, changeAppointmentTime, getAppointmentsByUserId } from "../../../services/appointmentService";
+
 const { Option } = Select;
+const { Title, Text } = Typography;
 
 const AdjustAppointmentSchedule = () => {
   const hospitalId = useSelector((state) => state.user.user?.hospitals?.[0]?.id);
@@ -29,19 +35,17 @@ const AdjustAppointmentSchedule = () => {
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [specializations, setSpecializations] = useState([]);
-
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [selectedSpec, setSelectedSpec] = useState(null);
-
   const [selectedPatientId, setSelectedPatientId] = useState(null);
-
   const [appointments, setAppointments] = useState([]);
-  const [schedules, setSchedules] = useState([]);
+  const [currentRange, setCurrentRange] = useState({ start: null, end: null });
 
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  const [currentRange, setCurrentRange] = useState({ start: null, end: null });
+  const [filterDoctorId, setFilterDoctorId] = useState(null);
+  const [filterSpecId, setFilterSpecId] = useState(null);
+  const [availableSchedules, setAvailableSchedules] = useState([]);
+  const [selectedScheduleId, setSelectedScheduleId] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -56,221 +60,235 @@ const AdjustAppointmentSchedule = () => {
 
   useEffect(() => {
     if (!hospitalId) return;
-
     (async () => {
       try {
         const docs = await getDoctorByHospitalId(hospitalId);
         setDoctors(docs || []);
       } catch {
-        setDoctors([]);
         message.error("Lấy danh sách bác sĩ thất bại");
+        setDoctors([]);
       }
-
       try {
         const specs = await getSpecializationsByHospitalId(hospitalId);
         setSpecializations(specs || []);
-
       } catch {
-        setSpecializations([]);
         message.error("Lấy danh sách chuyên khoa thất bại");
+        setSpecializations([]);
       }
     })();
   }, [hospitalId]);
 
-  const fetchAppointments = async (patientId, start, end) => {
-    if (!patientId) {
+  useEffect(() => {
+    if (!selectedPatientId || !currentRange.start || !currentRange.end) {
       setAppointments([]);
       return;
     }
-    try {
-      const list = await getAppointmentsByUserId(patientId, start.toISOString(), end.toISOString());
-      console.log("getAppointmentsByUserId:", list);
-      setSelectedDoctor(list[0]?.doctorSchedule?.doctorProfile?.id || null);
-      setSelectedSpec(list[0]?.doctorSchedule?.specialization?.id || null);
-      const events = list.map((item) => {
-        const workDateStr = item.doctorSchedule.workDate.split("T")[0];
-        const startDT = dayjs(`${workDateStr}T${item.doctorSchedule.startTime}`).toISOString();
-        const endDT = dayjs(`${workDateStr}T${item.doctorSchedule.endTime}`).toISOString();
-
-        const patient = patients.find((p) => p.id === item.patientId);
-
-        return {
-          id: `appointment-${item.id}`,
-          title: `Hẹn khám: ${patient?.fullname || "Bệnh nhân"}`,
-          start: startDT,
-          end: endDT,
-          extendedProps: {
-            type: "appointment",
-            patientId: item.patientId,
-            patientName: patient?.fullname || "Không rõ",
-            doctorId: item.doctorSchedule.doctorProfile?.id,
-            department: item.doctorSchedule.department,
-            note: item.note,
-            status:
-              item.status === 1
-                ? "Chưa xác nhận"
-                : item.status === 2
+    (async () => {
+      try {
+        const list = await getAppointmentsByUserId(
+          selectedPatientId,
+          currentRange.start.toISOString(),
+          currentRange.end.toISOString()
+        );
+        const events = list.map((item) => {
+          const workDateStr = item.doctorSchedule.workDate.split("T")[0];
+          const startDT = dayjs(`${workDateStr}T${item.doctorSchedule.startTime}`).toISOString();
+          const endDT = dayjs(`${workDateStr}T${item.doctorSchedule.endTime}`).toISOString();
+          const patient = patients.find((p) => p.id === item.patientId);
+          return {
+            id: `appointment-${item.id}`,
+            title: `Hẹn khám: ${patient?.fullname || "Bệnh nhân"}`,
+            start: startDT,
+            end: endDT,
+            extendedProps: {
+              type: "appointment",
+              patientId: item.patientId,
+              patientName: patient?.fullname || "Không rõ",
+              doctorId: item.doctorSchedule.doctorProfile?.id,
+              doctorName: item.doctorSchedule.doctorProfile?.user?.fullname || "Không rõ",
+              specializationId: item.doctorSchedule.specialization?.id,
+              specializationName: item.doctorSchedule.specialization?.name,
+              department: item.doctorSchedule.department,
+              note: item.note,
+              status:
+                item.status === 1
+                  ? "Chưa xác nhận"
+                  : item.status === 2
                   ? "Đã xác nhận"
+                  : item.status === 3
+                  ? "Đã hủy"
                   : "Không rõ",
-            room: item.doctorSchedule.room?.name,
-            serviceName: item.service?.name,
-            appointmentId: item.id,
-          },
-          backgroundColor: "#389e0d",
-          borderColor: "#237804",
-          editable: true,
-        };
-      });
-      setAppointments(events);
-    } catch {
-      message.error("Lấy lịch hẹn thất bại");
-      setAppointments([]);
-    }
+              room: item.doctorSchedule.room?.name,
+              serviceName: item.service?.name,
+              appointmentId: item.id,
+            },
+          };
+        });
+        setAppointments(events);
+      } catch {
+        message.error("Lấy lịch hẹn thất bại");
+        setAppointments([]);
+      }
+    })();
+  }, [selectedPatientId, currentRange, patients]);
+
+  const openModal = (event) => {
+    setSelectedEvent(event);
+    setFilterDoctorId(event.extendedProps.doctorId || null);
+    setFilterSpecId(event.extendedProps.specializationId || null);
+    setAvailableSchedules([]);
+    setSelectedScheduleId(null);
+    setModalOpen(true);
   };
 
-  
-  const fetchSchedules = async (hospitalId, doctorId, specializationId, start, end) => {
-    if (!hospitalId) {
-      setSchedules([]);
+  useEffect(() => {
+    if (!hospitalId) return;
+    if (!filterDoctorId && !filterSpecId) {
+      setAvailableSchedules([]);
       return;
     }
-    try {
-      const payload = {
-        hospitalId,
-        doctorIds: doctorId ? [doctorId] : [],
-        specializationId: specializationId || null,
-        dateFrom: start.format("YYYY-MM-DD"),
-        dateTo: end.format("YYYY-MM-DD"),
-      };
-      console.log("Payload gọi getHospitalSpecializationSchedule:", payload);
-      const result = await getHospitalSpecializationSchedule(payload);
-      console.log("Kết quả getHospitalSpecializationSchedule:", result);
-
-      const scheduleEvents = (result.schedules || []).map((item) => {
-        const dateStr = item.workDate.split("T")[0];
-        const startDT = dayjs(`${dateStr}T${item.startTime}`).toISOString();
-        const endDT = dayjs(`${dateStr}T${item.endTime}`).toISOString();
-
-        const doctorId = item.doctorProfile?.id || null;
-        const specIds = item.specializationIds || [];
-
-        return {
-          id: `schedule-${item.id}`,
-          title: item.timeShift === 1 ? "Ca sáng" : "Ca chiều",
-          start: startDT,
-          end: endDT,
-          extendedProps: {
-            type: "schedule",
-            doctorId,
-            specializationIds: specIds,
-            room: item.room?.name,
-            status: item.isAvailable ? "Đang làm" : "Không làm",
-          },
-          backgroundColor: "#1890ff",
-          borderColor: "#096dd9",
-          textColor: "white",
-          editable: false,
-          overlap: true,
-          display: "block",
+    (async () => {
+      try {
+        const payload = {
+          hospitalId,
+          doctorIds: filterDoctorId ? [filterDoctorId] : [],
+          specializationId: filterSpecId || null,
+          dateFrom: currentRange.start.format("YYYY-MM-DD"),
+          dateTo: currentRange.end.format("YYYY-MM-DD"),
         };
-      });
-      setSchedules(scheduleEvents);
-    } catch {
-      message.error("Lấy lịch làm việc thất bại");
-      setSchedules([]);
-    }
-  };
+        const result = await getHospitalSpecializationSchedule(payload);
+        const schedules = (result.schedules || []).filter((item) => item.isAvailable);
+        setAvailableSchedules(schedules);
+      } catch {
+        message.error("Lấy ca làm việc khả dụng thất bại");
+        setAvailableSchedules([]);
+      }
+    })();
+  }, [hospitalId, filterDoctorId, filterSpecId, currentRange]);
 
   const handleDatesSet = (arg) => {
     setCurrentRange({ start: dayjs(arg.start), end: dayjs(arg.end) });
   };
 
-  
-  useEffect(() => {
-    if (!selectedPatientId || !currentRange.start || !currentRange.end) return;
-    fetchAppointments(selectedPatientId, currentRange.start, currentRange.end);
-  }, [selectedPatientId, currentRange, patients]);
-
-
-  useEffect(() => {
-    if (!hospitalId || !currentRange.start || !currentRange.end) {
-      setSchedules([]);
+  const handleChangeTime = async () => {
+    if (!selectedEvent) {
+      message.error("Chưa chọn lịch hẹn");
       return;
     }
-    fetchSchedules(hospitalId, selectedDoctor, selectedSpec, currentRange.start, currentRange.end);
-  }, [hospitalId, selectedDoctor, selectedSpec, currentRange]);
-
-  
-  const handleEventDrop = (info) => {
-    const event = info.event;
-
-    if (event.extendedProps.type !== "appointment") {
-      message.error("Chỉ có thể điều chỉnh lịch hẹn");
-      info.revert();
+    if (!selectedScheduleId) {
+      message.error("Vui lòng chọn ca làm việc mới");
       return;
     }
-
-    const newStart = dayjs(event.start);
-    const newEnd = event.end ? dayjs(event.end) : newStart.add(30, "minutes");
-
-
-    const matchSchedule = schedules.find((sch) => {
-      const schStart = dayjs(sch.start);
-      const schEnd = dayjs(sch.end);
-
-      const inSchedule = newStart.isSameOrAfter(schStart) && newEnd.isSameOrBefore(schEnd);
-      const doctorOk =
-        !selectedDoctor || sch.extendedProps.doctorId === event.extendedProps.doctorId;
-
-      return inSchedule && doctorOk;
-    });
-
-    if (!matchSchedule) {
-      message.error("Lịch hẹn phải nằm trong ca làm việc khả dụng.");
-      info.revert();
-      return;
+    try {
+      await changeAppointmentTime(selectedEvent.extendedProps.appointmentId, selectedScheduleId);
+      message.success("Đã đổi thời gian lịch hẹn");
+      setModalOpen(false);
+      if (selectedPatientId && currentRange.start && currentRange.end) {
+        const list = await getAppointmentsByUserId(
+          selectedPatientId,
+          currentRange.start.toISOString(),
+          currentRange.end.toISOString()
+        );
+        const events = list.map((item) => {
+          const workDateStr = item.doctorSchedule.workDate.split("T")[0];
+          const startDT = dayjs(`${workDateStr}T${item.doctorSchedule.startTime}`).toISOString();
+          const endDT = dayjs(`${workDateStr}T${item.doctorSchedule.endTime}`).toISOString();
+          const patient = patients.find((p) => p.id === item.patientId);
+          return {
+            id: `appointment-${item.id}`,
+            title: `Hẹn khám: ${patient?.fullname || "Bệnh nhân"}`,
+            start: startDT,
+            end: endDT,
+            extendedProps: {
+              type: "appointment",
+              patientId: item.patientId,
+              patientName: patient?.fullname || "Không rõ",
+              doctorId: item.doctorSchedule.doctorProfile?.id,
+              doctorName: item.doctorSchedule.doctorProfile?.user?.fullname || "Không rõ",
+              specializationId: item.doctorSchedule.specialization?.id,
+              specializationName: item.doctorSchedule.specialization?.name,
+              department: item.doctorSchedule.department,
+              note: item.note,
+              status:
+                item.status === 1
+                  ? "Chưa xác nhận"
+                  : item.status === 2
+                  ? "Đã xác nhận"
+                  : item.status === 3
+                  ? "Đã hủy"
+                  : "Không rõ",
+              room: item.doctorSchedule.room?.name,
+              serviceName: item.service?.name,
+              appointmentId: item.id,
+            },
+          };
+        });
+        setAppointments(events);
+      }
+    } catch {
+      message.error("Đổi thời gian không thành công");
     }
-
-    setAppointments((prev) =>
-      prev.map((e) =>
-        e.id === event.id
-          ? {
-            ...e,
-            start: event.start.toISOString(),
-            end: event.end ? event.end.toISOString() : null,
-          }
-          : e
-      )
-    );
-
-    message.success("Đã cập nhật lịch hẹn!");
-
   };
 
-  const handleEventClick = ({ event }) => {
-    setSelectedEvent(event);
-    setModalOpen(true);
+  const handleChangeStatus = async () => {
+    if (!selectedEvent) return;
+    const appointmentId = selectedEvent.extendedProps.appointmentId;
+    const currentStatusText = selectedEvent.extendedProps.status;
+
+    const statusMap = {
+      "Chưa xác nhận": 1,
+      "Đã xác nhận": 2,
+      "Đã hủy": 3,
+      "Không rõ": 1,
+    };
+
+    const currentStatus = statusMap[currentStatusText] || 1;
+    let newStatus;
+
+    if (currentStatus === 3) {
+      message.warning("Lịch đã hủy, không thể đổi trạng thái khác");
+      return;
+    }
+
+    newStatus = currentStatus === 1 ? 2 : 1;
+
+    try {
+      await changeAppointmentStatus(appointmentId, newStatus);
+      message.success("Đã đổi trạng thái lịch hẹn");
+      setModalOpen(false);
+      setSelectedPatientId((id) => id); 
+    } catch {
+      message.error("Đổi trạng thái không thành công");
+    }
+  };
+
+  const handleCancelAppointment = async () => {
+    if (!selectedEvent) return;
+    const appointmentId = selectedEvent.extendedProps.appointmentId;
+
+    const currentStatusText = selectedEvent.extendedProps.status;
+    if (currentStatusText === "Đã hủy") {
+      message.warning("Lịch hẹn đã được hủy trước đó");
+      return;
+    }
+
+    try {
+      await changeAppointmentStatus(appointmentId, 3);
+      message.success("Đã hủy lịch hẹn");
+      setModalOpen(false);
+      setSelectedPatientId((id) => id); 
+    } catch {
+      message.error("Hủy lịch không thành công");
+    }
   };
 
   const renderEventContent = (eventInfo) => {
-    const { title, extendedProps } = eventInfo.event;;
-    console.log("renderEventContent:", eventInfo.event);
-    if (extendedProps.type === "schedule") {
-      return (
-        <div style={{ color: "white", fontWeight: "bold", fontSize: 12 }}>
-          {title} - {extendedProps.room || ""}
-        </div>
-      );
-    }
-
+    const { title, extendedProps } = eventInfo.event;
     return (
       <div>
         <b>{title}</b>
-        <div style={{ fontSize: 10 }}>
-          {extendedProps.patientName || ""}
-          <br />
-          Phòng: {extendedProps.room || ""}
-        </div>
+        <br />
+        <small>{extendedProps.room || ""}</small>
       </div>
     );
   };
@@ -278,9 +296,9 @@ const AdjustAppointmentSchedule = () => {
   return (
     <ConfigProvider locale={viVN}>
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: 20 }}>
-        <h2 style={{ textAlign: "center", marginBottom: 20 }}>
+        <Title level={2} style={{ textAlign: "center", marginBottom: 20 }}>
           Quản lý lịch hẹn & ca làm việc
-        </h2>
+        </Title>
 
         <Row gutter={16} style={{ marginBottom: 16 }}>
           <Col span={8}>
@@ -289,7 +307,7 @@ const AdjustAppointmentSchedule = () => {
               allowClear
               placeholder="Chọn bệnh nhân"
               style={{ width: "100%" }}
-              onChange={(val) => setSelectedPatientId(val)}
+              onChange={setSelectedPatientId}
               value={selectedPatientId}
               optionFilterProp="children"
               filterOption={(input, option) =>
@@ -304,63 +322,16 @@ const AdjustAppointmentSchedule = () => {
               ))}
             </Select>
           </Col>
-
-          <Col span={8}>
-            <Select
-              allowClear
-              placeholder="Chọn bác sĩ"
-              style={{ width: "100%" }}
-              value={selectedDoctor}
-              onChange={setSelectedDoctor}
-              optionFilterProp="children"
-              showSearch
-              filterOption={(input, option) =>
-                option.children.toLowerCase().includes(input.toLowerCase())
-              }
-            >
-              {doctors.map((doc) => (
-                <Option key={doc.id} value={doc.id}>
-                  {doc.user?.fullname || doc.description || `Bác sĩ #${doc.id}`}
-                </Option>
-              ))}
-            </Select>
-          </Col>
-
-          <Col span={8}>
-            <Select
-              allowClear
-              placeholder="Chọn chuyên khoa"
-              style={{ width: "100%" }}
-              value={selectedSpec}
-              onChange={setSelectedSpec}
-              optionFilterProp="label"
-            >
-              {specializations.map((spec) => (
-                <Option key={spec.id} value={spec.id} label={spec.name}>
-                  <div style={{ display: "flex", alignItems: "center" }}>
-                    <img
-                      src={spec.image}
-                      alt={spec.name}
-                      style={{ width: 24, height: 24, marginRight: 8 }}
-                    />
-                    {spec.name}
-                  </div>
-                </Option>
-              ))}
-            </Select>
-          </Col>
         </Row>
 
         <FullCalendar
           plugins={[timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           locale={viLocale}
-          editable={true}
-          events={[...appointments, ...schedules]}
+          editable={false}
+          events={appointments}
           eventContent={renderEventContent}
-          eventClick={handleEventClick}
-          eventDrop={handleEventDrop}
-          eventDurationEditable={false}
+          eventClick={({ event }) => openModal(event)}
           height={600}
           nowIndicator
           headerToolbar={{
@@ -379,49 +350,133 @@ const AdjustAppointmentSchedule = () => {
           onCancel={() => setModalOpen(false)}
           footer={null}
           centered
-          title={selectedEvent?.title || "Chi tiết"}
+          title={
+            selectedEvent?.title ? `Chi tiết: ${selectedEvent.title}` : "Chi tiết"
+          }
+          width={700}
         >
           {selectedEvent ? (
             <>
               <p>
-                <b>Thời gian: </b>
-                {dayjs(selectedEvent.start).format("HH:mm")} -{" "}
+                <b>Thời gian:</b>{" "}
+                {dayjs(selectedEvent.start).format("DD/MM/YYYY HH:mm")} -{" "}
                 {dayjs(selectedEvent.end).format("HH:mm")}
               </p>
               <p>
-                <b>Phòng: </b> {selectedEvent.extendedProps.room || "Không rõ"}
+                <b>Bệnh nhân:</b> {selectedEvent.extendedProps.patientName}
               </p>
-              {selectedEvent.extendedProps.type === "appointment" && (
-                <>
-                  <p>
-                    <b>Bệnh nhân: </b>
-                    {selectedEvent.extendedProps.patientName}
-                  </p>
-                  <p>
-                    <b>Chuyên khoa: </b>
-                    {selectedEvent.extendedProps.department || "Không rõ"}
-                  </p>
-                  <p>
-                    <b>Trạng thái: </b>
-                    {selectedEvent.extendedProps.status}
-                  </p>
-                  <p>
-                    <b>Ghi chú: </b>
-                    {selectedEvent.extendedProps.note || "Không có"}
-                  </p>
-                  {selectedEvent.extendedProps.serviceName && (
-                    <p>
-                      <b>Dịch vụ: </b> {selectedEvent.extendedProps.serviceName}
-                    </p>
-                  )}
-                </>
-              )}
-              {selectedEvent.extendedProps.type === "schedule" && (
-                <p>
-                  <b>Trạng thái ca: </b>
-                  {selectedEvent.extendedProps.status}
-                </p>
-              )}
+              <p>
+                <b>Bác sĩ hiện tại:</b> {selectedEvent.extendedProps.doctorName || "Không rõ"}
+              </p>
+              <p>
+                <b>Chuyên khoa hiện tại:</b>{" "}
+                {selectedEvent.extendedProps.specializationName || "Không rõ"}
+              </p>
+              <p>
+                <b>Phòng:</b> {selectedEvent.extendedProps.room || "Không rõ"}
+              </p>
+              <p>
+                <b>Trạng thái:</b> {selectedEvent.extendedProps.status}
+              </p>
+              <p>
+                <b>Ghi chú:</b> {selectedEvent.extendedProps.note || "Không có"}
+              </p>
+
+              <Row gutter={16} style={{ marginTop: 16 }}>
+                <Col span={12}>
+                  <label>Bác sĩ (lọc ca khả dụng):</label>
+                  <Select
+                    allowClear
+                    style={{ width: "100%" }}
+                    value={filterDoctorId}
+                    onChange={setFilterDoctorId}
+                    placeholder="Chọn bác sĩ"
+                    showSearch
+                    filterOption={(input, option) =>
+                      option.children.toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    {doctors.map((doc) => (
+                      <Option key={doc.id} value={doc.id}>
+                        {doc.user?.fullname || doc.description || `Bác sĩ #${doc.id}`}
+                      </Option>
+                    ))}
+                  </Select>
+                </Col>
+                <Col span={12}>
+                  <label>Chuyên khoa (lọc ca khả dụng):</label>
+                  <Select
+                    allowClear
+                    style={{ width: "100%" }}
+                    value={filterSpecId}
+                    onChange={setFilterSpecId}
+                    placeholder="Chọn chuyên khoa"
+                    showSearch
+                    filterOption={(input, option) =>
+                      option.children.toLowerCase().includes(input.toLowerCase())
+                    }
+                  >
+                    {specializations.map((spec) => (
+                      <Option key={spec.id} value={spec.id}>
+                        {spec.name}
+                      </Option>
+                    ))}
+                  </Select>
+                </Col>
+              </Row>
+
+              <div style={{ marginTop: 20 }}>
+                <label>Chọn ca làm việc khả dụng để đổi lịch:</label>
+                {availableSchedules.length === 0 ? (
+                  <Text type="secondary">
+                    Vui lòng chọn bác sĩ hoặc chuyên khoa để hiển thị ca làm việc khả dụng
+                  </Text>
+                ) : (
+                  <List
+                    bordered
+                    dataSource={availableSchedules}
+                    renderItem={(item) => {
+                      const workDate = dayjs(item.workDate).format("DD/MM/YYYY");
+                      return (
+                        <List.Item
+                          style={{
+                            cursor: "pointer",
+                            backgroundColor:
+                              selectedScheduleId === item.id ? "#bae7ff" : "transparent",
+                          }}
+                          onClick={() => setSelectedScheduleId(item.id)}
+                        >
+                          <Text strong>
+                            Ca {item.timeShift === 1 ? "Sáng" : "Chiều"} - {workDate}
+                          </Text>
+                          <br />
+                          <Text>
+                            {item.startTime} - {item.endTime} - Phòng {item.room?.name || "Không rõ"}
+                          </Text>
+                        </List.Item>
+                      );
+                    }}
+                    style={{ maxHeight: 200, overflowY: "auto", marginBottom: 16 }}
+                  />
+                )}
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <Button
+                  type="primary"
+                  disabled={!selectedScheduleId}
+                  onClick={handleChangeTime}
+                  style={{ marginRight: 8 }}
+                >
+                  Đổi lịch hẹn
+                </Button>
+                <Button onClick={handleChangeStatus} style={{ marginRight: 8 }}>
+                  Đổi trạng thái
+                </Button>
+                <Button danger onClick={handleCancelAppointment}>
+                  Hủy lịch hẹn
+                </Button>
+              </div>
             </>
           ) : (
             <p>Không có dữ liệu</p>

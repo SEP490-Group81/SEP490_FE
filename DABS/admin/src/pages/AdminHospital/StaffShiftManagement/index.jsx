@@ -135,7 +135,6 @@ const StaffShiftManagement = () => {
   const [modalDetail, setModalDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const user = useSelector((state) => state.user.user);
-   console.log("hospital nurse id is: " + user.hospitals[0]?.id);
   const [allStaffs, setAllStaffs] = useState([]);
   const [nurses, setNurses] = useState([]);
   const [selectedPersonId, setSelectedPersonId] = useState(null);
@@ -481,7 +480,7 @@ const StaffShiftManagement = () => {
     try {
       for (const userId of staffIds) {
         const payload = {
-          userIds: [userId],
+          staffIds: [userId],
           hospitalId: user.hospitals[0]?.id,
           daysOfWeek: weekdays,
           shifts: shiftsPayload,

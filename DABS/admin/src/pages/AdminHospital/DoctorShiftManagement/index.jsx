@@ -129,8 +129,8 @@ const renderEventContent = (eventInfo) => {
         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         lineHeight: 1.3,
-        maxWidth: "100%",    
-        wordBreak: "break-word", 
+        maxWidth: "100%",
+        wordBreak: "break-word",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
@@ -144,7 +144,7 @@ const renderEventContent = (eventInfo) => {
             color: "#2c3e50",
             marginBottom: 4,
             whiteSpace: "normal",
-         
+
             display: "-webkit-box",
             WebkitLineClamp: 1,
             WebkitBoxOrient: "vertical",
@@ -224,6 +224,8 @@ const AdminDoctorShiftManagement = () => {
   const [modalDetail, setModalDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [doctors, setDoctors] = useState([]);
+  const [shiftToDelete, setShiftToDelete] = useState(null);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [doctorDetail, setDoctorDetail] = useState(null);
   const [events, setEvents] = useState([]);
   const dispatch = useDispatch();
@@ -335,7 +337,10 @@ const AdminDoctorShiftManagement = () => {
   }, [doctorDetail, flag]);
 
 
-
+  const showDeleteConfirm = (shift) => {
+    setShiftToDelete(shift);
+    setDeleteConfirmVisible(true);
+  };
 
   const handleDatesSet = async (arg) => {
     if (!doctorDetail) return;
@@ -462,7 +467,7 @@ const AdminDoctorShiftManagement = () => {
         const payload = {
           id: scheduleId,
           hospitalAffiliationId,
-          staffId: nurseId,
+          userId: nurseId,
           roomId,
           daysOfWeek,
           startTime: shiftTimesMap[shiftKey]?.startTime || "00:00:00",
@@ -866,7 +871,7 @@ const AdminDoctorShiftManagement = () => {
                       >
                         <Select placeholder="Chọn Y tá" style={{ borderRadius: 8 }}>
                           {nurses.map((nurse) => (
-                            <Option key={nurse?.staffId} value={nurse?.staffId}>
+                            <Option key={nurse?.id} value={nurse?.id}>
                               {nurse?.fullname}
                             </Option>
                           ))}
@@ -937,11 +942,20 @@ const AdminDoctorShiftManagement = () => {
                 >
                   Sửa
                 </Button>,
+                // <Button
+                //   key="delete"
+                //   danger
+                //   disabled={isShiftDisabled(selectedEvent)}
+                //   onClick={() => onDeleteShift(selectedEvent.id)}
+                //   style={{ borderRadius: 8 }}
+                // >
+                //   Xoá
+                // </Button>,
                 <Button
                   key="delete"
                   danger
                   disabled={isShiftDisabled(selectedEvent)}
-                  onClick={() => onDeleteShift(selectedEvent.id)}
+                  onClick={() => showDeleteConfirm(selectedEvent)}
                   style={{ borderRadius: 8 }}
                 >
                   Xoá
@@ -997,6 +1011,32 @@ const AdminDoctorShiftManagement = () => {
                 <div>Không có dữ liệu lịch làm việc.</div>
               )}
             </Modal>
+
+            <Modal
+              visible={deleteConfirmVisible}
+              title="Xác nhận xóa ca làm việc?"
+              onOk={async () => {
+                try {
+                  console.log("Deleting shift:", shiftToDelete.id);
+                //  await deleteStaffSchedule(shiftToDelete.id);
+                  setFlag(prev => !prev);
+                  dispatch(setMessage({ type: 'success', content: 'Xóa ca làm việc thành công!' }));
+                } catch (error) {
+                  dispatch(setMessage({ type: 'error', content: 'Lỗi xoá ca làm việc!' }));
+                } finally {
+                  setDeleteConfirmVisible(false);
+                  setShiftToDelete(null);
+                  setModalDetail(false);
+                }
+              }}
+              onCancel={() => {
+                setDeleteConfirmVisible(false);
+                setShiftToDelete(null);
+              }}
+              okText="Xóa"
+              cancelText="Hủy"
+              centered
+            />
           </div>
         </div>
       </ConfigProvider>

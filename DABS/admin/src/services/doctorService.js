@@ -286,3 +286,4 @@ export const updateDoctorStatus = async (doctorId, status) => {
     throw error;
   }
 };
+

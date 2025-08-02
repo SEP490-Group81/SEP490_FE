@@ -58,17 +58,17 @@ export const routes = [
         element: <ErrorPage />
       },
       {
-    path: '/payment/success',
-    element: <PaymentSuccess />
-  },
-  {
-    path: '/payment/cancelled',
-    element: <PaymentCancelled />
-  },
-  {
-    path: '/payment/cancel',
-    element: <PaymentCancelled />
-  }
+        path: '/payment/success',
+        element: <PaymentSuccess />
+      },
+      {
+        path: '/payment/cancelled',
+        element: <PaymentCancelled />
+      },
+      {
+        path: '/payment/cancel',
+        element: <PaymentCancelled />
+      }
     ],
   },
   {
@@ -98,7 +98,7 @@ export const routes = [
         element:
           <AdminDoctorShiftManagement />
       },
-   
+
       {
         path: "staff-shift-management",
         element:
@@ -134,6 +134,10 @@ export const routes = [
         path: "hospital-statistic",
         element:
           <HospitalStatisticPage />
+      },
+      {
+        path: "payment-list",
+        element: <NurseUnpaidBookingList />
       },
     ]
   },
@@ -175,7 +179,7 @@ export const routes = [
         path: "staff-profile",
         element: <StaffProfile />
       },
-        {
+      {
         path: "work-schedule",
         element: <StaffWorkSchedule />
       },
