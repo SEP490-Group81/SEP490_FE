@@ -164,6 +164,11 @@ function MenuSider() {
             label: <Link to="/nurse/payment-list">Xử lý thanh toán</Link>,
             icon: <UnorderedListOutlined />,
         },
+        {
+            key: "request-leave",
+            label: <Link to="/nurse/request-leave">Xin nghỉ</Link>,
+            icon: <FormOutlined />,
+        },
     ];
 
     const staffItems = [
@@ -181,6 +186,11 @@ function MenuSider() {
             key: "work-schedule",
             label: <Link to="/staff/work-schedule">Lịch làm việc</Link>,
             icon: <ClockCircleOutlined />,
+        },
+        {
+            key: "request-leave",
+            label: <Link to="/staff/request-leave">Xin nghỉ</Link>,
+            icon: <FormOutlined />,
         },
     ];
     const getMenuItems = (role) => {

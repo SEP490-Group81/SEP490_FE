@@ -11,9 +11,10 @@ import { clearMessage, setMessage } from '../../../redux/slices/messageSlice';
 const DoctorRequestLeave = () => {
     const { Title, Text } = Typography;
     const user = useSelector((state) => state.user.user);
+    console.log("user in RequestLeave:", JSON.stringify(user?.role?.id));
     const hospitalId = user?.hospitals?.[0]?.id;
     const doctorUserId = user?.id;
-
+    const roleName = user?.role?.id === 1 ? 'Bác Sĩ' : user?.role?.id === 7 ? 'Y Tá' : 'Nhân Viên'
     const [dataSource, setDataSource] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -74,12 +75,12 @@ const DoctorRequestLeave = () => {
 
     const handleAddUserSuccess = (newRequest) => {
         setShowAddModal(false);
-         dispatch(setMessage({ type: "success", content: "Thêm đơn nghỉ phép thành công!" }));
+        dispatch(setMessage({ type: "success", content: "Thêm đơn nghỉ phép thành công!" }));
     };
     const handleUpdateSuccess = (updatedRecord) => {
         setShowUpdateModal(false);
         setEditingRecord(null);
-         dispatch(setMessage({ type: "success", content: "Cập nhật đơn nghỉ phép thành công!" }));
+        dispatch(setMessage({ type: "success", content: "Cập nhật đơn nghỉ phép thành công!" }));
     };
 
     const mapReasonToRequestType = (reason) => {
@@ -112,7 +113,7 @@ const DoctorRequestLeave = () => {
                     };
                     await updateRequest(payload);
                     dispatch(setMessage({ type: "success", content: "Hủy đơn thành công!" }));
-            
+
                 } catch (error) {
                     console.error("Lỗi khi hủy đơn:", error);
                     message.error('Hủy đơn thất bại');
@@ -206,7 +207,7 @@ const DoctorRequestLeave = () => {
                             <Col>
                                 <Title level={2}>
                                     <UserOutlined style={{ marginRight: 12 }} />
-                                    Đơn xin nghỉ phép của bác sĩ
+                                    Đơn Xin Nghỉ Phép của {roleName}
                                 </Title>
                             </Col>
                             <Col>
@@ -223,44 +224,9 @@ const DoctorRequestLeave = () => {
                     </Col>
                 </Row>
 
-                <Row gutter={24} style={{ marginBottom: 24, justifyContent: 'space-between' }}>
-                    <Col xs={24} sm={8}>
-                        <Card style={{ textAlign: 'center' }}>
-                            <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
-                                {/* Bạn có thể tính toán số ngày nghỉ từ API hoặc update sau */}
-                                8/15
-                            </Title>
-                            <Text style={{ fontFamily: "Roboto", fontSize: 20, fontWeight: 500 }}>Số ngày đã nghỉ</Text>
-                        </Card>
-                    </Col>
-
-                    <Col xs={24} sm={8}>
-                        <Card style={{ textAlign: 'center' }}>
-                            <Title level={2} style={{ margin: 0, color: '#faad14' }}>
-                                0/3
-                            </Title>
-                            <Text style={{ fontFamily: "Roboto", fontSize: 20, fontWeight: 500 }}>Số ngày nghỉ lễ</Text>
-                        </Card>
-                    </Col>
-                </Row>
 
                 <Row gutter={[0, 24]}>
-                    <Col span={24}>
-                        <Card>
-                            <Row className="actions-row" gutter={[16, 16]}>
-                                <Col xs={24} sm={12} md={8} lg={6} className="search-container">
-                                    <Input.Search
-                                        placeholder="Tìm theo họ tên..."
-                                        value={searchText}
-                                        onChange={(e) => setSearchText(e.target.value)}
-                                        enterButton={<SearchOutlined />}
-                                        size="middle"
-                                        allowClear
-                                    />
-                                </Col>
-                            </Row>
-                        </Card>
-                    </Col>
+
                     <Col span={24}>
                         <Table
                             columns={columns}

@@ -85,11 +85,18 @@ const AdjustAppointmentSchedule = () => {
     }
     (async () => {
       try {
+        const payload = {
+          userId: selectedPatientId,
+          dateFrom: currentRange.start.format("YYYY-MM-DD"),
+          dateTo: currentRange.end.format("YYYY-MM-DD"),  
+        }
+        console.log("payload in adjust appointment :", payload);
         const list = await getAppointmentsByUserId(
           selectedPatientId,
           currentRange.start.toISOString(),
           currentRange.end.toISOString()
         );
+        console.log("Appointments list:", JSON.stringify(list));
         const events = list.map((item) => {
           const workDateStr = item.doctorSchedule.workDate.split("T")[0];
           const startDT = dayjs(`${workDateStr}T${item.doctorSchedule.startTime}`).toISOString();

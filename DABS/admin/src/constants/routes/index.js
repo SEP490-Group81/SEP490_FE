@@ -183,6 +183,10 @@ export const routes = [
         path: "work-schedule",
         element: <StaffWorkSchedule />
       },
+      {
+        path: "request-leave",
+        element: <DoctorRequestLeave />,
+      }
     ]
   },
   {
@@ -217,6 +221,10 @@ export const routes = [
         path: "payment-list",
         element: <NurseUnpaidBookingList />
       },
+      {
+        path: "request-leave",
+        element: <DoctorRequestLeave />,
+      }
     ]
   },
   {

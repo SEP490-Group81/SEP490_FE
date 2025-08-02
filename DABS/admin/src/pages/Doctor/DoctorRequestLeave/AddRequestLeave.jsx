@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Modal, Form, Input, DatePicker, Select, Button, Spin, notification, Row, Col } from 'antd';
 import { FileTextOutlined } from '@ant-design/icons';
 import { createRequest } from '../../../services/requestService';
+import { useSelector } from 'react-redux';
 
 const { Option } = Select;
 
 const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
   const [form] = Form.useForm();
   const [spinning, setSpinning] = useState(false);
-
+  const user = useSelector((state) => state.user.user);
   const success = () => {
     notification.success({
       message: 'Thành công',
@@ -27,13 +28,13 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
   const mapReasonToRequestType = (reason) => {
     switch (reason) {
       case 'Nghỉ phép':
-        return 1; 
+        return 1;
       case 'Nghỉ ốm':
-        return 2; 
+        return 2;
       case 'Đi công tác':
         return 3;
       case 'Khác':
-        return 4; 
+        return 4;
       default:
         return 4;
     }
@@ -42,12 +43,12 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
     setSpinning(true);
     try {
       const payload = {
-        type: mapReasonToRequestType(values.reason), 
+        type: mapReasonToRequestType(values.reason),
         startDate: values.startDate.format(),
         endDate: values.endDate.format(),
         reason: values.reason,
         status: 1,
-       
+
       };
 
       const response = await createRequest(payload);
@@ -55,7 +56,7 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
       setSpinning(false);
       form.resetFields();
       success();
-      onSuccess(response); 
+      onSuccess(response);
 
     } catch (err) {
       setSpinning(false);
@@ -69,7 +70,7 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
       title={
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <FileTextOutlined style={{ marginRight: 8, color: '#1890ff' }} />
-          Đơn Xin Nghỉ Phép Bác Sĩ
+          Đơn Xin Nghỉ Phép {user?.role?.id === 1 ? 'Bác Sĩ' : user?.role?.id === 7 ? 'Y Tá' : 'Nhân Viên'}
         </div>
       }
       visible={visible}
@@ -95,7 +96,15 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
                 <Input placeholder="Nhập họ và tên bác sĩ" />
               </Form.Item>
             </Col>
-
+            <Col xs={24} md={12}>
+              <Form.Item
+                name="shift"
+                label="Ca nghỉ"
+                rules={[{ required: true, message: 'Nhập ca nghỉ phép' }]}
+              >
+                <Input placeholder="Sáng/Chiều" />
+              </Form.Item>
+            </Col>
           </Row>
 
 
