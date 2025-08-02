@@ -20,7 +20,6 @@ import AdminSystem from "../../pages/AdminSystem/DashBoard";
 import AdminSystemHeader from "../../components/LayoutCommon/admin-system-header";
 import DoctorRequestLeave from "../../pages/Doctor/DoctorRequestLeave";
 import AdminDoctorShiftManagement from "../../pages/AdminHospital/DoctorShiftManagement";
-import NurseShiftManagement from "../../pages/AdminHospital/NurseShiftManagement";
 import StaffShiftManagement from "../../pages/AdminHospital/StaffShiftManagement";
 import ManageRoom from "../../pages/AdminHospital/RoomManagement";
 import ManageSpecialist from "../../pages/AdminHospital/SpecialistManagement";
@@ -99,11 +98,7 @@ export const routes = [
         element:
           <AdminDoctorShiftManagement />
       },
-      {
-        path: "nurse-shift-management",
-        element:
-          <NurseShiftManagement />
-      },
+   
       {
         path: "staff-shift-management",
         element:

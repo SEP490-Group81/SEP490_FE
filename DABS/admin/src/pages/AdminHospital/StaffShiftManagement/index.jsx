@@ -125,10 +125,9 @@ const eventColor = (info) => {
 
 
 const StaffShiftManagement = () => {
-  // const [filteredShifts, setFilteredShifts] = useState([]);
   const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [shiftToDelete, setShiftToDelete] = useState(null);
-  const [staffDetail, setStaffDetail] = useState(null);
+  //const [staffDetail, setStaffDetail] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingShift, setEditingShift] = useState(null);
   const [form] = Form.useForm();
@@ -136,7 +135,7 @@ const StaffShiftManagement = () => {
   const [modalDetail, setModalDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const user = useSelector((state) => state.user.user);
-  // console.log("hospital nurse id is: " + user.hospitals[0]?.id);
+   console.log("hospital nurse id is: " + user.hospitals[0]?.id);
   const [allStaffs, setAllStaffs] = useState([]);
   const [nurses, setNurses] = useState([]);
   const [selectedPersonId, setSelectedPersonId] = useState(null);
@@ -274,20 +273,20 @@ const StaffShiftManagement = () => {
     fetchStaffs();
   }, [user?.hospitals]);
 
-  useEffect(() => {
-    const fetchDoctor = async () => {
-      if (!selectedPersonId) return;
-      const result = await getUserById(selectedPersonId);
-      if (result) {
-        console.log("result doctor detail : " + result);
-        setStaffDetail(result);
-        console.log("staff detail: " + JSON.stringify(staffDetail));
-      } else {
-        console.error("Không tìm thấy thông tin bác sĩ.");
-      }
-    };
-    fetchDoctor();
-  }, [selectedPersonId]);
+  // useEffect(() => {
+  //   const fetchDoctor = async () => {
+  //     if (!selectedPersonId) return;
+  //     const result = await getUserById(selectedPersonId);
+  //     if (result) {
+  //       console.log("result nurse detail : " + JSON.stringify(result));
+  //       setStaffDetail(result);
+  //       console.log("staff detail: " + JSON.stringify(staffDetail));
+  //     } else {
+  //       console.error("Không tìm thấy thông tin bác sĩ.");
+  //     }
+  //   };
+  //   fetchDoctor();
+  // }, [selectedPersonId]);
 
   const normalStaffs = allStaffs.filter(
     (s) => !nurses.find((n) => n.staffId === s.staffId)
@@ -343,7 +342,7 @@ const StaffShiftManagement = () => {
         const updatePayload = {
           id: editingShift.id,
           doctorScheduleId: editingShift.doctorScheduleId || 0,
-          userId: values.staffId,
+          staffIds: values.staffId,
           workDate: values.workDate.toISOString(),
           timeShift: shiftsPayload[0].startTime < "12:00:00" ? 1 : 2,
           isAvailable: true,
@@ -354,8 +353,8 @@ const StaffShiftManagement = () => {
         dispatch(setMessage({ type: 'success', content: 'Cập nhật ca làm việc thành công!' }));
       } else {
         const payload = {
-          userIds: [values.staffId],
-          hospitalId: user.hospitals[0]?.staffId,
+          staffIds: [values.staffId],
+          hospitalId: user.hospitals[0]?.id,
           daysOfWeek: [dayjs(values.workDate).day()],
           shifts: shiftsPayload,
           startDate: values.workDate.format("YYYY-MM-DD"),
@@ -363,7 +362,7 @@ const StaffShiftManagement = () => {
           isAvailable: false,
           reasonOfUnavailability: "",
         };
-        console.log("Create payload:", payload);
+        console.log("Create payload:", JSON.stringify(payload));
         await createStaffSchedules(payload);
         dispatch(setMessage({ type: 'success', content: 'Tạo ca làm việc thành công!' }));
       }
@@ -483,7 +482,7 @@ const StaffShiftManagement = () => {
       for (const userId of staffIds) {
         const payload = {
           userIds: [userId],
-          hospitalId: user.hospitals[0]?.staffId,
+          hospitalId: user.hospitals[0]?.id,
           daysOfWeek: weekdays,
           shifts: shiftsPayload,
           startDate: dateRange[0].format("YYYY-MM-DD"),
