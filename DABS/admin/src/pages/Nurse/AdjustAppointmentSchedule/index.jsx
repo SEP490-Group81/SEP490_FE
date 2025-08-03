@@ -25,6 +25,7 @@ import { getSpecializationsByHospitalId } from "../../../services/specialization
 import { getHospitalSpecializationSchedule } from "../../../services/scheduleService";
 import { getAllPatients } from "../../../services/userService";
 import { changeAppointmentStatus, changeAppointmentTime, getAppointmentsByUserId } from "../../../services/appointmentService";
+import { getStepByServiceId } from "../../../services/medicalServiceService";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -46,7 +47,37 @@ const AdjustAppointmentSchedule = () => {
   const [filterSpecId, setFilterSpecId] = useState(null);
   const [availableSchedules, setAvailableSchedules] = useState([]);
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
+  const [serviceSteps, setServiceSteps] = useState([]);
 
+  useEffect(() => {
+    if (!selectedEvent) {
+      setServiceSteps([]);
+      return;
+    }
+    const serviceId = selectedEvent.extendedProps.serviceId;
+    if (!serviceId) {
+      setServiceSteps([]);
+      return;
+    }
+
+    (async () => {
+      try {
+        const steps = await getStepByServiceId(serviceId);
+        setServiceSteps(steps || []);
+      } catch (error) {
+        message.error("Lấy danh sách bước dịch vụ thất bại");
+        setServiceSteps([]);
+      }
+    })();
+  }, [selectedEvent]);
+
+  const isSpecializationStepEnabled = serviceSteps.some(
+    (step) => step.steps.id === 1 && step.status === true
+  );
+
+  const isDoctorStepEnabled = serviceSteps.some(
+    (step) => step.steps.id === 5 && step.status === true
+  );
   useEffect(() => {
     (async () => {
       try {
@@ -88,7 +119,7 @@ const AdjustAppointmentSchedule = () => {
         const payload = {
           userId: selectedPatientId,
           dateFrom: currentRange.start.format("YYYY-MM-DD"),
-          dateTo: currentRange.end.format("YYYY-MM-DD"),  
+          dateTo: currentRange.end.format("YYYY-MM-DD"),
         }
         console.log("payload in adjust appointment :", payload);
         const list = await getAppointmentsByUserId(
@@ -117,14 +148,15 @@ const AdjustAppointmentSchedule = () => {
               specializationName: item.doctorSchedule.specialization?.name,
               department: item.doctorSchedule.department,
               note: item.note,
+              serviceId: item.service?.id,
               status:
                 item.status === 1
                   ? "Chưa xác nhận"
                   : item.status === 2
-                  ? "Đã xác nhận"
-                  : item.status === 3
-                  ? "Đã hủy"
-                  : "Không rõ",
+                    ? "Đã xác nhận"
+                    : item.status === 3
+                      ? "Đã hủy"
+                      : "Không rõ",
               room: item.doctorSchedule.room?.name,
               serviceName: item.service?.name,
               appointmentId: item.id,
@@ -220,10 +252,10 @@ const AdjustAppointmentSchedule = () => {
                 item.status === 1
                   ? "Chưa xác nhận"
                   : item.status === 2
-                  ? "Đã xác nhận"
-                  : item.status === 3
-                  ? "Đã hủy"
-                  : "Không rõ",
+                    ? "Đã xác nhận"
+                    : item.status === 3
+                      ? "Đã hủy"
+                      : "Không rõ",
               room: item.doctorSchedule.room?.name,
               serviceName: item.service?.name,
               appointmentId: item.id,
@@ -263,7 +295,7 @@ const AdjustAppointmentSchedule = () => {
       await changeAppointmentStatus(appointmentId, newStatus);
       message.success("Đã đổi trạng thái lịch hẹn");
       setModalOpen(false);
-      setSelectedPatientId((id) => id); 
+      setSelectedPatientId((id) => id);
     } catch {
       message.error("Đổi trạng thái không thành công");
     }
@@ -283,7 +315,7 @@ const AdjustAppointmentSchedule = () => {
       await changeAppointmentStatus(appointmentId, 3);
       message.success("Đã hủy lịch hẹn");
       setModalOpen(false);
-      setSelectedPatientId((id) => id); 
+      setSelectedPatientId((id) => id);
     } catch {
       message.error("Hủy lịch không thành công");
     }
@@ -399,6 +431,7 @@ const AdjustAppointmentSchedule = () => {
                     onChange={setFilterDoctorId}
                     placeholder="Chọn bác sĩ"
                     showSearch
+                    disabled={!isDoctorStepEnabled}
                     filterOption={(input, option) =>
                       option.children.toLowerCase().includes(input.toLowerCase())
                     }
@@ -419,6 +452,7 @@ const AdjustAppointmentSchedule = () => {
                     onChange={setFilterSpecId}
                     placeholder="Chọn chuyên khoa"
                     showSearch
+                    disabled={!isSpecializationStepEnabled}
                     filterOption={(input, option) =>
                       option.children.toLowerCase().includes(input.toLowerCase())
                     }
