@@ -17,7 +17,7 @@ import {
 import viVN from "antd/es/locale/vi_VN";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import { getDoctorByHospitalId } from "../../../services/doctorService";
 import { getSpecializationsByHospitalId } from "../../../services/specializationService";
@@ -26,6 +26,7 @@ import { getHospitalSpecializationSchedule } from "../../../services/scheduleSer
 import { getAllPatients } from "../../../services/userService";
 import { changeAppointmentStatus, changeAppointmentTime, getAppointmentsByUserId } from "../../../services/appointmentService";
 import { getStepByServiceId } from "../../../services/medicalServiceService";
+import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -49,6 +50,21 @@ const AdjustAppointmentSchedule = () => {
   const [selectedScheduleId, setSelectedScheduleId] = useState(null);
   const [serviceSteps, setServiceSteps] = useState([]);
 
+  const messageState = useSelector((state) => state.message);
+  const [messageApi, contextHolder] = message.useMessage();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (messageState) {
+      messageApi.open({
+        type: messageState.type,
+        content: messageState.content,
+      });
+      dispatch(clearMessage());
+    }
+  }, [messageState, dispatch, messageApi]);
+
+
   useEffect(() => {
     if (!selectedEvent) {
       setServiceSteps([]);
@@ -65,7 +81,6 @@ const AdjustAppointmentSchedule = () => {
         const steps = await getStepByServiceId(serviceId);
         setServiceSteps(steps || []);
       } catch (error) {
-        message.error("Lấy danh sách bước dịch vụ thất bại");
         setServiceSteps([]);
       }
     })();
@@ -84,7 +99,7 @@ const AdjustAppointmentSchedule = () => {
         const data = await getAllPatients();
         setPatients(data || []);
       } catch {
-        message.error("Lấy danh sách bệnh nhân thất bại");
+        console.error("Failed to fetch patients");
       }
     })();
   }, []);
@@ -96,14 +111,12 @@ const AdjustAppointmentSchedule = () => {
         const docs = await getDoctorByHospitalId(hospitalId);
         setDoctors(docs || []);
       } catch {
-        message.error("Lấy danh sách bác sĩ thất bại");
         setDoctors([]);
       }
       try {
         const specs = await getSpecializationsByHospitalId(hospitalId);
         setSpecializations(specs || []);
       } catch {
-        message.error("Lấy danh sách chuyên khoa thất bại");
         setSpecializations([]);
       }
     })();
@@ -135,7 +148,7 @@ const AdjustAppointmentSchedule = () => {
           const patient = patients.find((p) => p.id === item.patientId);
           return {
             id: `appointment-${item.id}`,
-            title: `Hẹn khám: ${patient?.fullname || "Bệnh nhân"}`,
+            title: `Hẹn khám`,
             start: startDT,
             end: endDT,
             extendedProps: {
@@ -165,45 +178,69 @@ const AdjustAppointmentSchedule = () => {
         });
         setAppointments(events);
       } catch {
-        message.error("Lấy lịch hẹn thất bại");
         setAppointments([]);
       }
     })();
   }, [selectedPatientId, currentRange, patients]);
 
-  const openModal = (event) => {
+  const openModal = async (event) => {
     setSelectedEvent(event);
     setFilterDoctorId(event.extendedProps.doctorId || null);
     setFilterSpecId(event.extendedProps.specializationId || null);
-    setAvailableSchedules([]);
     setSelectedScheduleId(null);
     setModalOpen(true);
-  };
 
-  useEffect(() => {
+    await loadAvailableSchedules(event.extendedProps.doctorId, event.extendedProps.specializationId);
+  };
+  const loadAvailableSchedules = async (doctorId, specId) => {
     if (!hospitalId) return;
-    if (!filterDoctorId && !filterSpecId) {
+    if (!doctorId && !specId) {
       setAvailableSchedules([]);
       return;
     }
-    (async () => {
-      try {
-        const payload = {
-          hospitalId,
-          doctorIds: filterDoctorId ? [filterDoctorId] : [],
-          specializationId: filterSpecId || null,
-          dateFrom: currentRange.start.format("YYYY-MM-DD"),
-          dateTo: currentRange.end.format("YYYY-MM-DD"),
-        };
-        const result = await getHospitalSpecializationSchedule(payload);
-        const schedules = (result.schedules || []).filter((item) => item.isAvailable);
-        setAvailableSchedules(schedules);
-      } catch {
-        message.error("Lấy ca làm việc khả dụng thất bại");
-        setAvailableSchedules([]);
-      }
-    })();
-  }, [hospitalId, filterDoctorId, filterSpecId, currentRange]);
+    try {
+      const payload = {
+        hospitalId,
+        doctorIds: doctorId ? [doctorId] : [],
+        specializationId: specId || null,
+        dateFrom: currentRange.start.format("YYYY-MM-DD"),
+        dateTo: currentRange.end.format("YYYY-MM-DD"),
+      };
+      console.log("Fetching available schedules with payload:", JSON.stringify(payload));
+      const result = await getHospitalSpecializationSchedule(payload);
+      const schedules = (result.schedules || []).filter(item => item.isAvailable);
+      setAvailableSchedules(schedules);
+    } catch {
+      setAvailableSchedules([]);
+    }
+  };
+  // useEffect(() => {
+  //   if (!hospitalId) return;
+  //   if (!filterDoctorId && !filterSpecId) {
+  //     setAvailableSchedules([]);
+  //     return;
+  //   }
+  //   (async () => {
+  //     try {
+  //       const payload = {
+  //         hospitalId,
+  //         doctorIds: filterDoctorId ? [filterDoctorId] : [],
+  //         specializationId: filterSpecId || null,
+  //         dateFrom: currentRange.start.format("YYYY-MM-DD"),
+  //         dateTo: currentRange.end.format("YYYY-MM-DD"),
+  //       };
+  //       console.log("Fetching available schedules with payload:", JSON.stringify(payload));
+  //       const result = await getHospitalSpecializationSchedule(payload);
+  //       console.log("Available schedules:", JSON.stringify(result));
+  //       const schedules = (result.schedules || []).filter((item) => item.isAvailable);
+  //       setAvailableSchedules(schedules);
+  //       console.log("Filtered available schedules:", JSON.stringify(availableSchedules));
+  //     } catch {
+  //       message.error("Lấy ca làm việc khả dụng thất bại");
+  //       setAvailableSchedules([]);
+  //     }
+  //   })();
+  // }, [hospitalId, filterDoctorId, filterSpecId, currentRange]);
 
   const handleDatesSet = (arg) => {
     setCurrentRange({ start: dayjs(arg.start), end: dayjs(arg.end) });
@@ -211,16 +248,15 @@ const AdjustAppointmentSchedule = () => {
 
   const handleChangeTime = async () => {
     if (!selectedEvent) {
-      message.error("Chưa chọn lịch hẹn");
       return;
     }
     if (!selectedScheduleId) {
-      message.error("Vui lòng chọn ca làm việc mới");
       return;
     }
     try {
       await changeAppointmentTime(selectedEvent.extendedProps.appointmentId, selectedScheduleId);
-      message.success("Đã đổi thời gian lịch hẹn");
+      console.log("Changing appointment time for:", selectedEvent.extendedProps.appointmentId, "to schedule ID:", selectedScheduleId);
+      dispatch(setMessage({ type: "success", content: "Đổi lịch hẹn thành công!" }));
       setModalOpen(false);
       if (selectedPatientId && currentRange.start && currentRange.end) {
         const list = await getAppointmentsByUserId(
@@ -265,7 +301,8 @@ const AdjustAppointmentSchedule = () => {
         setAppointments(events);
       }
     } catch {
-      message.error("Đổi thời gian không thành công");
+      console.log("Error changing appointment time:");
+      dispatch(setMessage({ type: "error", content: "Lịch không khả dụng hoặc người dùng đã có lịch khám vào thời gian này!" }));
     }
   };
 
@@ -293,11 +330,11 @@ const AdjustAppointmentSchedule = () => {
 
     try {
       await changeAppointmentStatus(appointmentId, newStatus);
-      message.success("Đã đổi trạng thái lịch hẹn");
+      dispatch(setMessage({ type: "success", content: "Đã đổi trạng thái lịch hẹn!" }));
       setModalOpen(false);
       setSelectedPatientId((id) => id);
     } catch {
-      message.error("Đổi trạng thái không thành công");
+      dispatch(setMessage({ type: "error", content: "Đổi trạng thái không thành công!" }));
     }
   };
 
@@ -333,198 +370,203 @@ const AdjustAppointmentSchedule = () => {
   };
 
   return (
-    <ConfigProvider locale={viVN}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: 20 }}>
-        <Title level={2} style={{ textAlign: "center", marginBottom: 20 }}>
-          Quản lý lịch hẹn & ca làm việc
-        </Title>
+    <>
+      {contextHolder}
 
-        <Row gutter={16} style={{ marginBottom: 16 }}>
-          <Col span={8}>
-            <Select
-              showSearch
-              allowClear
-              placeholder="Chọn bệnh nhân"
-              style={{ width: "100%" }}
-              onChange={setSelectedPatientId}
-              value={selectedPatientId}
-              optionFilterProp="children"
-              filterOption={(input, option) =>
-                option?.children.toLowerCase().includes(input.toLowerCase())
-              }
-              optionLabelProp="children"
-            >
-              {patients.map((p) => (
-                <Option key={p.id} value={p.id}>
-                  {p.fullname || `Bệnh nhân #${p.id}`}
-                </Option>
-              ))}
-            </Select>
-          </Col>
-        </Row>
+      <ConfigProvider locale={viVN}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: 20 }}>
+          <Title level={2} style={{ textAlign: "center", marginBottom: 20 }}>
+            Quản lý lịch hẹn & ca làm việc
+          </Title>
 
-        <FullCalendar
-          plugins={[timeGridPlugin, interactionPlugin]}
-          initialView="timeGridWeek"
-          locale={viLocale}
-          editable={false}
-          events={appointments}
-          eventContent={renderEventContent}
-          eventClick={({ event }) => openModal(event)}
-          height={600}
-          nowIndicator
-          headerToolbar={{
-            left: "prev,next today",
-            center: "title",
-            right: "timeGridWeek,timeGridDay",
-          }}
-          allDaySlot={false}
-          slotMinTime="06:00:00"
-          slotMaxTime="20:00:00"
-          datesSet={handleDatesSet}
-        />
+          <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Col span={8}>
+              <Select
+                showSearch
+                allowClear
+                placeholder="Chọn bệnh nhân"
+                style={{ width: "100%" }}
+                onChange={setSelectedPatientId}
+                value={selectedPatientId}
+                optionFilterProp="children"
+                filterOption={(input, option) =>
+                  option?.children.toLowerCase().includes(input.toLowerCase())
+                }
+                optionLabelProp="children"
+              >
+                {patients.map((p) => (
+                  <Option key={p.id} value={p.id}>
+                    {p.fullname || `Bệnh nhân #${p.id}`}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+          </Row>
 
-        <Modal
-          open={modalOpen}
-          onCancel={() => setModalOpen(false)}
-          footer={null}
-          centered
-          title={
-            selectedEvent?.title ? `Chi tiết: ${selectedEvent.title}` : "Chi tiết"
-          }
-          width={700}
-        >
-          {selectedEvent ? (
-            <>
-              <p>
-                <b>Thời gian:</b>{" "}
-                {dayjs(selectedEvent.start).format("DD/MM/YYYY HH:mm")} -{" "}
-                {dayjs(selectedEvent.end).format("HH:mm")}
-              </p>
-              <p>
-                <b>Bệnh nhân:</b> {selectedEvent.extendedProps.patientName}
-              </p>
-              <p>
-                <b>Bác sĩ hiện tại:</b> {selectedEvent.extendedProps.doctorName || "Không rõ"}
-              </p>
-              <p>
-                <b>Chuyên khoa hiện tại:</b>{" "}
-                {selectedEvent.extendedProps.specializationName || "Không rõ"}
-              </p>
-              <p>
-                <b>Phòng:</b> {selectedEvent.extendedProps.room || "Không rõ"}
-              </p>
-              <p>
-                <b>Trạng thái:</b> {selectedEvent.extendedProps.status}
-              </p>
-              <p>
-                <b>Ghi chú:</b> {selectedEvent.extendedProps.note || "Không có"}
-              </p>
+          <FullCalendar
+            plugins={[timeGridPlugin, interactionPlugin]}
+            initialView="timeGridWeek"
+            locale={viLocale}
+            editable={false}
+            events={appointments}
+            eventContent={renderEventContent}
+            eventClick={({ event }) => openModal(event)}
+            height={600}
+            nowIndicator
+            headerToolbar={{
+              left: "prev,next today",
+              center: "title",
+              right: "timeGridWeek,timeGridDay",
+            }}
+            allDaySlot={false}
+            slotMinTime="06:00:00"
+            slotMaxTime="20:00:00"
+            datesSet={handleDatesSet}
+          />
 
-              <Row gutter={16} style={{ marginTop: 16 }}>
-                <Col span={12}>
-                  <label>Bác sĩ (lọc ca khả dụng):</label>
-                  <Select
-                    allowClear
-                    style={{ width: "100%" }}
-                    value={filterDoctorId}
-                    onChange={setFilterDoctorId}
-                    placeholder="Chọn bác sĩ"
-                    showSearch
-                    disabled={!isDoctorStepEnabled}
-                    filterOption={(input, option) =>
-                      option.children.toLowerCase().includes(input.toLowerCase())
-                    }
+          <Modal
+            open={modalOpen}
+            onCancel={() => setModalOpen(false)}
+            footer={null}
+            centered
+            title={
+              selectedEvent?.title ? `Chi tiết: ${selectedEvent.title}` : "Chi tiết"
+            }
+            width={700}
+          >
+            {selectedEvent ? (
+              <>
+                <p>
+                  <b>Thời gian:</b>{" "}
+                  {dayjs(selectedEvent.start).format("DD/MM/YYYY HH:mm")} -{" "}
+                  {dayjs(selectedEvent.end).format("HH:mm")}
+                </p>
+                <p>
+                  <b>Bệnh nhân:</b> {selectedEvent.extendedProps.patientName}
+                </p>
+                <p>
+                  <b>Bác sĩ hiện tại:</b> {selectedEvent.extendedProps.doctorName || "Không rõ"}
+                </p>
+                <p>
+                  <b>Chuyên khoa hiện tại:</b>{" "}
+                  {selectedEvent.extendedProps.specializationName || "Không rõ"}
+                </p>
+                <p>
+                  <b>Phòng:</b> {selectedEvent.extendedProps.room || "Không rõ"}
+                </p>
+                <p>
+                  <b>Trạng thái:</b> {selectedEvent.extendedProps.status}
+                </p>
+                <p>
+                  <b>Ghi chú:</b> {selectedEvent.extendedProps.note || "Không có"}
+                </p>
+
+                <Row gutter={16} style={{ marginTop: 16 }}>
+                  <Col span={12}>
+                    <label>Bác sĩ (lọc ca khả dụng):</label>
+                    <Select
+                      allowClear
+                      style={{ width: "100%" }}
+                      value={filterDoctorId}
+                      onChange={setFilterDoctorId}
+                      placeholder="Chọn bác sĩ"
+                      showSearch
+                      disabled={!isDoctorStepEnabled}
+                      filterOption={(input, option) =>
+                        option.children.toLowerCase().includes(input.toLowerCase())
+                      }
+                    >
+                      {doctors.map((doc) => (
+                        <Option key={doc.id} value={doc.id}>
+                          {doc.user?.fullname || doc.description || `Bác sĩ #${doc.id}`}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Col>
+                  <Col span={12}>
+                    <label>Chuyên khoa (lọc ca khả dụng):</label>
+                    <Select
+                      allowClear
+                      style={{ width: "100%" }}
+                      value={filterSpecId}
+                      onChange={setFilterSpecId}
+                      placeholder="Chọn chuyên khoa"
+                      showSearch
+                      disabled={!isSpecializationStepEnabled}
+                      filterOption={(input, option) =>
+                        option.children.toLowerCase().includes(input.toLowerCase())
+                      }
+                    >
+                      {specializations.map((spec) => (
+                        <Option key={spec.id} value={spec.id}>
+                          {spec.name}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Col>
+                </Row>
+
+                <div style={{ marginTop: 20 }}>
+                  <label>Chọn ca làm việc khả dụng để đổi lịch:</label>
+                  {availableSchedules.length === 0 ? (
+                    <Text type="secondary">
+                      Vui lòng chọn bác sĩ hoặc chuyên khoa để hiển thị ca làm việc khả dụng
+                    </Text>
+                  ) : (
+                    <List
+                      bordered
+                      dataSource={availableSchedules}
+                      renderItem={(item) => {
+                        const workDate = dayjs(item.workDate).format("DD/MM/YYYY");
+                        return (
+                          <List.Item
+                            style={{
+                              cursor: "pointer",
+                              backgroundColor:
+                                selectedScheduleId === item.id ? "#bae7ff" : "transparent",
+                            }}
+                            onClick={() => setSelectedScheduleId(item.id)}
+                          >
+                            <Text strong>
+                              Ca {item.startTime >= "07:30:00" && item.endTime <= "12:00:00" ? "Sáng" : "Chiều"} - {workDate}
+                            </Text>
+                            <br />
+                            <Text>
+                              {item.startTime} - {item.endTime} - Phòng {item.roomName || "Không rõ"}
+                            </Text>
+
+                          </List.Item>
+                        );
+                      }}
+                      style={{ maxHeight: 200, overflowY: "auto", marginBottom: 16 }}
+                    />
+                  )}
+                </div>
+
+                <div style={{ textAlign: "right" }}>
+                  <Button
+                    type="primary"
+                    disabled={!selectedScheduleId}
+                    onClick={handleChangeTime}
+                    style={{ marginRight: 8 }}
                   >
-                    {doctors.map((doc) => (
-                      <Option key={doc.id} value={doc.id}>
-                        {doc.user?.fullname || doc.description || `Bác sĩ #${doc.id}`}
-                      </Option>
-                    ))}
-                  </Select>
-                </Col>
-                <Col span={12}>
-                  <label>Chuyên khoa (lọc ca khả dụng):</label>
-                  <Select
-                    allowClear
-                    style={{ width: "100%" }}
-                    value={filterSpecId}
-                    onChange={setFilterSpecId}
-                    placeholder="Chọn chuyên khoa"
-                    showSearch
-                    disabled={!isSpecializationStepEnabled}
-                    filterOption={(input, option) =>
-                      option.children.toLowerCase().includes(input.toLowerCase())
-                    }
-                  >
-                    {specializations.map((spec) => (
-                      <Option key={spec.id} value={spec.id}>
-                        {spec.name}
-                      </Option>
-                    ))}
-                  </Select>
-                </Col>
-              </Row>
-
-              <div style={{ marginTop: 20 }}>
-                <label>Chọn ca làm việc khả dụng để đổi lịch:</label>
-                {availableSchedules.length === 0 ? (
-                  <Text type="secondary">
-                    Vui lòng chọn bác sĩ hoặc chuyên khoa để hiển thị ca làm việc khả dụng
-                  </Text>
-                ) : (
-                  <List
-                    bordered
-                    dataSource={availableSchedules}
-                    renderItem={(item) => {
-                      const workDate = dayjs(item.workDate).format("DD/MM/YYYY");
-                      return (
-                        <List.Item
-                          style={{
-                            cursor: "pointer",
-                            backgroundColor:
-                              selectedScheduleId === item.id ? "#bae7ff" : "transparent",
-                          }}
-                          onClick={() => setSelectedScheduleId(item.id)}
-                        >
-                          <Text strong>
-                            Ca {item.timeShift === 1 ? "Sáng" : "Chiều"} - {workDate}
-                          </Text>
-                          <br />
-                          <Text>
-                            {item.startTime} - {item.endTime} - Phòng {item.room?.name || "Không rõ"}
-                          </Text>
-                        </List.Item>
-                      );
-                    }}
-                    style={{ maxHeight: 200, overflowY: "auto", marginBottom: 16 }}
-                  />
-                )}
-              </div>
-
-              <div style={{ textAlign: "right" }}>
-                <Button
-                  type="primary"
-                  disabled={!selectedScheduleId}
-                  onClick={handleChangeTime}
-                  style={{ marginRight: 8 }}
-                >
-                  Đổi lịch hẹn
-                </Button>
-                <Button onClick={handleChangeStatus} style={{ marginRight: 8 }}>
-                  Đổi trạng thái
-                </Button>
-                <Button danger onClick={handleCancelAppointment}>
-                  Hủy lịch hẹn
-                </Button>
-              </div>
-            </>
-          ) : (
-            <p>Không có dữ liệu</p>
-          )}
-        </Modal>
-      </div>
-    </ConfigProvider>
+                    Đổi lịch hẹn
+                  </Button>
+                  <Button onClick={handleChangeStatus} style={{ marginRight: 8 }}>
+                    Đổi trạng thái
+                  </Button>
+                  <Button danger onClick={handleCancelAppointment}>
+                    Hủy lịch hẹn
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <p>Không có dữ liệu</p>
+            )}
+          </Modal>
+        </div>
+      </ConfigProvider>
+    </>
   );
 };
 

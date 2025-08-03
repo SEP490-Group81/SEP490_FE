@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getAuth, postAuth, putAuth } from '../utils/request';
+import { getAuth, postAuth, putAuth, putAuthNum } from '../utils/request';
 
 const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWRlbnRpZmllciI6IjEiLCJlbWFpbCI6ImFkbWluQGhvc3RuYW1lLmNvbSIsImZ1bGxOYW1lIjoiU3VwZXIgVXNlciIsIm5hbWUiOiJTdXBlciIsInN1cm5hbWUiOiJVc2VyIiwiaXBBZGRyZXNzIjoiMC4wLjAuMSIsImF2YXRhclVybCI6IiIsIm1vYmlsZXBob25lIjoiIiwiZXhwIjoxNzgxMjcwNDgzLCJpc3MiOiJodHRwczovL0JFLlNFUDQ5MC5uZXQiLCJhdWQiOiJCRS5TRVA0OTAifQ.kQIX9uvjN9UOPiBitp9JsO2DlPlFyIU4VTP1ZyM4k3Y";
 
@@ -376,7 +376,7 @@ export const getAppointmentsByUserId = async (userId, from, to) => {
 
 export const changeAppointmentTime = async (appointmentId, scheduleId) => {
   try {
-    const result = await postAuth(`/appointments/${appointmentId}/change-time/${scheduleId}`);
+    const result = await putAuth(`/appointments/${appointmentId}/change-time/${scheduleId}`);
     return result;
   } catch (error) {
     console.error(
@@ -391,7 +391,12 @@ export const changeAppointmentStatus = async (appointmentId, newStatus) => {
   try {
     const body = JSON.stringify(String(newStatus)); 
     
-    const result = await putAuth(`/appointments/${appointmentId}/change-status`, body);
+       const result = await putAuthNum(
+      `/appointments/${appointmentId}/change-status`,
+      body,
+      { 'Content-Type': 'application/json' }
+    );
+
     return result;
   } catch (error) {
     console.error(
