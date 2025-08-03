@@ -39,6 +39,7 @@ const LegendColor = () => (
 
 const WorkScheduleNurse = () => {
   const user = useSelector((state) => state.user.user);
+  console.log("Current user:", user);
   const hospitalId = user?.hospitals?.[0]?.id;
   const userId = user?.id;
 
@@ -46,7 +47,6 @@ const WorkScheduleNurse = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  // Load lịch theo ngày hiển thị (datesSet)
   const handleDatesSet = async (arg) => {
     if (!userId || !hospitalId) {
       setEvents([]);
@@ -57,7 +57,6 @@ const WorkScheduleNurse = () => {
       const from = dayjs(arg.start).toISOString();
       const to = dayjs(arg.end).toISOString();
 
-      // Gọi API lấy lịch theo user đăng nhập và bệnh viện
       const data = await getScheduleByStaffNurseId(userId, from, to, hospitalId);
       const schedules = data?.schedules || [];
 

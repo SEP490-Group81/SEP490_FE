@@ -35,7 +35,9 @@ import { getStaffNurseList } from "../../../services/staffNurseService";
 import { getUserById } from "../../../services/userService";
 import { createStaffSchedules, deleteStaffSchedule, getScheduleByStaffNurseId, updateStaffSchedule } from "../../../services/scheduleService";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
+import utc from "dayjs/plugin/utc";
 
+dayjs.extend(utc);
 const { Option, OptGroup } = Select;
 const { RangePicker } = DatePicker;
 
@@ -177,7 +179,7 @@ const StaffShiftManagement = () => {
     console.log("Fetching staff schedule for:", selectedPersonId, "from", from, "to", to, "and hospital ID:", user.hospitals[0]?.id);
 
     try {
-      
+      console.log("Fetching schedule for staff ID:", selectedPersonId, "from", from, "to", to, "hospital ID:", user.hospitals[0]?.id);
       const data = await getScheduleByStaffNurseId(selectedPersonId, from, to, user.hospitals[0]?.id);
       console.log("Fetched staff schedule data:", data, "for staff ID:", selectedPersonId);
       const schedules = data?.schedules || [];
@@ -229,7 +231,7 @@ const StaffShiftManagement = () => {
 
         return {
           id: item.id,
-          title: item.timeShift === 1 ? "Ca sáng" : "Ca chiều",
+          title: item.timeShift === 1 ? "Ca sáng " : "Ca chiều",
           start: start.toISOString(),
           end: end.toISOString(),
           extendedProps: {
@@ -238,6 +240,7 @@ const StaffShiftManagement = () => {
             room: item.room?.name || "Không rõ",
             status,
             patients,
+            doctorScheduleId: item.doctorScheduleId || 0,
           },
         };
       });
@@ -321,12 +324,28 @@ const StaffShiftManagement = () => {
     if (dateStr) form.setFieldValue("workDate", dayjs(dateStr));
     setModalVisible(true);
   };
+  const handleEventClick = ({ event }) => {
+    setSelectedEvent(event);
 
-  const onEditShift = (shift) => {
-    setSelectedEvent(shift);
-    console.log("Selected event for edit:", selectedEvent);
+    setEditingShift({
+      id: event.id,
+      doctorScheduleId: event.extendedProps.doctorScheduleId || 0,
+      staffId: event.extendedProps.staffId || selectedPersonId,
+      workDate: dayjs(event.start).local().startOf('day'),
+      timeShift: event.title.includes("sáng") ? 1 : 2,
+      isAvailable: true,
+      reasonOfUnavailability: event.extendedProps.reasonOfUnavailability || "",
+    });
+
+    form.setFieldsValue({
+      staffId: event.extendedProps.staffId || selectedPersonId,
+      workDate: dayjs(event.start).local().startOf('day'),
+      shift: event.title.includes("sáng") ? ["morning"] : ["afternoon"],
+    });
+
     setModalDetail(true);
   };
+
 
 
   const onFinish = async (values) => {
@@ -337,12 +356,13 @@ const StaffShiftManagement = () => {
     }));
 
     try {
+
       if (editingShift) {
         const updatePayload = {
           id: editingShift.id,
-          doctorScheduleId: editingShift.doctorScheduleId || 0,
-          staffIds: values.staffId,
-          workDate: values.workDate.toISOString(),
+          doctorScheduleId: editingShift.doctorScheduleId || null,
+          staffId: values.staffId,
+         workDate: values.workDate.format('YYYY-MM-DD'),
           timeShift: shiftsPayload[0].startTime < "12:00:00" ? 1 : 2,
           isAvailable: true,
           reasonOfUnavailability: "",
@@ -735,7 +755,7 @@ const StaffShiftManagement = () => {
                     }}
                     locale="vi"
                     height={600}
-                    eventClick={(info) => onEditShift(info.event)}
+                    eventClick={handleEventClick}
                     events={events}
                     eventDidMount={eventColor}
                     datesSet={handleDatesSet}
@@ -784,7 +804,7 @@ const StaffShiftManagement = () => {
                 onFinish={onFinish}
                 initialValues={{
                   status: "pending",
-                  staffId: selectedPersonId 
+                  staffId: selectedPersonId
                 }}
                 scrollToFirstError
               >
@@ -795,7 +815,7 @@ const StaffShiftManagement = () => {
                       label="Nhân viên"
                       rules={[{ required: true, message: "Vui lòng chọn Nhân viên" }]}
                     >
-                      <Select  placeholder="Chọn Nhân viên" style={{ borderRadius: 8 }}>
+                      <Select placeholder="Chọn Nhân viên" style={{ borderRadius: 8 }}>
                         {allStaffs.map((doc) => (
                           <Option key={doc?.staffId} value={doc?.staffId}>
                             {doc?.fullname}
@@ -869,16 +889,26 @@ const StaffShiftManagement = () => {
                   type="primary"
                   disabled={isShiftDisabled(selectedEvent)}
                   onClick={() => {
-                    setEditingShift(selectedEvent.extendedProps);
-                    form.setFieldsValue({
-                      staffId: selectedEvent.extendedProps.staffId,
-                      workDate: dayjs(selectedEvent.start),
+                    setEditingShift({
+                      id: selectedEvent.id,
+                      doctorScheduleId: selectedEvent.extendedProps.doctorScheduleId || 0,
+                      staffId: selectedEvent.extendedProps.staffId || selectedPersonId,
+                      workDate: selectedEvent.start,
+                      timeShift: selectedEvent.title.includes("sáng") ? 1 : 2,
+                      isAvailable: true,
+                      reasonOfUnavailability: selectedEvent.extendedProps.reasonOfUnavailability || "",
                     });
+
+                    form.setFieldsValue({
+                      staffId: selectedEvent.extendedProps.staffId || selectedPersonId,
+                       workDate: dayjs(selectedEvent.start).local().startOf('day'),
+                      shift: selectedEvent.title.includes("sáng") ? ["morning"] : ["afternoon"],
+                    });
+
                     setModalVisible(true);
                     setModalDetail(false);
                   }}
                   style={{ borderRadius: 8 }}
-
                 >
                   Sửa
                 </Button>,
@@ -935,7 +965,7 @@ const StaffShiftManagement = () => {
                   <p>🕒 Thời gian: {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
                   <p>👥 Số bệnh nhân: {selectedEvent.extendedProps.patients?.length || 0}</p>
                   <p>📌 Trạng thái: {selectedEvent.extendedProps.status || "Không rõ"}</p>
-
+                  {/* <p>📌 id doctor schedule: {selectedEvent.extendedProps.doctorScheduleId || "Không rõ"}</p> */}
                   <List
                     bordered
                     dataSource={selectedEvent.extendedProps.patients || []}
@@ -948,7 +978,7 @@ const StaffShiftManagement = () => {
                     style={{ marginBottom: 22 }}
                   />
 
-                
+
                 </>
               ) : (
                 <div>Không có dữ liệu lịch làm việc.</div>
