@@ -179,19 +179,23 @@ export const createDoctor = async (doctorData) => {
 // Update doctor
 export const updateDoctor = async (id, doctorData) => {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return {
-        ...doctorData,
-        id,
-        updatedAt: new Date().toISOString()
-      };
-    }
+    console.log('🔄 updateDoctor called with ID:', id);
+    console.log('📝 updateDoctor data:', doctorData);
 
-    const response = putAuth(`/doctors`, doctorData);
-    return response.data;
+    // ✅ Sử dụng endpoint mới /doctors/update với PUT method
+    const response = await putAuth(`/doctors/update`, doctorData);
+    console.log('📥 updateDoctor API response:', response);
+    
+    return response.result || response;
   } catch (error) {
-    console.error('Error updating doctor:', error);
+    console.error('❌ Error updating doctor:', error);
+    
+    // Enhanced error logging
+    if (error.response) {
+      console.error('📄 Error response data:', error.response.data);
+      console.error('🔢 Error status:', error.response.status);
+    }
+    
     throw error;
   }
 };
@@ -199,9 +203,9 @@ export const updateDoctor = async (id, doctorData) => {
 // Delete doctor
 export const deleteDoctor = async (id) => {
   try {
-    
 
-    const response = await deleteAuth(`/doctors`,id);
+
+    const response = await deleteAuth(`/doctors`, id);
     return response.data;
   } catch (error) {
     console.error('Error deleting doctor:', error);
@@ -262,7 +266,7 @@ export const updateDoctorByDoctor = async (userData) => {
   }
 };
 
-// Alias for getAllDoctors to support StaffManagement component
+
 
 
 // Function to update doctor status
@@ -283,6 +287,32 @@ export const updateDoctorStatus = async (doctorId, status) => {
     return response.data;
   } catch (error) {
     console.error('Error updating doctor status:', error);
+    throw error;
+  }
+};
+
+
+export const getDoctorDetail = async (doctorId) => {
+  try {
+    console.log('🔍 Fetching doctor detail for ID:', doctorId);
+
+    const response = await getAuth(`/doctors/${doctorId}`);
+    console.log('📥 Doctor detail API response:', response);
+
+    return response.result || response;
+  } catch (error) {
+    console.error('❌ Error fetching doctor detail:', error);
+    throw error;
+  }
+};
+
+export const getSpecializations = async () => {
+  try {
+    const response = await getAuth('/specializations');
+    console.log('📥 Specializations response:', response);
+    return response.result || response;
+  } catch (error) {
+    console.error('❌ Error fetching specializations:', error);
     throw error;
   }
 };

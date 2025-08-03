@@ -79,11 +79,12 @@ const StaffManagementPage = () => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [viewModalVisible, setViewModalVisible] = useState(false);
     const [selectedStaff, setSelectedStaff] = useState(null);
-    const [staffType, setStaffType] = useState('doctor'); 
+    const [staffType, setStaffType] = useState('doctor');
+    const [selectedViewStaff, setSelectedViewStaff] = useState(null);
 
     const dispatch = useDispatch();
 
-    
+
     const departments = [
         { id: 1, name: 'Cardiology' },
         { id: 2, name: 'Neurology' },
@@ -113,7 +114,7 @@ const StaffManagementPage = () => {
         'Recovery'
     ];
 
-   
+
     const sampleNurses = [
         {
             id: 101,
@@ -216,7 +217,6 @@ const StaffManagementPage = () => {
         try {
             console.log('🔄 Fetching staff data...');
 
-            
             const doctorResponse = await getAllDoctors();
             console.log('📥 Doctor API Response:', doctorResponse);
 
@@ -228,24 +228,36 @@ const StaffManagementPage = () => {
                 doctors = doctorResponse.result.map((doctor, index) => {
                     console.log(`👨‍⚕️ Doctor ${index + 1}:`, doctor);
 
-
                     const user = doctor.user || {};
 
+                    // ✅ Create consistent data structure for both view and edit
                     return {
+                        // Basic info
                         id: doctor.id || user.id || `doctor-${index}`,
                         type: 'doctor',
+
+                        // User info (flat structure for easy access)
                         name: user.fullname || user.userName || doctor.description || 'Unknown Doctor',
                         fullname: user.fullname || user.userName || doctor.description || 'Unknown Doctor',
                         email: user.email || `doctor${index + 1}@hospital.com`,
                         phone: user.phoneNumber || 'N/A',
                         phoneNumber: user.phoneNumber || 'N/A',
                         userName: user.userName || '',
+                        avatarUrl: user.avatarUrl || '',
+                        avatar: user.avatarUrl || '',
+                        gender: user.gender,
+                        dob: user.dob,
+                        cccd: user.cccd || '',
+                        province: user.province ,
+                        ward: user.ward ,
+                        streetAddress: user.streetAddress || '',
+                        job: user.job || 'Doctor',
 
-
+                        // Professional info
                         description: doctor.description || 'No description',
                         practicingFrom: doctor.practicingFrom || new Date().toISOString(),
 
-
+                        // Default values for display
                         specialization: 'General Medicine',
                         departmentId: 1,
                         departmentName: getDepartmentName(1),
@@ -253,24 +265,22 @@ const StaffManagementPage = () => {
                         experience: '5 years',
                         education: 'Medical Degree',
                         status: 'active',
-                        avatarUrl: user.avatarUrl || '',
-                        avatar: user.avatarUrl || '',
-                        gender: null,
-                        dob: null,
                         consultationFee: 200000,
                         totalPatients: Math.floor(Math.random() * 1000),
                         rating: (4 + Math.random()).toFixed(1),
                         createdAt: doctor.practicingFrom || new Date().toISOString(),
                         schedule: 'Mon-Fri: 8:00-17:00',
-                        cccd: '',
-                        province: 'Ho Chi Minh City',
-                        ward: 'District 1',
-                        streetAddress: '',
-                        job: 'Doctor'
+
+                        // ✅ Keep original API data for editing
+                        originalData: {
+                            doctor: doctor,
+                            user: user,
+                            hospitalAffiliations: doctor.hospitalAffiliations || [],
+                            specializations: doctor.specializations || []
+                        }
                     };
                 });
             } else if (Array.isArray(doctorResponse)) {
-
                 console.log('📋 Response is direct array, length:', doctorResponse.length);
                 doctors = doctorResponse.map((doctor, index) => {
                     const user = doctor.user || {};
@@ -283,6 +293,15 @@ const StaffManagementPage = () => {
                         phone: user.phoneNumber || 'N/A',
                         phoneNumber: user.phoneNumber || 'N/A',
                         userName: user.userName || '',
+                        avatarUrl: user.avatarUrl || '',
+                        avatar: user.avatarUrl || '',
+                        gender: user.gender,
+                        dob: user.dob,
+                        cccd: user.cccd || '',
+                        province: user.province,
+                        ward: user.ward ,
+                        streetAddress: user.streetAddress || '',
+                        job: user.job || 'Doctor',
                         description: doctor.description || 'No description',
                         practicingFrom: doctor.practicingFrom || new Date().toISOString(),
                         specialization: 'General Medicine',
@@ -292,20 +311,17 @@ const StaffManagementPage = () => {
                         experience: '5 years',
                         education: 'Medical Degree',
                         status: 'active',
-                        avatarUrl: user.avatarUrl || '',
-                        avatar: user.avatarUrl || '',
-                        gender: null,
-                        dob: null,
                         consultationFee: 200000,
                         totalPatients: Math.floor(Math.random() * 1000),
                         rating: (4 + Math.random()).toFixed(1),
                         createdAt: doctor.practicingFrom || new Date().toISOString(),
                         schedule: 'Mon-Fri: 8:00-17:00',
-                        cccd: '',
-                        province: 'Ho Chi Minh City',
-                        ward: 'District 1',
-                        streetAddress: '',
-                        job: 'Doctor'
+                        originalData: {
+                            doctor: doctor,
+                            user: user,
+                            hospitalAffiliations: doctor.hospitalAffiliations || [],
+                            specializations: doctor.specializations || []
+                        }
                     };
                 });
             } else {
@@ -341,8 +357,54 @@ const StaffManagementPage = () => {
             console.log('✅ Filtered doctors:', filteredDoctors);
 
 
-            let nurses = [...sampleNurses];
 
+
+
+            if (searchText) {
+                filteredDoctors = filteredDoctors.filter(doctor =>
+                    doctor.name.toLowerCase().includes(searchText.toLowerCase()) ||
+                    doctor.email.toLowerCase().includes(searchText.toLowerCase()) ||
+                    doctor.phoneNumber.toLowerCase().includes(searchText.toLowerCase()) ||
+                    doctor.userName.toLowerCase().includes(searchText.toLowerCase())
+                );
+            }
+
+            if (departmentFilter !== 'all') {
+                filteredDoctors = filteredDoctors.filter(doctor => doctor.departmentId === parseInt(departmentFilter));
+            }
+
+            if (statusFilter !== 'all') {
+                filteredDoctors = filteredDoctors.filter(doctor => doctor.status === statusFilter);
+            }
+
+            if (specializationFilter !== 'all') {
+                filteredDoctors = filteredDoctors.filter(doctor => doctor.specialization === specializationFilter);
+            }
+            console.log('✅ Filtered doctors:', filteredDoctors);
+
+
+            let nurses = sampleNurses.map(nurse => ({
+                ...nurse,
+                originalData: {
+                    nurse: nurse,
+                    user: {
+                        id: nurse.id,
+                        fullname: nurse.fullname,
+                        phoneNumber: nurse.phoneNumber,
+                        email: nurse.email,
+                        avatarUrl: nurse.avatarUrl,
+                        dob: nurse.dob,
+                        gender: nurse.gender,
+                        job: nurse.job || 'Nurse',
+                        cccd: nurse.cccd,
+                        province: nurse.province,
+                        ward: nurse.ward,
+                        streetAddress: nurse.streetAddress
+                    },
+                    hospitalAffiliations: [],
+                    specializations: []
+                }
+            }));
 
             if (searchText) {
                 nurses = nurses.filter(nurse =>
@@ -362,9 +424,6 @@ const StaffManagementPage = () => {
             if (specializationFilter !== 'all') {
                 nurses = nurses.filter(nurse => nurse.specialization === specializationFilter);
             }
-
-            console.log('✅ Filtered nurses:', nurses);
-
 
             let allStaff = [];
 
@@ -391,12 +450,12 @@ const StaffManagementPage = () => {
 
             const activeDoctors = doctors.filter(d => d.status === 'active').length;
             const inactiveDoctors = doctors.filter(d => d.status === 'inactive').length;
-            const activeNurses = sampleNurses.filter(n => n.status === 'active').length;
-            const inactiveNurses = sampleNurses.filter(n => n.status === 'inactive').length;
+            const activeNurses = nurses.filter(n => n.status === 'active').length;
+            const inactiveNurses = nurses.filter(n => n.status === 'inactive').length;
 
             setStats({
                 totalDoctors: doctors.length,
-                totalNurses: sampleNurses.length,
+                totalNurses: nurses.length,
                 activeDoctors,
                 activeNurses,
                 inactiveDoctors,
@@ -435,7 +494,8 @@ const StaffManagementPage = () => {
 
     const handleView = (staffMember) => {
         console.log('👁️ Viewing staff:', staffMember);
-        setSelectedStaff(staffMember);
+        // Chỉ cần pass staff với id, component ViewStaff sẽ tự fetch detail
+        setSelectedStaff({ id: staffMember.id }); // ✅ Sử dụng setSelectedStaff thay vì setSelectedDoctor
         setViewModalVisible(true);
     };
 
@@ -446,10 +506,10 @@ const StaffManagementPage = () => {
     };
 
     const handleDelete = (staffMember) => {
-    console.log('🗑️ Delete action triggered for:', staffMember);
-    setSelectedStaff(staffMember);
-    setDeleteModalVisible(true);
-};
+        console.log('🗑️ Delete action triggered for:', staffMember);
+        setSelectedStaff(staffMember);
+        setDeleteModalVisible(true);
+    };
 
 
     const handleDeleteSuccess = async () => {
@@ -457,7 +517,7 @@ const StaffManagementPage = () => {
         setDeleteModalVisible(false);
         setSelectedStaff(null);
 
-        
+
         try {
             await fetchStaff();
             console.log('🔄 Staff data refreshed after deletion');
@@ -683,7 +743,7 @@ const StaffManagementPage = () => {
 
     return (
         <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
-          
+
             <div style={{ marginBottom: 24 }}>
                 <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
                     <TeamOutlined style={{ marginRight: 12 }} />
@@ -694,7 +754,7 @@ const StaffManagementPage = () => {
                 </p>
             </div>
 
-           
+
             <Row gutter={16} style={{ marginBottom: 24 }}>
                 <Col xs={12} md={6}>
                     <Card>
@@ -738,9 +798,9 @@ const StaffManagementPage = () => {
                 </Col>
             </Row>
 
-            
+
             <Card>
-               
+
                 <div style={{
                     marginBottom: 24,
                     display: 'flex',
@@ -812,7 +872,7 @@ const StaffManagementPage = () => {
                     </Space>
                 </div>
 
-               
+
                 <Tabs
                     activeKey={activeTab}
                     onChange={setActiveTab}
@@ -847,7 +907,7 @@ const StaffManagementPage = () => {
                     />
                 </Tabs>
 
-               
+
                 <Table
                     columns={columns}
                     dataSource={staff}
@@ -865,7 +925,7 @@ const StaffManagementPage = () => {
                 />
             </Card>
 
-            
+
             <AddStaff
                 visible={addModalVisible}
                 onCancel={() => setAddModalVisible(false)}
@@ -890,11 +950,16 @@ const StaffManagementPage = () => {
                 specializations={specializations}
             />
 
-            <ViewStaff
-                visible={viewModalVisible}
-                onCancel={() => setViewModalVisible(false)}
-                staff={selectedStaff}
-            />
+            {viewModalVisible && selectedStaff && (
+                <ViewStaff
+                    visible={viewModalVisible}
+                    onCancel={() => {
+                        setViewModalVisible(false);
+                        setSelectedStaff(null); // ✅ Sử dụng setSelectedStaff thay vì setSelectedDoctor
+                    }}
+                    staff={selectedStaff} // ✅ Sử dụng selectedStaff thay vì selectedDoctor
+                />
+            )}
 
             <DeleteStaff
                 visible={deleteModalVisible}
