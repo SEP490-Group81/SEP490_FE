@@ -409,6 +409,7 @@ const AdminDoctorShiftManagement = () => {
             room: item.room?.name || "Không rõ",
             status,
             patients,
+            nurseId: item.nurseInfo?.id || null,
           },
         };
       });
@@ -509,9 +510,6 @@ const AdminDoctorShiftManagement = () => {
 
     }
   };
-
-
-
 
   const onFinishBulk = async (values) => {
     const { doctorIds, weekdays, shift, dateRange } = values;
@@ -659,7 +657,6 @@ const AdminDoctorShiftManagement = () => {
             </Row>
 
             <Legend />
-
             <Row gutter={28}>
               <Col md={8} xs={24} style={{ marginBottom: 24 }}>
                 <div

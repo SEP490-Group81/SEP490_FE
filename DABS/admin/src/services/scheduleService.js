@@ -42,7 +42,7 @@ export const updateSchedule = async (scheduleId, scheduleData) => {
 export const getScheduleByStaffNurseId = async (staffId, from, to, hospitalId) => {
   try {
     const payload = {
-      userId: staffId,
+      staffId: staffId,
       hospitalId: hospitalId,
       dateFrom: from,  
       dateTo: to

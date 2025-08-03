@@ -145,7 +145,6 @@ const StaffShiftManagement = () => {
   const messageState = useSelector((state) => state.message)
   const calendarRef = useRef();
 
-  console.log("Selected person ID:", selectedPersonId);
 
 
   useEffect(() => {
@@ -178,8 +177,9 @@ const StaffShiftManagement = () => {
     console.log("Fetching staff schedule for:", selectedPersonId, "from", from, "to", to, "and hospital ID:", user.hospitals[0]?.id);
 
     try {
+      
       const data = await getScheduleByStaffNurseId(selectedPersonId, from, to, user.hospitals[0]?.id);
-
+      console.log("Fetched staff schedule data:", data, "for staff ID:", selectedPersonId);
       const schedules = data?.schedules || [];
       const now = dayjs();
 
@@ -581,7 +581,7 @@ const StaffShiftManagement = () => {
                 style={{ width: 300 }}
                 optionFilterProp="children"
                 filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
-                onChange={setSelectedPersonId}
+                onChange={(value) => setSelectedPersonId(value)}
                 value={selectedPersonId}
               >
                 <OptGroup label="Y tá (Nurse)">
@@ -784,6 +784,7 @@ const StaffShiftManagement = () => {
                 onFinish={onFinish}
                 initialValues={{
                   status: "pending",
+                  staffId: selectedPersonId 
                 }}
                 scrollToFirstError
               >
@@ -794,7 +795,7 @@ const StaffShiftManagement = () => {
                       label="Nhân viên"
                       rules={[{ required: true, message: "Vui lòng chọn Nhân viên" }]}
                     >
-                      <Select placeholder="Chọn Nhân viên" style={{ borderRadius: 8 }}>
+                      <Select  placeholder="Chọn Nhân viên" style={{ borderRadius: 8 }}>
                         {allStaffs.map((doc) => (
                           <Option key={doc?.staffId} value={doc?.staffId}>
                             {doc?.fullname}
