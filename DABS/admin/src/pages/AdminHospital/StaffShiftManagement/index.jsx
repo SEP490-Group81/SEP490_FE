@@ -415,6 +415,10 @@ const StaffShiftManagement = () => {
           boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
           lineHeight: 1.3,
+          overflow: "hidden",
+          WebkitBoxOrient: "vertical",
+          display: "-webkit-box",
+           WebkitLineClamp: 6,
         }}
       >
         {(department) && (
@@ -448,6 +452,7 @@ const StaffShiftManagement = () => {
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
+            maxWidth: 120,
           }}
           title={title}
         >

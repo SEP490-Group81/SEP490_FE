@@ -131,12 +131,11 @@ const renderEventContent = (eventInfo) => {
         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         lineHeight: 1.3,
-        maxWidth: "100%",
-        wordBreak: "break-word",
         overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
+        WebkitBoxOrient: "vertical",
+        display: "-webkit-box",
+        WebkitLineClamp: 6,
+          maxHeight: 150
       }}
     >
       {department && (
@@ -174,23 +173,21 @@ const renderEventContent = (eventInfo) => {
           {room}
         </div>
       )}
-      {/* <div
+      <div
         style={{
-          fontWeight: "700",
-          fontSize: 14,
-          color: "#34495e",
-          marginBottom: 6,
-          whiteSpace: "normal",  
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,     
-          WebkitBoxOrient: "vertical",
+           fontWeight: "700",
+            fontSize: 14,
+            color: "#34495e",
+            marginBottom: 6,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: 120,
         }}
         title={title}
       >
         {title.split(" - ")[0]}
-      </div> */}
+      </div>
 
       <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "6px 0" }} />
 
@@ -1019,7 +1016,7 @@ const AdminDoctorShiftManagement = () => {
               onOk={async () => {
                 try {
                   console.log("Deleting shift:", shiftToDelete.id);
-                    await deleteDoctorSchedule(shiftToDelete.id);
+                  await deleteDoctorSchedule(shiftToDelete.id);
                   setFlag(prev => !prev);
                   dispatch(setMessage({ type: 'success', content: 'Xóa ca làm việc thành công!' }));
                 } catch (error) {

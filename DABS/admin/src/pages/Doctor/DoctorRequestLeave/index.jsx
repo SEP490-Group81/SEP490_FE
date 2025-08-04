@@ -22,7 +22,22 @@ const DoctorRequestLeave = () => {
     const [searchText, setSearchText] = useState('');
     const messageState = useSelector((state) => state.message);
     const [messageApi, contextHolder] = message.useMessage();
+    const [flag, setFlag] = useState(false);
     const dispatch = useDispatch();
+
+    const handleSuccess = () => {
+        setFlag(flag => !flag);
+        setShowAddModal(false);
+        dispatch(setMessage({ type: "success", content: "Thêm đơn nghỉ phép thành công!" }));
+    };
+
+    const handleUpdateSuccess = () => {
+        setFlag(flag => !flag);
+        setShowUpdateModal(false);
+        setEditingRecord(null);
+        dispatch(setMessage({ type: "success", content: "Cập nhật đơn nghỉ phép thành công!" }));
+
+    };
 
     useEffect(() => {
         if (messageState) {
@@ -32,7 +47,7 @@ const DoctorRequestLeave = () => {
             });
             dispatch(clearMessage());
         }
-    }, [dispatch, messageApi]);
+    }, [dispatch, messageApi, messageState]);
 
     useEffect(() => {
         const fetchRequests = async () => {
@@ -57,7 +72,7 @@ const DoctorRequestLeave = () => {
             }
         };
         fetchRequests();
-    }, [hospitalId, doctorUserId]);
+    }, [hospitalId, doctorUserId, flag]);
 
     const filteredData = dataSource.filter((item) =>
         item.fullName.toLowerCase().includes(searchText.toLowerCase())
@@ -73,15 +88,7 @@ const DoctorRequestLeave = () => {
     };
 
 
-    const handleAddUserSuccess = (newRequest) => {
-        setShowAddModal(false);
-        dispatch(setMessage({ type: "success", content: "Thêm đơn nghỉ phép thành công!" }));
-    };
-    const handleUpdateSuccess = (updatedRecord) => {
-        setShowUpdateModal(false);
-        setEditingRecord(null);
-        dispatch(setMessage({ type: "success", content: "Cập nhật đơn nghỉ phép thành công!" }));
-    };
+
 
     const mapReasonToRequestType = (reason) => {
         switch (reason) {
@@ -127,11 +134,6 @@ const DoctorRequestLeave = () => {
             title: 'Họ và tên',
             dataIndex: 'fullName',
             key: 'fullName',
-        },
-        {
-            title: 'Chức vụ',
-            dataIndex: 'position',
-            key: 'position',
         },
         {
             title: 'Ngày bắt đầu',
@@ -242,19 +244,7 @@ const DoctorRequestLeave = () => {
                     <AddUser
                         visible={showAddModal}
                         onCancel={() => setShowAddModal(false)}
-                        onSuccess={(newRequestRaw) => {
-                            const newMapped = {
-                                key: newRequestRaw.id.toString(),
-                                fullName: newRequestRaw.requesterName,
-                                position: 'Bác sĩ chuyên khoa',
-                                department: newRequestRaw.department || '',
-                                startDate: newRequestRaw.startDate ? newRequestRaw.startDate.split('T')[0] : '',
-                                endDate: newRequestRaw.endDate ? newRequestRaw.endDate.split('T')[0] : '',
-                                status: newRequestRaw.status === 1 ? 'pending' : newRequestRaw.status === 2 ? 'approved' : 'completed',
-                                rawData: newRequestRaw,
-                            };
-                            handleAddUserSuccess(newMapped);
-                        }}
+                        onSuccess={handleSuccess}
                         userId={doctorUserId}
                         hospitalId={hospitalId}
                     />
@@ -267,19 +257,7 @@ const DoctorRequestLeave = () => {
                             setShowUpdateModal(false);
                             setEditingRecord(null);
                         }}
-                        onSuccess={(updatedRequestRaw) => {
-                            const updatedMapped = {
-                                key: updatedRequestRaw.id.toString(),
-                                fullName: updatedRequestRaw.requesterName,
-                                position: 'Bác sĩ chuyên khoa',
-                                department: updatedRequestRaw.department || '',
-                                startDate: updatedRequestRaw.startDate ? updatedRequestRaw.startDate.split('T')[0] : '',
-                                endDate: updatedRequestRaw.endDate ? updatedRequestRaw.endDate.split('T')[0] : '',
-                                status: updatedRequestRaw.status === 1 ? 'pending' : updatedRequestRaw.status === 2 ? 'approved' : 'completed',
-                                rawData: updatedRequestRaw,
-                            };
-                            handleUpdateSuccess(updatedMapped);
-                        }}
+                        onSuccess={handleUpdateSuccess}
                         initialValues={editingRecord.rawData}
                         hospitalId={hospitalId}
                         userId={doctorUserId}

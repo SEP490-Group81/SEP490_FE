@@ -12,17 +12,19 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
   const [form] = Form.useForm();
   const [spinning, setSpinning] = useState(false);
   const user = useSelector((state) => state.user.user);
-  console.log("User data:", user);
-  const success = () => {
-    notification.success({
-      message: 'Thành công',
-      description: 'Đơn xin nghỉ phép đã được gửi thành công!',
-      placement: 'topRight',
-    });
+  const [startDateValue, setStartDateValue] = useState(null);
+  const [endDateValue, setEndDateValue] = useState(null);
+  //console.log("User data:", user);
+  const disabledStartDate = (current) => {
+    if (!current) return false;
+    return current <= dayjs().startOf('day') || (endDateValue && current > endDateValue);
   };
-  const disabledDate = (current) => {
-    return current && current <= dayjs().startOf('day');
+
+  const disabledEndDate = (current) => {
+    if (!current) return false;
+    return current <= dayjs().startOf('day') || (startDateValue && current < startDateValue);
   };
+
   const error = () => {
     notification.error({
       message: 'Lỗi',
@@ -49,18 +51,18 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
     try {
       const payload = {
         type: mapReasonToRequestType(values.reason),
+        hospitalId: user.hospitals[0]?.id,
         startDate: values.startDate.format(),
         endDate: values.endDate.format(),
         timeShift: values.shift,
         reason: values.reason,
       };
       console.log("Submitting leave request with payload:", payload);
-       const response = await createRequest(payload);
+      await createRequest(payload);
 
       setSpinning(false);
       form.resetFields();
-      success();
-      onSuccess(response);
+      onSuccess();
 
     } catch (err) {
       setSpinning(false);
@@ -100,7 +102,7 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
                 <Form.Item
                   name="fullName"
                   label="Họ và tên"
-                 
+
                   rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
                 >
                   <Input disabled placeholder="Nhập họ và tên" />
@@ -121,8 +123,6 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
               </Col>
             </Row>
 
-
-
             <Row gutter={16}>
               <Col xs={24} md={12}>
                 <Form.Item
@@ -130,7 +130,12 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
                   label="Ngày bắt đầu nghỉ"
                   rules={[{ required: true, message: 'Vui lòng chọn ngày bắt đầu nghỉ' }]}
                 >
-                  <DatePicker style={{ width: '100%' }} showToday={false} disabledDate={disabledDate} />
+                  <DatePicker
+                    style={{ width: '100%' }}
+                    showToday={false}
+                    disabledDate={disabledStartDate}
+                    onChange={(date) => setStartDateValue(date)}
+                  />
                 </Form.Item>
               </Col>
               <Col xs={24} md={12}>
@@ -139,7 +144,12 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
                   label="Ngày kết thúc nghỉ"
                   rules={[{ required: true, message: 'Vui lòng chọn ngày kết thúc nghỉ' }]}
                 >
-                  <DatePicker style={{ width: '100%' }} showToday={false} disabledDate={disabledDate} />
+                  <DatePicker
+                    style={{ width: '100%' }}
+                    showToday={false}
+                    disabledDate={disabledEndDate}
+                    onChange={(date) => setEndDateValue(date)}
+                  />
                 </Form.Item>
               </Col>
             </Row>
