@@ -37,6 +37,14 @@ const LeaveRequestManagement = () => {
     const [searchText, setSearchText] = useState("");
     const [modalLoading, setModalLoading] = useState(false);
 
+    const isRequestExpired = (startDate) => {
+        if (!startDate) return false;
+        const today = new Date();
+        const start = new Date(startDate);
+        today.setHours(0, 0, 0, 0);
+        start.setHours(0, 0, 0, 0);
+        return start < today;
+    };
 
     const updateStatus = async (status) => {
         if (!selectedRequest) return;
@@ -52,7 +60,7 @@ const LeaveRequestManagement = () => {
                 reason: selectedRequest.reason,
             }
             console.log("Cập nhật trạng thái:", JSON.stringify(payload));
-             await updateRequest(payload);
+            await updateRequest(payload);
             message.success("Cập nhật trạng thái thành công");
             setSelectedRequest(null);
             const result = await getRequestsByHospital(user.hospitals[0].id);
@@ -226,38 +234,38 @@ const LeaveRequestManagement = () => {
                     title="Chi tiết yêu cầu nghỉ phép"
                     open={!!selectedRequest}
                     onCancel={() => setSelectedRequest(null)}
-                  
+
                     footer={[
                         <Space key="actions">
-                            <Button
+                            {/* <Button
                                 key="cancel"
                                 icon={<CloseOutlined />}
                                 loading={modalLoading}
                                 onClick={() => updateStatus(4)}
                             >
                                 Huỷ đơn
-                            </Button>
+                            </Button> */}
 
-                            {selectedRequest?.status === 1 && (
-                                <>
-                                    <Button
-                                        icon={<CloseOutlined />}
-                                        danger
-                                        loading={modalLoading}
-                                        onClick={() => updateStatus(3)}
-                                    >
-                                        Từ chối
-                                    </Button>
-                                    <Button
-                                        icon={<CheckOutlined />}
-                                        type="primary"
-                                        loading={modalLoading}
-                                        onClick={() => updateStatus(2)}
-                                    >
-                                        Duyệt
-                                    </Button>
-                                </>
-                            )}
+                            <>
+                                <Button
+                                    icon={<CloseOutlined />}
+                                    danger
+                                    loading={modalLoading}
+                                    onClick={() => updateStatus(3)}
+                                    disabled={isRequestExpired(selectedRequest?.startDate)} 
+                                >
+                                    Từ chối
+                                </Button>
+                                <Button
+                                    icon={<CheckOutlined />}
+                                    type="primary"
+                                    loading={modalLoading}
+                                    onClick={() => updateStatus(2)}
+                                    disabled={isRequestExpired(selectedRequest?.startDate)} 
+                                >
+                                    Duyệt
+                                </Button>
+                            </>
                         </Space>
                     ]}
                 >

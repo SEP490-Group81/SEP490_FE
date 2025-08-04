@@ -8,10 +8,8 @@ import {
   Table,
   Tag,
   Typography,
-  Space,
-  Divider,
 } from "antd";
-import { Line, Column, Bar } from "@ant-design/charts";
+import { Column, Bar } from "@ant-design/charts";
 import moment from "moment";
 
 const { Title } = Typography;
@@ -26,143 +24,203 @@ const HospitalStatisticPage = () => {
 
   useEffect(() => {
     fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange]);
 
-  const fetchStats = () => {
+  const fetchStats = async () => {
     setLoading(true);
+
+    // TODO: Replace with actual API call to fetch data from your DB
     setTimeout(() => {
       setStats({
-        appointments: 650,
-        operations: 54,
-        newPatients: 129,
-        earnings: 20125,
-        totalAppointments: 128,
-        revenueToday: 4589,
-        revenueTrend: [3, 6, 4, 7, 5, 8, 4],
-        surveyChart: [
-          { date: "Jan", new: 40, old: 30 },
-          { date: "Feb", new: 35, old: 28 },
-          { date: "Mar", new: 45, old: 34 },
-          { date: "Apr", new: 55, old: 33 },
-          { date: "May", new: 70, old: 40 },
-          { date: "Jun", new: 80, old: 42 },
+        soLuotKham: 650,           // Số lượt khám (Appointments count)
+        soCaPhauThuat: 54,         // Số ca phẫu thuật
+        soBenhNhanMoi: 129,        // Bệnh nhân mới
+        doanhThu: 20125,           // Tổng doanh thu
+        soPhong: 100,              // Tổng số phòng hoặc giường (tạm dùng HotelCapacity)
+        soGiuongDangDung: 79,      // Giường đang sử dụng (từ phòng/room hoặc appointments active)
+        soNhanVienHienCo: 50,      // Số lượng nhân viên (HospitalStaffs)
+        soNhanVienCoMat: 45,       // Nhân viên hiện diện (StaffSchedules)
+        doanhThuTheoNgay: [600, 1500, 1200, 1700, 1000, 1900, 2500], // Doanh thu tuần hoặc ngày
+        soLuotKhamTheoKhoa: [       // Số lượt khám theo khoa (Departments)
+          { khoa: "Nội khoa", luotKham: 120 },
+          { khoa: "Ngoại khoa", luotKham: 80 },
+          { khoa: "Sản khoa", luotKham: 60 },
         ],
-        appointmentsTable: [
+        trangThaiBacSi: [
+          { key: 1, ten: "Bác sĩ Binh", trangThai: "Có mặt" },
+          { key: 2, ten: "Bác sĩ An", trangThai: "Đang phẫu thuật" },
+        ],
+        lichHen: [
           {
             key: 1,
-            patient: "Nguyen Van A",
-            doctor: "Dr. Binh",
-            date: "2025-07-08",
-            disease: "Sốt siêu vi",
+            benhNhan: "Nguyễn Văn A",
+            bacSi: "Bác sĩ Binh",
+            ngay: "2025-07-08",
+            dichVu: "Khám tổng quát",
           },
           {
             key: 2,
-            patient: "Tran Thi B",
-            doctor: "Dr. An",
-            date: "2025-07-09",
-            disease: "Viêm họng",
+            benhNhan: "Trần Thị B",
+            bacSi: "Bác sĩ An",
+            ngay: "2025-07-09",
+            dichVu: "Khám chuyên khoa",
           },
-        ],
-        doctorStatus: [
-          { key: 1, name: "Dr. Binh", status: "Available" },
-          { key: 2, name: "Dr. An", status: "In Surgery" },
         ],
       });
       setLoading(false);
     }, 800);
   };
 
-  const revenueBarConfig = {
-    data: stats.revenueTrend?.map((r, i) => ({ day: `D${i + 1}`, revenue: r })) || [],
-    xField: "day",
-    yField: "revenue",
-    height: 100,
-    color: "#9254de",
-    xAxis: { label: { autoRotate: false } },
-    yAxis: { visible: false },
-    legend: false,
+  // Config charts data mapping
+  const chartDoanhThuConfig = {
+    data: stats.doanhThuTheoNgay?.map((value, idx) => ({
+      ngay: `Ngày ${idx + 1}`,
+      doanhThu: value,
+    })) || [],
+    xField: "ngay",
+    yField: "doanhThu",
+    color: "#722ed1",
+    height: 220,
   };
 
-  const surveyConfig = {
-    data: stats.surveyChart?.flatMap(({ date, new: n, old }) => [
-      { type: "New Patients", date, value: n },
-      { type: "Old Patients", date, value: old },
-    ]) || [],
-    xField: "date",
-    yField: "value",
-    seriesField: "type",
+  const chartLuotKhamKhoaConfig = {
+    data: stats.soLuotKhamTheoKhoa || [],
+    xField: "khoa",
+    yField: "luotKham",
+    color: "#52c41a",
     height: 220,
-    color: ["#52c41a", "#fa8c16"],
-    smooth: true,
   };
 
   return (
     <div style={{ padding: 24, backgroundColor: "#f0f2f5" }}>
-      <Title level={3} style={{ color: "#1890ff" }}>🏥 Thống kê bệnh viện</Title>
+      <Title level={3} style={{ color: "#1890ff" }}>
+        🏥 Thống kê bệnh viện
+      </Title>
 
-      {/* Top Stats */}
+      {/* Thống kê chung */}
       <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={6}><Card style={{ backgroundColor: "#f9f0ff" }}><Statistic title="Appointments" value={stats.appointments} valueStyle={{ color: "#722ed1" }} /></Card></Col>
-        <Col span={6}><Card style={{ backgroundColor: "#fff2e8" }}><Statistic title="Operations" value={stats.operations} valueStyle={{ color: "#fa541c" }} /></Card></Col>
-        <Col span={6}><Card style={{ backgroundColor: "#f6ffed" }}><Statistic title="New Patients" value={stats.newPatients} valueStyle={{ color: "#389e0d" }} /></Card></Col>
-        <Col span={6}><Card style={{ backgroundColor: "#e6f7ff" }}><Statistic title="Earnings" prefix="$" value={stats.earnings} valueStyle={{ color: "#096dd9" }} /></Card></Col>
-      </Row>
-
-      <Row gutter={16}>
-        <Col span={16}>
-          <Card
-            title={<span style={{ color: "#722ed1" }}>📊 Hospital Survey</span>}
-            extra={<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />}
-          >
-            <Line {...surveyConfig} />
+        <Col span={4}>
+          <Card style={{ backgroundColor: "#f9f0ff" }}>
+            <Statistic
+              title="Số lượt khám"
+              value={stats.soLuotKham}
+              valueStyle={{ color: "#722ed1" }}
+              loading={loading}
+            />
           </Card>
         </Col>
-
-        <Col span={8}>
-          <Card>
-            <Statistic title="Total Appointments" value={stats.totalAppointments} valueStyle={{ color: "#fa8c16" }} />
-            <Divider style={{ margin: '12px 0' }} />
-            <Statistic title="Revenue Today" prefix="$" value={stats.revenueToday} valueStyle={{ color: "#1890ff" }} />
-            <div style={{ marginTop: 16 }}>
-              <Column {...revenueBarConfig} />
-            </div>
+     
+        <Col span={4}>
+          <Card style={{ backgroundColor: "#f6ffed" }}>
+            <Statistic
+              title="Bệnh nhân mới"
+              value={stats.soBenhNhanMoi}
+              valueStyle={{ color: "#389e0d" }}
+              loading={loading}
+            />
           </Card>
         </Col>
-      </Row>
-
-      <Row gutter={16} style={{ marginTop: 24 }}>
-        <Col span={12}>
-          <Card title={<span style={{ color: "#13c2c2" }}>📅 Appointments</span>}>
-            <Table
-              size="small"
-              pagination={false}
-              dataSource={stats.appointmentsTable}
-              columns={[
-                { title: "Patient Name", dataIndex: "patient" },
-                { title: "Assigned Doctor", dataIndex: "doctor" },
-                { title: "Date", dataIndex: "date" },
-                { title: "Disease", dataIndex: "disease" },
-              ]}
+        <Col span={4}>
+          <Card style={{ backgroundColor: "#e6f7ff" }}>
+            <Statistic
+              title="Doanh thu"
+              prefix="$"
+              value={stats.doanhThu}
+              valueStyle={{ color: "#096dd9" }}
+              loading={loading}
             />
           </Card>
         </Col>
 
+        <Col span={4}>
+          <Card style={{ backgroundColor: "#f0f5ff" }}>
+            <Statistic
+              title="Nhân viên (Hiện diện / Tổng)"
+              value={
+                stats.soNhanVienCoMat !== undefined &&
+                stats.soNhanVienHienCo !== undefined
+                  ? `${stats.soNhanVienCoMat} / ${stats.soNhanVienHienCo}`
+                  : ""
+              }
+              valueStyle={{ color: "#52c41a" }}
+              loading={loading}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Chọn khoảng thời gian */}
+      <Row gutter={16} style={{ marginBottom: 24, textAlign: "right" }}>
+        <Col span={24}>
+          <DatePicker.RangePicker
+            value={dateRange}
+            onChange={setDateRange}
+            style={{ width: 300 }}
+          />
+        </Col>
+      </Row>
+
+      {/* Biểu đồ doanh thu và lượt khám theo khoa */}
+      <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={12}>
-          <Card title={<span style={{ color: "#fa541c" }}>👨‍⚕️ Doctor Status</span>}>
+          <Card title="Doanh thu theo ngày" loading={loading}>
+            <Column {...chartDoanhThuConfig} />
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card title="Số lượt khám theo khoa" loading={loading}>
+            <Bar {...chartLuotKhamKhoaConfig} />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Bảng lịch hẹn */}
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col span={24}>
+          <Card title="Lịch hẹn khám bệnh" loading={loading}>
+            <Table
+              size="small"
+              pagination={{ pageSize: 5 }}
+              dataSource={stats.lichHen}
+              columns={[
+                {
+                  title: "Tên bệnh nhân",
+                  dataIndex: "benhNhan",
+                  key: "benhNhan",
+                },
+                { title: "Bác sĩ", dataIndex: "bacSi", key: "bacSi" },
+                { title: "Ngày khám", dataIndex: "ngay", key: "ngay" },
+                { title: "Dịch vụ", dataIndex: "dichVu", key: "dichVu" },
+              ]}
+              loading={loading}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Bảng trạng thái bác sĩ */}
+      <Row gutter={16} style={{ marginBottom: 24 }}>
+        <Col span={24}>
+          <Card title="Trạng thái bác sĩ" loading={loading}>
             <Table
               size="small"
               pagination={false}
-              dataSource={stats.doctorStatus}
+              dataSource={stats.trangThaiBacSi}
               columns={[
-                { title: "Doctor Name", dataIndex: "name" },
+                { title: "Tên bác sĩ", dataIndex: "ten", key: "ten" },
                 {
-                  title: "Status",
-                  dataIndex: "status",
+                  title: "Trạng thái",
+                  dataIndex: "trangThai",
+                  key: "trangThai",
                   render: (text) => (
-                    <Tag color={text === "Available" ? "green" : "orange"}>{text}</Tag>
+                    <Tag color={text === "Có mặt" ? "green" : "orange"}>
+                      {text}
+                    </Tag>
                   ),
                 },
               ]}
+              loading={loading}
             />
           </Card>
         </Col>

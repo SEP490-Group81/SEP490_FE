@@ -36,7 +36,7 @@ import { getUserById } from "../../../services/userService";
 import { createStaffSchedules, deleteStaffSchedule, getScheduleByStaffNurseId, updateStaffSchedule } from "../../../services/scheduleService";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
 import utc from "dayjs/plugin/utc";
-
+import viLocale from "@fullcalendar/core/locales/vi";
 dayjs.extend(utc);
 const { Option, OptGroup } = Select;
 const { RangePicker } = DatePicker;
@@ -146,7 +146,7 @@ const StaffShiftManagement = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const messageState = useSelector((state) => state.message)
   const calendarRef = useRef();
-
+  const shiftSelectMode = editingShift ? undefined : "multiple";
 
 
   useEffect(() => {
@@ -362,12 +362,12 @@ const StaffShiftManagement = () => {
           id: editingShift.id,
           doctorScheduleId: editingShift.doctorScheduleId || null,
           staffId: values.staffId,
-         workDate: values.workDate.format('YYYY-MM-DD'),
+          workDate: values.workDate.format('YYYY-MM-DD'),
           timeShift: shiftsPayload[0].startTime < "12:00:00" ? 1 : 2,
           isAvailable: true,
           reasonOfUnavailability: "",
         };
-        console.log("Update payload:", updatePayload);
+        console.log("Update payload:", JSON.stringify(updatePayload));
         await updateStaffSchedule(updatePayload);
         dispatch(setMessage({ type: 'success', content: 'Cập nhật ca làm việc thành công!' }));
       } else {
@@ -753,7 +753,7 @@ const StaffShiftManagement = () => {
                       center: "title",
                       end: "dayGridMonth,timeGridWeek,timeGridDay",
                     }}
-                    locale="vi"
+                    locale={viLocale}
                     height={600}
                     eventClick={handleEventClick}
                     events={events}
@@ -843,7 +843,7 @@ const StaffShiftManagement = () => {
                       label="Ca làm"
                       rules={[{ required: true, message: "Vui lòng chọn ca làm." }]}
                     >
-                      <Select mode="multiple" style={{ borderRadius: 8 }}>
+                      <Select mode={shiftSelectMode} style={{ borderRadius: 8 }}>
                         <Option value="morning">Sáng</Option>
                         <Option value="afternoon">Chiều</Option>
                       </Select>
@@ -901,7 +901,7 @@ const StaffShiftManagement = () => {
 
                     form.setFieldsValue({
                       staffId: selectedEvent.extendedProps.staffId || selectedPersonId,
-                       workDate: dayjs(selectedEvent.start).local().startOf('day'),
+                      workDate: dayjs(selectedEvent.start).local().startOf('day'),
                       shift: selectedEvent.title.includes("sáng") ? ["morning"] : ["afternoon"],
                     });
 

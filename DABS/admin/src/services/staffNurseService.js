@@ -30,3 +30,16 @@ export const getStaffSchedules = async (hospitalId, userId, dateFrom, dateTo) =>
     throw error;
   }
 };
+
+export const getStaffNurseByUserId = async (id) => {
+  try {
+    const result = await getAuth(`/staffnurse/by_users/${id}`);
+    if (!result || !result.result) {
+      throw new Error('Staff nurse is missing in the response.');
+    }
+    return result.result;
+  } catch (error) {
+    console.error(`Error fetching staff nurse with ID ${id}:`, error.message);
+    throw error;
+  }
+};

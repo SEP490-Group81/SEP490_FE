@@ -9,6 +9,7 @@ import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { getScheduleByStaffNurseId } from "../../../services/scheduleService"; // API call
 import "dayjs/locale/vi";
+import { getStaffNurseByUserId } from "../../../services/staffNurseService";
 
 dayjs.locale("vi");
 
@@ -41,14 +42,28 @@ const WorkScheduleNurse = () => {
   const user = useSelector((state) => state.user.user);
   console.log("Current user:", user);
   const hospitalId = user?.hospitals?.[0]?.id;
-  const userId = user?.id;
 
   const [events, setEvents] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [staffNurseDetail, setStaffNurseDetail] = useState(null);
+
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      if (!user.id) return;
+      const result = await getStaffNurseByUserId(user.id);
+      if (result) {
+        console.log("result staff nurse detail : " + result);
+        setStaffNurseDetail(result);
+      } else {
+        console.error("Không tìm thấy thông tin bác sĩ.");
+      }
+    };
+    fetchDoctor();
+  }, [user?.id]);
 
   const handleDatesSet = async (arg) => {
-    if (!userId || !hospitalId) {
+    if (!staffNurseDetail?.staffId || !hospitalId) {
       setEvents([]);
       return;
     }
@@ -57,12 +72,11 @@ const WorkScheduleNurse = () => {
       const from = dayjs(arg.start).toISOString();
       const to = dayjs(arg.end).toISOString();
 
-      const data = await getScheduleByStaffNurseId(userId, from, to, hospitalId);
+      const data = await getScheduleByStaffNurseId(staffNurseDetail?.staffId, from, to, hospitalId);
       const schedules = data?.schedules || [];
 
       const now = dayjs();
 
-      // Format lịch thành sự kiện FullCalendar
       const eventsFormatted = schedules.map((item) => {
         const dateStr = item.workDate.split("T")[0];
         const start = dayjs(`${dateStr}T${item.startTime}`).toISOString();

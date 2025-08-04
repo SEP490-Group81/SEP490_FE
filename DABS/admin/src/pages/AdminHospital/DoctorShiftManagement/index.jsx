@@ -23,6 +23,8 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { useDispatch, useSelector } from 'react-redux';
+import viLocale from "@fullcalendar/core/locales/vi";
+
 import {
   PlusOutlined,
   CalendarOutlined,
@@ -237,10 +239,11 @@ const AdminDoctorShiftManagement = () => {
   const [flag, setFlag] = useState(false);
   const [nurses, setNurses] = useState([]);
   const user = useSelector((state) => state.user.user);
-  console.log("user is: " + JSON.stringify(user));
-  console.log("hospital admin id is: " + user.hospitals[0]?.id);
-  console.log("hospital admin is: " + JSON.stringify(user));
-  console.log("doctor detail: " + JSON.stringify(doctorDetail));
+  const shiftSelectMode = editingShift ? undefined : "multiple";
+  // console.log("user is: " + JSON.stringify(user));
+  // console.log("hospital admin id is: " + user.hospitals[0]?.id);
+  // console.log("hospital admin is: " + JSON.stringify(user));
+  // console.log("doctor detail: " + JSON.stringify(doctorDetail));
   const isShiftDisabled = (event) => {
     if (!event) return true;
 
@@ -783,6 +786,7 @@ const AdminDoctorShiftManagement = () => {
                   <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                     initialView="timeGridWeek"
+
                     ref={calendarRef}
                     eventContent={renderEventContent}
                     datesSet={handleDatesSet}
@@ -791,7 +795,7 @@ const AdminDoctorShiftManagement = () => {
                       center: "title",
                       end: "dayGridMonth,timeGridWeek,timeGridDay",
                     }}
-                    locale="vi"
+                    locale={viLocale}
                     events={events}
                     height={600}
                     eventClick={handleEventClick}
@@ -892,7 +896,7 @@ const AdminDoctorShiftManagement = () => {
                       label="Ca làm"
                       rules={[{ required: true, message: "Vui lòng chọn ca làm." }]}
                     >
-                      <Select mode="multiple" style={{ borderRadius: 8 }}>
+                      <Select mode={shiftSelectMode} style={{ borderRadius: 8 }}>
                         <Option value="morning">Sáng</Option>
                         <Option value="afternoon">Chiều</Option>
                       </Select>
@@ -1015,7 +1019,7 @@ const AdminDoctorShiftManagement = () => {
               onOk={async () => {
                 try {
                   console.log("Deleting shift:", shiftToDelete.id);
-                //  await deleteStaffSchedule(shiftToDelete.id);
+                  //  await deleteStaffSchedule(shiftToDelete.id);
                   setFlag(prev => !prev);
                   dispatch(setMessage({ type: 'success', content: 'Xóa ca làm việc thành công!' }));
                 } catch (error) {
