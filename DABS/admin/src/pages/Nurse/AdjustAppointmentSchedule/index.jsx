@@ -42,9 +42,9 @@ const { Option } = Select;
 const { Title, Text } = Typography;
 
 const APPOINTMENT_STATUS = {
-  PENDING: 1,    
-  CONFIRMED: 2,  
-  CANCELLED: 3,  
+  PENDING: 1,
+  CONFIRMED: 2,
+  CANCELLED: 3,
   COMPLETED: 4,
 };
 
@@ -74,7 +74,12 @@ const AdjustAppointmentSchedule = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const dispatch = useDispatch();
 
-  // Hiển thị các message hệ thống
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      await loadAvailableSchedules(filterDoctorId, filterSpecId);
+    };
+    fetchSchedules();
+  }, [filterDoctorId, filterSpecId, hospitalId, currentRange]);
   useEffect(() => {
     if (messageState) {
       messageApi.open({
