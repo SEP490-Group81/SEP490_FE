@@ -95,6 +95,17 @@ export const deleteStaffSchedule = async (staffScheduleId) => {
   }
 };
 
+export const deleteDoctorSchedule = async (id) => {
+  try {
+    const result = await deleteAuth(`/schedules`, id);
+    console.log(`doctor schedule ${id} deleted successfully`, result);
+    return result;
+  } catch (error) {
+    console.error(`Error deleting StaffSchedule ${id}:`, error.message);
+    throw error;
+  }
+};
+
 export const getHospitalSpecializationSchedule = async ({
   hospitalId,
   doctorIds = [],

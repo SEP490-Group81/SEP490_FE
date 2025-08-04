@@ -20,6 +20,7 @@ function AppointmentService() {
     const [selectedServiceDetail, setSelectedServiceDetail] = useState(null);
     useEffect(() => {
         const fetchApi = async () => {
+            if (!hospitalId) return;
             const result = await getHospitalDetail(hospitalId);
             setHospital(result);
             setLoadingHospital(false);

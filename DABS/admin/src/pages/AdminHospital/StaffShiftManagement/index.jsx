@@ -726,7 +726,7 @@ const StaffShiftManagement = () => {
                     flexDirection: "column",
                   }}
                 >
-                  <Row justify="end" style={{ marginBottom: 8 }}>
+                  {/* <Row justify="end" style={{ marginBottom: 8 }}>
                     <Button
                       type="primary"
                       icon={<PlusOutlined />}
@@ -741,7 +741,7 @@ const StaffShiftManagement = () => {
                     >
                       Tạo sự kiện
                     </Button>
-                  </Row>
+                  </Row> */}
 
                   <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}

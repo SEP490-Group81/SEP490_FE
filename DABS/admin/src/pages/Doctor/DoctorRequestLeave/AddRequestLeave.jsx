@@ -54,8 +54,8 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
         timeShift: values.shift,
         reason: values.reason,
       };
-
-      const response = await createRequest(payload);
+      console.log("Submitting leave request with payload:", payload);
+       const response = await createRequest(payload);
 
       setSpinning(false);
       form.resetFields();
@@ -75,7 +75,7 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
         title={
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <FileTextOutlined style={{ marginRight: 8, color: '#1890ff' }} />
-            Đơn Xin Nghỉ Phép {user?.role?.id === 1 ? 'Bác Sĩ' : user?.role?.id === 7 ? 'Y Tá' : 'Nhân Viên'}
+            Đơn Xin Nghỉ Phép Của {user?.role?.id === 1 ? 'Bác Sĩ' : user?.role?.id === 7 ? 'Y Tá' : 'Nhân Viên'}
           </div>
         }
         visible={visible}
@@ -100,9 +100,10 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
                 <Form.Item
                   name="fullName"
                   label="Họ và tên"
+                 
                   rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
                 >
-                  <Input placeholder="Nhập họ và tên" />
+                  <Input disabled placeholder="Nhập họ và tên" />
                 </Form.Item>
               </Col>
               <Col xs={24} md={12}>
@@ -114,6 +115,7 @@ const DoctorLeaveRequestForm = ({ visible, onCancel, onSuccess }) => {
                   <Select placeholder="Chọn ca nghỉ">
                     <Option value={1}>Sáng</Option>
                     <Option value={2}>Chiều</Option>
+                    <Option value={3}>Cả ngày</Option>
                   </Select>
                 </Form.Item>
               </Col>

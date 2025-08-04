@@ -34,7 +34,7 @@ import {
 } from "@ant-design/icons";
 import { getDoctorByHospitalId, getDoctorByUserId } from "../../../services/doctorService";
 import { useRef } from "react";
-import { createSchedule, getScheduleByDoctorId, updateSchedule } from "../../../services/scheduleService";
+import { createSchedule, deleteDoctorSchedule, getScheduleByDoctorId, updateSchedule } from "../../../services/scheduleService";
 import { getHospitalDepartments } from "../../../services/departmentService";
 import { getHospitalRooms } from "../../../services/roomService";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
@@ -497,7 +497,7 @@ const AdminDoctorShiftManagement = () => {
           reasonOfUnavailability: "",
         };
 
-        console.log("Payload tạo mới:", payload);
+        console.log("Payload tạo mới:", JSON.stringify(payload));
         await createSchedule(payload);
         setFlag(prev => !prev);
         dispatch(setMessage({ type: 'success', content: 'Tạo ca làm việc thành công!' }));
@@ -1019,7 +1019,7 @@ const AdminDoctorShiftManagement = () => {
               onOk={async () => {
                 try {
                   console.log("Deleting shift:", shiftToDelete.id);
-                  //  await deleteStaffSchedule(shiftToDelete.id);
+                    await deleteDoctorSchedule(shiftToDelete.id);
                   setFlag(prev => !prev);
                   dispatch(setMessage({ type: 'success', content: 'Xóa ca làm việc thành công!' }));
                 } catch (error) {

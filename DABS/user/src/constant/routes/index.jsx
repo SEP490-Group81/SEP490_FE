@@ -196,7 +196,7 @@ export const routes = [
   },
   {
     path: "/appointment",
-    element: <ProtectedRoute allowedRoles={["Patient"]}><LayoutCommon /></ProtectedRoute>,
+    element: <LayoutCommon />,
     children: [
       {
         index: true,
