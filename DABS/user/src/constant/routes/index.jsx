@@ -66,10 +66,7 @@ export const routes = [
         path: "unauthorized",
         element: <ErrorPage /> // đã vẽ report 3
       },
-      {
-        path: "/chatbot-tester",
-        element: <ChatbotTester /> // đã vẽ report 3
-      },
+
       {
         path: "profile",
         element: <UpadteProfile /> // đã vẽ report 3
