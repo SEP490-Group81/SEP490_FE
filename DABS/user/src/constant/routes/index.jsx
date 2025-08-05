@@ -37,7 +37,7 @@ import UserBookingFlow from "../../pages/Appointment/Flow/index.jsx";
 import AppointmentReviewPage from "../../pages/Appointment/Accept/index.jsx";
 import PaymentCancelled from "../../pages/Payment/PaymentCancelled.jsx";
 import PaymentSuccess from "../../pages/Payment/PaymentSuccess.jsx";
-import ChatbotTester from "../../components/ChatBox/ChatBotTester.jsx";
+
 
 
 export const routes = [
