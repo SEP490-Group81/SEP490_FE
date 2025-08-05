@@ -1,112 +1,166 @@
-import { Row, Col, Card, Avatar, Button, Typography, List } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import {
+  Row, Col, Card, Avatar, Typography, List, Tag, Space, Divider
+} from "antd";
+import {
+  UserOutlined, MailOutlined, PhoneOutlined, HomeOutlined,
+  ManOutlined, WomanOutlined
+} from "@ant-design/icons";
+import { getDoctorDetail } from "../../../services/doctorService";
+import imgErrorDoctor from "../../../assets/images/errorImgHospital.jpg";
 
-export default function DoctorDetailPage() {
 const { Title, Text, Paragraph } = Typography;
 
+export default function DoctorDetailPage() {
+  const { doctorId } = useParams();
+  const [doctorDetail, setDoctorDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-const doctorsSameFacility = [
-  {
-    name: "BS. Nguyễn Văn B",
-    specialty: "Nội tổng quát",
-    photoUrl: "https://example.com/doctor1.jpg",
-    description: "Chuyên gia nội tổng quát, hơn 10 năm kinh nghiệm.",
-  },
-  {
-    name: "BS. Trần Thị C",
-    specialty: "Nhi khoa",
-    photoUrl: "https://example.com/doctor2.jpg",
-    description: "Bác sĩ nhi khoa, tận tâm với trẻ em.",
-  },
-];
+  useEffect(() => {
+    async function fetchDoctorData() {
+      try {
+        const response = await getDoctorDetail(doctorId);
+        if (response) setDoctorDetail(response);
+      } catch (error) {
+        console.error("Failed to fetch doctor detail:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDoctorData();
+  }, [doctorId]);
 
+  if (loading) return <div style={{ padding: 60, textAlign: "center" }}>Đang tải thông tin bác sĩ...</div>;
+  if (!doctorDetail) return <div style={{ padding: 60, textAlign: "center", color: "red" }}>Không tìm thấy thông tin bác sĩ.</div>;
+
+  const {
+    user,
+    description,
+    practicingFrom,
+    specializations,
+    qualification,
+    hospitalAffiliations,
+  } = doctorDetail;
+
+  const genderIcon = user.gender ? <ManOutlined /> : <WomanOutlined />;
+  const dobFormatted = user.dob ? new Date(user.dob).toLocaleDateString("vi-VN") : "Chưa cập nhật";
 
   return (
-    <div style={{ background: "#f5f7fa", minHeight: "100vh", padding: "32px 0" }}>
-      <div style={{ maxWidth: 1100, margin: "auto" }}>
-        <Card style={{ marginBottom: 24 }}>
+    <div style={{ background: "#f0f2f5", padding: "48px 16px", minHeight: "100vh" }}>
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+
+        {/* Header Info */}
+        <Card style={{ borderRadius: 16, padding: 24, marginBottom: 32 }}>
           <Row gutter={24} align="middle">
-            <Col xs={24} md={4} style={{ textAlign: "center" }}>
-              <Avatar size={90} src="https://example.com/avatar.jpg" icon={<UserOutlined />} />
+            <Col xs={24} md={8} style={{ textAlign: "center" }}>
+              <Avatar
+                size={120}
+                src={user.avatarUrl || imgErrorDoctor}
+                icon={!user.avatarUrl && <UserOutlined />}
+                style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.15)", marginBottom: 12 }}
+              />
+              <Tag
+                icon={genderIcon}
+                color={user.gender ? "#40a9ff" : "#f759ab"}
+                style={{ fontSize: 16, marginTop: 8 }}
+              >
+                {user.gender ? "Nam" : "Nữ"}
+              </Tag>
             </Col>
+
             <Col xs={24} md={16}>
-              <Title level={3} style={{ marginBottom: 0 }}>Ths BS. Lê Hoàng Thiên</Title>
-              <Text strong>Chuyên khoa:</Text> Tổng Quát<br />
-              <Text strong>Chuyên trị:</Text> Nội tổng quát<br />
-              <Text strong>Giá khám:</Text> 149.000đ<br />
-              <Text strong>Lịch khám:</Text> Hẹn khám
-            </Col>
-            <Col xs={24} md={4} style={{ textAlign: "center" }}>
-              <Button type="primary" size="large">Đặt khám ngay</Button>
+              <Title level={3}>{user.fullname}</Title>
+              <Space direction="vertical" size="small" style={{ fontSize: 16 }}>
+                <Text><MailOutlined /> {user.email || "Chưa cập nhật"}</Text>
+                <Text><PhoneOutlined /> {user.phoneNumber || "Chưa cập nhật"}</Text>
+                <Text><HomeOutlined /> {`${user.streetAddress || ""}, ${user.ward || ""}, ${user.province || ""}`}</Text>
+                <Text>Ngày sinh: <Text strong>{dobFormatted}</Text></Text>
+              </Space>
             </Col>
           </Row>
         </Card>
 
-        <Row gutter={24}>
-          <Col xs={24} md={16}>
-            <Card title="Giới thiệu" style={{ marginBottom: 16 }}>
-              <Paragraph>
-                Bác sĩ Lê Hoàng Thiên tốt nghiệp Thạc sĩ y khoa chuyên ngành nội khoa tại Đại học Y Dược TP.HCM...
-              </Paragraph>
-            </Card>
-            <Card title="Quá trình đào tạo" style={{ marginBottom: 16 }}>
-              <ul>
-                <li>2013 – 2019: Sinh viên chuyên ngành Y Đa khoa</li>
-                <li>2019 – 2022: Học nội soi siêu hóa bệnh viện</li>
-              </ul>
-            </Card>
-            <Card title="Kinh nghiệm" style={{ marginBottom: 16 }}>
-              <ul>
-                <li>2023 – nay: Làm việc tại Bệnh viện An Bình</li>
-              </ul>
-            </Card>
-            <Card title="Giải thưởng & Công trình nghiên cứu">
-              <ul>
-                <li>2022: Bằng khen Đại học Y Dược TP.HCM</li>
-              </ul>
-            </Card>
-          </Col>
-          <Col xs={24} md={8}>
-            <Card title="Bài viết liên quan">
-              <List
-                itemLayout="vertical"
-                dataSource={[
-                  { title: "Địa chỉ điều trị suy giãn tĩnh mạch...", date: "25/06/2025" },
-                  { title: "Nâng mông ở đâu đẹp nhất TPHCM", date: "25/06/2025" },
-                ]}
-                renderItem={item => (
-                  <List.Item>
-                    <Text>{item.title}</Text><br />
-                    <Text type="secondary" style={{ fontSize: 12 }}>{item.date}</Text>
-                  </List.Item>
-                )}
-              />
-            </Card>
-          </Col>
-        </Row>
+        {/* Section: Giới thiệu */}
+        <Card title="Giới thiệu" style={{ borderRadius: 16, marginBottom: 28 }}>
+          <Paragraph style={{ fontSize: 16 }}>
+            {description || "Chưa có thông tin giới thiệu."}
+          </Paragraph>
+          <Text type="secondary">Hành nghề từ: {practicingFrom ? new Date(practicingFrom).getFullYear() : "Chưa cập nhật"}</Text>
+        </Card>
 
-        {/* <Title level={4} style={{ margin: "32px 0 16px", textAlign: "center", color: "#00a3e0" }}>
-          Bác sĩ cùng cơ sở y tế
-        </Title>
-        <Row gutter={[24, 24]} justify="center">
-          {doctorsSameFacility.map((doc, idx) => (
-            <Col xs={24} sm={12} md={8} key={idx}>
-              <Card hoverable>
-                <Row align="middle">
-                  <Col span={8}>
-                    <Avatar size={64} src={doc.photoUrl} icon={<UserOutlined />} />
-                  </Col>
-                  <Col span={16}>
-                    <Text strong>{doc.name}</Text><br />
-                    <Text type="secondary">{doc.specialty}</Text>
-                    <Paragraph ellipsis={{ rows: 2 }}>{doc.description}</Paragraph>
-                    <Button type="link" size="small">Xem chi tiết</Button>
-                  </Col>
-                </Row>
-              </Card>
-            </Col>
-          ))}
-        </Row> */}
+        {/* Section: Chuyên khoa */}
+        <Card title="Chuyên khoa" style={{ borderRadius: 16, marginBottom: 28 }}>
+          {specializations.length > 0 ? (
+            <Row gutter={[16, 16]}>
+              {specializations.map(spec => (
+                <Col xs={12} sm={8} md={6} key={spec.id}>
+                  <div style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    textAlign: "center"
+                  }}>
+                    <div style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: 12,
+                      background: "#fff",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                      marginBottom: 10
+                    }}>
+                      <img
+                        src={spec.image}
+                        alt={spec.name}
+                        style={{ maxWidth: "90%", maxHeight: "90%" }}
+                      />
+                    </div>
+                    <Text strong>{spec.name}</Text>
+                  </div>
+                </Col>
+              ))}
+            </Row>
+          ) : <Text>Chưa cập nhật chuyên khoa</Text>}
+        </Card>
+
+        {/* Section: Quá trình đào tạo */}
+        <Card title="Quá trình đào tạo" style={{ borderRadius: 16, marginBottom: 28 }}>
+          {qualification.length > 0 ? (
+            <List
+              dataSource={qualification}
+              renderItem={item => (
+                <List.Item>
+                  <Text>{item.qualificationName} - {item.instituteName} ({item.procurementYear})</Text>
+                </List.Item>
+              )}
+            />
+          ) : <Text>Chưa cập nhật bằng cấp</Text>}
+        </Card>
+
+        {/* Section: Cơ sở công tác */}
+        <Card title="Công tác tại cơ sở y tế" style={{ borderRadius: 16 }}>
+          {hospitalAffiliations.length > 0 ? hospitalAffiliations.map(affil => (
+            <Card
+              key={affil.id}
+              type="inner"
+              style={{
+                marginBottom: 20,
+                borderRadius: 12,
+                backgroundColor: "#fafcff",
+                border: "1px solid #e6f7ff"
+              }}
+            >
+              <Title level={5} style={{ color: "#1890ff" }}>{affil.hospital.name}</Title>
+              <Paragraph>{affil.hospital.address}</Paragraph>
+              <Text><b>Phòng ban:</b> {affil.departmentName || "Chưa có thông tin"}</Text><br />
+              <Text><b>Vị trí:</b> {affil.position || "Chưa có thông tin"}</Text><br />
+              <Text><b>Hợp đồng:</b> {new Date(affil.contractStart).toLocaleDateString()} - {new Date(affil.contractEnd).toLocaleDateString()}</Text>
+            </Card>
+          )) : <Text>Chưa có thông tin về cơ sở y tế công tác</Text>}
+        </Card>
       </div>
     </div>
   );

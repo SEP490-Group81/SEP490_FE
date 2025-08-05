@@ -257,7 +257,7 @@ const AdminDoctorShiftManagement = () => {
   };
   useEffect(() => {
     const fetchDoctor = async () => {
-      if (!user.id) return;
+      if (!user?.id) return;
       const result = await getDoctorByHospitalId(user.hospitals[0]?.id);
       setSelectedDoctorId(result?.[0]?.user?.id || null);
       if (result) {
@@ -268,7 +268,7 @@ const AdminDoctorShiftManagement = () => {
       }
     };
     fetchDoctor();
-  }, [user.hospitals[0]?.id]);
+  }, [user?.hospitals[0]?.id]);
 
 
   useEffect(() => {
@@ -304,14 +304,14 @@ const AdminDoctorShiftManagement = () => {
   }, [messageState, dispatch]);
 
   useEffect(() => {
-    const hospitalId = user.hospitals[0]?.id;
+    const hospitalId = user?.hospitals[0]?.id;
     if (!hospitalId) return;
     const fetchData = async () => {
       const roomData = await getHospitalRooms(hospitalId);
       setRooms(roomData || []);
     };
     fetchData();
-  }, [user.hospitals[0]?.id]);
+  }, [user?.hospitals[0]?.id]);
 
   useEffect(() => {
     const fetchDoctor = async () => {

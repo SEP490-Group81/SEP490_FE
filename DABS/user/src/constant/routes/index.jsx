@@ -70,7 +70,7 @@ export const routes = [
         element: <UpadteProfile /> // đã vẽ report 3
       },
       {
-        path: "doctor-detail",
+        path: "doctor-detail/:doctorId",
         element: <DoctorDetail /> // đã vẽ report 3
       },
       {
