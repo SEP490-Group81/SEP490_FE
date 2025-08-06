@@ -57,36 +57,36 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
 
     // ✅ Watch for message state changes và hiển thị message
     useEffect(() => {
-    // ✅ Add null check for messageState
-    if (messageState && messageState.content) {
-        if (messageState.type === 'success') {
-            messageApi.success({
-                content: messageState.content,
-                duration: messageState.duration || 4,
-            });
-        } else if (messageState.type === 'error') {
-            messageApi.error({
-                content: messageState.content,
-                duration: messageState.duration || 8,
-            });
-        } else if (messageState.type === 'warning') {
-            messageApi.warning({
-                content: messageState.content,
-                duration: messageState.duration || 6,
-            });
-        } else if (messageState.type === 'info') {
-            messageApi.info({
-                content: messageState.content,
-                duration: messageState.duration || 4,
-            });
-        }
+        // ✅ Add null check for messageState
+        if (messageState && messageState.content) {
+            if (messageState.type === 'success') {
+                messageApi.success({
+                    content: messageState.content,
+                    duration: messageState.duration || 4,
+                });
+            } else if (messageState.type === 'error') {
+                messageApi.error({
+                    content: messageState.content,
+                    duration: messageState.duration || 8,
+                });
+            } else if (messageState.type === 'warning') {
+                messageApi.warning({
+                    content: messageState.content,
+                    duration: messageState.duration || 6,
+                });
+            } else if (messageState.type === 'info') {
+                messageApi.info({
+                    content: messageState.content,
+                    duration: messageState.duration || 4,
+                });
+            }
 
-        // ✅ Clear message after showing
-        setTimeout(() => {
-            dispatch(clearMessage());
-        }, 100);
-    }
-}, [messageState, messageApi, dispatch]);
+            // ✅ Clear message after showing
+            setTimeout(() => {
+                dispatch(clearMessage());
+            }, 100);
+        }
+    }, [messageState, messageApi, dispatch]);
 
     console.log("🔍 Current user data:", JSON.stringify(user));
 
@@ -219,19 +219,29 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
             dispatch(clearMessage());
 
             // ✅ Validate required fields
-            const requiredFields = [
-                'fullname', 'phoneNumber', 'password', 'cccd', 'gender', 'dob',
-                'province', 'ward', 'streetAddress', 'description', 'position',
-                'departmentId', 'specialization'
-            ];
+            const missingFields = [];
 
-            const missingFields = requiredFields.filter(field => !allValues[field]);
+            if (!allValues.fullname) missingFields.push('fullname');
+            if (!allValues.phoneNumber) missingFields.push('phoneNumber');
+            if (!allValues.password) missingFields.push('password');
+            if (!allValues.cccd) missingFields.push('cccd');
+            if (!allValues.gender) missingFields.push('gender');
+            if (!allValues.dob) missingFields.push('dob');
+            if (!allValues.province) missingFields.push('province');
+            if (!allValues.ward) missingFields.push('ward');
+            if (!allValues.streetAddress) missingFields.push('streetAddress');
+            if (!allValues.description) missingFields.push('description');
+            if (!allValues.position) missingFields.push('position');
+            if (!allValues.departmentId) missingFields.push('departmentId');
+
+            if (allValues.specialization === undefined || allValues.specialization === null || allValues.specialization === '') {
+                missingFields.push('specialization');
+            }
 
             if (missingFields.length > 0) {
                 console.error('❌ Missing required fields:', missingFields);
                 const errorMsg = `Missing required fields: ${missingFields.join(', ')}`;
 
-                // ✅ Show error message immediately
                 messageApi.error({
                     content: errorMsg,
                     duration: 6,
@@ -257,15 +267,26 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                 let specializationIds = [];
 
                 // Primary specialization
-                if (allValues.specialization !== undefined && allValues.specialization !== null) {
+                if (allValues.specialization !== undefined && allValues.specialization !== null && allValues.specialization !== '') {
                     let specId;
                     if (hospitalSpecializations && hospitalSpecializations.length > 0) {
                         const hospitalSpec = hospitalSpecializations[allValues.specialization];
                         specId = hospitalSpec?.id || parseInt(allValues.specialization) || allValues.specialization;
+
+                        // ✅ Debug log
+                        console.log('🩺 Primary specialization:', {
+                            selectedIndex: allValues.specialization,
+                            hospitalSpec: hospitalSpec,
+                            finalId: specId
+                        });
                     } else {
                         specId = parseInt(allValues.specialization) || allValues.specialization;
                     }
-                    specializationIds.push(specId);
+
+                    // ✅ Thêm vào array nếu có giá trị hợp lệ
+                    if (specId !== undefined && specId !== null) {
+                        specializationIds.push(specId);
+                    }
                 }
 
                 // Additional specializations
@@ -276,13 +297,17 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             return hospitalSpec?.id || parseInt(id) || id;
                         }
                         return parseInt(id) || id;
-                    }).filter(id => !specializationIds.includes(id));
+                    }).filter(id => id !== undefined && id !== null && !specializationIds.includes(id));
 
                     specializationIds = [...specializationIds, ...additionalIds];
                 }
 
+                console.log('🩺 Final specialization IDs:', specializationIds);
+
+
                 // Default specializations if none selected
                 if (specializationIds.length === 0) {
+                    console.warn('⚠️ No specializations selected, using default [1]');
                     specializationIds = [1];
                 }
 
