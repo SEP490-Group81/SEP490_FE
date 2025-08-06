@@ -161,7 +161,9 @@ function AppointmentReviewPage() {
             };
             console.log("pay load in booking confirm : " + JSON.stringify(payload));
             const bookingResponse = await createBookAppointment(payload);
-            navigate(`https://pay.payos.vn/web/${latestPayment.payOsId}/`);
+            console.log("Booking response:", bookingResponse);
+            window.location.href = (`${bookingResponse.result.checkoutUrl}/`);
+            // navigate(`https://pay.payos.vn/web/${latestPayment.payOsId}/`); 
             dispatch(setMessage({ type: 'success', content: 'Đặt khám thành công! ' }));
             if (stepData.paymentType === 'online') {
                 console.log("💳 Online payment selected, getting payment link...");
@@ -183,7 +185,7 @@ function AppointmentReviewPage() {
 
                             if (latestPayment?.payOsId) {
                                 console.log(" Redirecting to PayOS:", latestPayment.payOsId);
-                                window.location.href = `https://pay.payos.vn/web/${latestPayment.payOsId}/`;
+                                // window.location.href = `https://pay.payos.vn/web/${latestPayment.payOsId}/`;
                             } else {
                                 console.error(" No payOsId found in newest payment");
                                 dispatch(setMessage({
@@ -199,7 +201,7 @@ function AppointmentReviewPage() {
                             content: 'Có lỗi khi tạo liên kết thanh toán.'
                         }));
                     }
-                }, 500); // Wait 2 seconds for payment to be processed
+                }, 1000); // Wait 2 seconds for payment to be processed
 
             } else {
 
@@ -207,9 +209,7 @@ function AppointmentReviewPage() {
                     type: 'success',
                     content: 'Đặt khám thành công! Vui lòng thanh toán tại cơ sở y tế.'
                 }));
-                setTimeout(async () => {
-                    navigate('/appointments');
-                }, 1000);
+                navigate('/appointments');
             }
         } catch (error) {
             dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn lịch khác! Bạn đã đặt lịch này rồi hoặc lịch đã quá thời gian để đặt. ' }));

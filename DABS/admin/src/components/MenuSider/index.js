@@ -58,8 +58,8 @@ function MenuSider() {
             icon: <LineChartOutlined />,
         },
         {
-            key: "users",
-            label: <Link to="/admin-hospital/users">Nhân viên</Link>,
+            key: "staffs",
+            label: <Link to="/admin-hospital/staff-management">Nhân viên</Link>,
             icon: <TeamOutlined />,
         },
         {

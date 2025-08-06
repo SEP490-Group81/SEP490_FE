@@ -12,7 +12,8 @@ import {
     InputNumber,
     Upload,
     Alert,
-    Steps
+    Steps,
+    message // ✅ Import message từ antd
 } from 'antd';
 import {
     UserAddOutlined,
@@ -23,14 +24,12 @@ import {
     UploadOutlined,
     CheckCircleOutlined
 } from '@ant-design/icons';
-import { useDispatch } from 'react-redux';
-import { setMessage } from '../../../redux/slices/messageSlice';
+import { useDispatch, useSelector } from 'react-redux'; // ✅ Import useSelector
+import { clearMessage, setMessage } from '../../../redux/slices/messageSlice'; // ✅ Import clearMessage
 import { createDoctor } from '../../../services/doctorService';
-
 import { getHospitalById, getSpecializationsByHospitalId } from '../../../services/hospitalService';
-import { useSelector } from 'react-redux';
 import { getDepartmentsByHospitalId } from '../../../services/departmentService';
-
+import { getProvinces } from '../../../services/provinceService';
 
 const { Option } = Select;
 const { Step } = Steps;
@@ -44,15 +43,101 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
     const [currentHospital, setCurrentHospital] = useState(null);
     const [hospitalSpecializations, setHospitalSpecializations] = useState([]);
     const [hospitalDepartments, setHospitalDepartments] = useState([]);
+
+    // ✅ Add states for provinces and wards
+    const [provinces, setProvinces] = useState([]);
+    const [wards, setWards] = useState([]);
+    const [selectedProvince, setSelectedProvince] = useState(null);
+    const [loadingProvinces, setLoadingProvinces] = useState(false);
+
     const dispatch = useDispatch();
-
-
     const user = useSelector((state) => state.user.user);
+    const messageState = useSelector((state) => state.message); // ✅ Get message state
+    const [messageApi, contextHolder] = message.useMessage(); // ✅ Use Ant Design message hook
+
+    // ✅ Watch for message state changes và hiển thị message
+    useEffect(() => {
+        // ✅ Add null check for messageState
+        if (messageState && messageState.content) {
+            if (messageState.type === 'success') {
+                messageApi.success({
+                    content: messageState.content,
+                    duration: messageState.duration || 4,
+                });
+            } else if (messageState.type === 'error') {
+                messageApi.error({
+                    content: messageState.content,
+                    duration: messageState.duration || 8,
+                });
+            } else if (messageState.type === 'warning') {
+                messageApi.warning({
+                    content: messageState.content,
+                    duration: messageState.duration || 6,
+                });
+            } else if (messageState.type === 'info') {
+                messageApi.info({
+                    content: messageState.content,
+                    duration: messageState.duration || 4,
+                });
+            }
+
+            // ✅ Clear message after showing
+            setTimeout(() => {
+                dispatch(clearMessage());
+            }, 100);
+        }
+    }, [messageState, messageApi, dispatch]);
+
     console.log("🔍 Current user data:", JSON.stringify(user));
 
+    // ✅ Fetch provinces on component mount
+    useEffect(() => {
+        if (visible) {
+            fetchProvinces();
+        }
+    }, [visible]);
 
+    // ✅ Function to fetch provinces
+    const fetchProvinces = async () => {
+        setLoadingProvinces(true);
+        try {
+            console.log("🌏 Fetching provinces...");
+            const data = await getProvinces();
+            console.log("📍 Provinces loaded:", data.data);
+            setProvinces(data.data || []);
+        } catch (error) {
+            console.error("❌ Error fetching provinces:", error);
+            dispatch(setMessage({
+                type: 'error',
+                content: 'Không thể tải danh sách tỉnh/thành phố'
+            }));
+        } finally {
+            setLoadingProvinces(false);
+        }
+    };
 
+    // ✅ Update wards when province changes
+    useEffect(() => {
+        if (selectedProvince && provinces.length > 0) {
+            const provinceObj = provinces.find((p) => p.province === selectedProvince);
+            const wardsList = provinceObj?.wards || [];
+            setWards(wardsList);
+            console.log("🏘️ Wards for province", selectedProvince, ":", wardsList);
+        } else {
+            setWards([]);
+        }
+    }, [selectedProvince, provinces]);
 
+    // ✅ Handle form value changes
+    const onFormValuesChange = (changedValues) => {
+        if ("province" in changedValues) {
+            const newProvince = changedValues.province || null;
+            setSelectedProvince(newProvince);
+            // Reset ward when province changes
+            form.setFieldsValue({ ward: undefined });
+            console.log("🔄 Province changed to:", newProvince);
+        }
+    };
 
     useEffect(() => {
         if (visible) {
@@ -60,6 +145,8 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
             setCurrentStep(0);
             setFileList([]);
             setFormData({});
+            setSelectedProvince(null); // ✅ Reset province selection
+            setWards([]); // ✅ Reset wards
 
             fetchHospitalData();
         }
@@ -70,14 +157,12 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
         try {
             console.log('🔄 Fetching hospital data...');
 
-
             const hospitalId = user?.hospitals?.[0]?.id;
             console.log('🏥 Hospital ID from user.hospitals[0].id:', hospitalId);
 
             if (!hospitalId) {
                 throw new Error('Hospital ID not found in user.hospitals data');
             }
-
 
             const [hospital, specs, departments] = await Promise.all([
                 getHospitalById(hospitalId),
@@ -96,14 +181,12 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
         } catch (error) {
             console.error('❌ Error fetching hospital data:', error);
 
-
             const fallbackHospitalId = user?.hospitals?.[0]?.id || 105;
             setCurrentHospital({
                 id: fallbackHospitalId,
                 name: user?.hospitals?.[0]?.name || 'Default Hospital',
                 address: 'Unknown'
             });
-
 
             setHospitalSpecializations(specializations || []);
             setHospitalDepartments(departments || []);
@@ -118,12 +201,12 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
         }
     };
 
-
     const handleSubmit = async () => {
+        console.log('🚀 handleSubmit called');
         setLoading(true);
 
         try {
-            console.log('🚀 Starting form submission...');
+            console.log('🔄 Starting form submission...');
 
             const currentStepValues = form.getFieldsValue();
             const allValues = { ...formData, ...currentStepValues };
@@ -131,82 +214,128 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
             console.log('📝 Current step values:', currentStepValues);
             console.log('💾 Stored form data:', formData);
             console.log('🔄 Merged values:', allValues);
-            console.log('🏥 Current hospital:', currentHospital);
-            console.log('🏢 Hospital departments:', hospitalDepartments);
-            console.log('👤 User data:', user);
 
+            // ✅ Clear any previous messages
+            dispatch(clearMessage());
 
-            const requiredFields = [
-                'fullname', 'phoneNumber', 'password', 'cccd', 'gender', 'dob',
-                'province', 'ward', 'streetAddress', 'description', 'position',
-                'departmentId', 'specialization'
-            ];
+            // ✅ Validate required fields
+            const missingFields = [];
 
-            const missingFields = requiredFields.filter(field => !allValues[field]);
+            if (!allValues.fullname) missingFields.push('fullname');
+            if (!allValues.phoneNumber) missingFields.push('phoneNumber');
+            if (!allValues.password) missingFields.push('password');
+            if (!allValues.cccd) missingFields.push('cccd');
+            if (!allValues.gender) missingFields.push('gender');
+            if (!allValues.dob) missingFields.push('dob');
+            if (!allValues.province) missingFields.push('province');
+            if (!allValues.ward) missingFields.push('ward');
+            if (!allValues.streetAddress) missingFields.push('streetAddress');
+            if (!allValues.description) missingFields.push('description');
+            if (!allValues.position) missingFields.push('position');
+            if (!allValues.departmentId) missingFields.push('departmentId');
+
+            if (allValues.specialization === undefined || allValues.specialization === null || allValues.specialization === '') {
+                missingFields.push('specialization');
+            }
 
             if (missingFields.length > 0) {
                 console.error('❌ Missing required fields:', missingFields);
-                throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+                const errorMsg = `Missing required fields: ${missingFields.join(', ')}`;
+
+                messageApi.error({
+                    content: errorMsg,
+                    duration: 6,
+                });
+
+                throw new Error(errorMsg);
             }
 
             if (staffType === 'doctor') {
+                // Get hospital ID
+                const hospitalId = user?.hospitals?.[0]?.id || currentHospital?.id;
 
-                const selectedDepartment = hospitalDepartments?.find(dept => dept.id === allValues.departmentId);
-                console.log('🏢 Selected department from hospital:', selectedDepartment);
+                if (!hospitalId) {
+                    const errorMsg = 'Hospital ID not found. Please contact administrator.';
+                    messageApi.error({
+                        content: errorMsg,
+                        duration: 6,
+                    });
+                    throw new Error(errorMsg);
+                }
 
-
+                // Process specialization IDs
                 let specializationIds = [];
 
-
-                if (allValues.specialization !== undefined && allValues.specialization !== null) {
+                // Primary specialization
+                if (allValues.specialization !== undefined && allValues.specialization !== null && allValues.specialization !== '') {
                     let specId;
                     if (hospitalSpecializations && hospitalSpecializations.length > 0) {
                         const hospitalSpec = hospitalSpecializations[allValues.specialization];
-                        specId = hospitalSpec?.id || parseInt(allValues.specialization);
+                        specId = hospitalSpec?.id || parseInt(allValues.specialization) || allValues.specialization;
+
+                        // ✅ Debug log
+                        console.log('🩺 Primary specialization:', {
+                            selectedIndex: allValues.specialization,
+                            hospitalSpec: hospitalSpec,
+                            finalId: specId
+                        });
                     } else {
-                        specId = parseInt(allValues.specialization);
+                        specId = parseInt(allValues.specialization) || allValues.specialization;
                     }
-                    specializationIds.push(specId);
+
+                    // ✅ Thêm vào array nếu có giá trị hợp lệ
+                    if (specId !== undefined && specId !== null) {
+                        specializationIds.push(specId);
+                    }
                 }
 
-
+                // Additional specializations
                 if (allValues.specializationIds && allValues.specializationIds.length > 0) {
                     const additionalIds = allValues.specializationIds.map(id => {
                         if (hospitalSpecializations && hospitalSpecializations.length > 0) {
                             const hospitalSpec = hospitalSpecializations[id];
-                            return hospitalSpec?.id || parseInt(id);
+                            return hospitalSpec?.id || parseInt(id) || id;
                         }
-                        return parseInt(id);
-                    }).filter(id => !specializationIds.includes(id));
+                        return parseInt(id) || id;
+                    }).filter(id => id !== undefined && id !== null && !specializationIds.includes(id));
 
                     specializationIds = [...specializationIds, ...additionalIds];
                 }
 
+                console.log('🩺 Final specialization IDs:', specializationIds);
 
+
+                // Default specializations if none selected
                 if (specializationIds.length === 0) {
-                    specializationIds = [1, 2];
+                    console.warn('⚠️ No specializations selected, using default [1]');
+                    specializationIds = [1];
                 }
 
-
-                const hospitalId = user?.hospitals?.[0]?.id || currentHospital?.id || 105;
-                console.log('🏥 Using hospital ID from user.hospitals[0].id:', hospitalId);
-
-
+                // Format date properly
                 const dobFormatted = allValues.dob
                     ? (typeof allValues.dob === 'string'
                         ? allValues.dob
-                        : allValues.dob.format('YYYY-MM-DDTHH:mm:ss.SSS[Z]'))
-                    : "1995-07-28T08:29:33.047Z";
+                        : allValues.dob.format('YYYY-MM-DD'))
+                    : null;
 
-
+                // ✅ Prepare doctor data
                 const doctorData = {
-                    description: allValues.description?.trim() || "Default description",
-                    practicingFrom: "2020-07-28T08:29:33.047Z",
+                    id: 0,
+                    hospitalAffiliations: [
+                        {
+                            hospitalId: parseInt(hospitalId),
+                            departmentId: parseInt(allValues.departmentId),
+                            contractStart: new Date().toISOString(),
+                            contractEnd: new Date(Date.now() + (365 * 24 * 60 * 60 * 1000)).toISOString(),
+                            position: allValues.position?.trim() || "Doctor"
+                        }
+                    ],
                     user: {
+                        id: 0,
                         fullname: allValues.fullname?.trim() || "",
                         phoneNumber: allValues.phoneNumber?.trim() || "",
-                        password: allValues.password?.trim() || "",
-                        avatarUrl: allValues.avatarUrl?.trim() || "string",
+                        email: allValues.email?.trim() || `${allValues.phoneNumber}@hospital.com`,
+                        avatarUrl: allValues.avatarUrl?.trim() || "",
                         dob: dobFormatted,
                         gender: allValues.gender === 'male',
                         job: "Doctor",
@@ -215,74 +344,182 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                         ward: allValues.ward?.trim() || "",
                         streetAddress: allValues.streetAddress?.trim() || ""
                     },
-                    hospitalAffiliations: [
-                        {
-                            hospitalId: hospitalId,
-                            departmentId: parseInt(allValues.departmentId) || 15,
-                            contractStart: "2020-07-28T08:29:33.047Z",
-                            contractEnd: "2027-07-28T08:29:33.047Z",
-                            position: allValues.position?.trim() || "Doctor"
-                        }
-                    ],
+                    description: allValues.description?.trim() || "",
+                    practicingFrom: new Date().toISOString(),
                     specializationIds: specializationIds
                 };
 
-                console.log('🏥 Creating doctor with payload:', doctorData);
-                console.log('🔍 Payload validation:');
-                console.log('- Hospital ID:', hospitalId);
-                console.log('- Department ID (from hospital):', parseInt(allValues.departmentId));
-                console.log('- Selected Department Name:', selectedDepartment?.name || 'Not found');
-                console.log('- Specialization IDs:', specializationIds);
-                console.log('- DOB formatted:', dobFormatted);
-                console.log('- Gender (boolean):', allValues.gender === 'male');
+                console.log('🏥 Final doctor payload:', JSON.stringify(doctorData, null, 2));
 
-                const response = await createDoctor(doctorData);
-                console.log('📥 Create doctor response:', response);
+                // ✅ Validate critical fields trước khi call API
+                if (!doctorData.user.fullname) {
+                    const errorMsg = 'Full name is required';
+                    messageApi.error({ content: errorMsg, duration: 4 });
+                    throw new Error(errorMsg);
+                }
+                if (!doctorData.user.phoneNumber) {
+                    const errorMsg = 'Phone number is required';
+                    messageApi.error({ content: errorMsg, duration: 4 });
+                    throw new Error(errorMsg);
+                }
+                if (!doctorData.hospitalAffiliations[0].hospitalId) {
+                    const errorMsg = 'Hospital ID is required';
+                    messageApi.error({ content: errorMsg, duration: 4 });
+                    throw new Error(errorMsg);
+                }
+                if (!doctorData.hospitalAffiliations[0].departmentId) {
+                    const errorMsg = 'Department ID is required';
+                    messageApi.error({ content: errorMsg, duration: 4 });
+                    throw new Error(errorMsg);
+                }
+                if (!doctorData.specializationIds.length) {
+                    const errorMsg = 'At least one specialization is required';
+                    messageApi.error({ content: errorMsg, duration: 4 });
+                    throw new Error(errorMsg);
+                }
 
-                if (response && response.success !== false) {
+                console.log('✅ All validations passed, calling API...');
+
+                // ✅ Show loading message
+                messageApi.loading({
+                    content: 'Creating doctor account...',
+                    duration: 0, // Don't auto dismiss
+                    key: 'creating'
+                });
+
+                // ✅ Call API với enhanced logging
+                let response;
+                try {
+                    console.log('🌐 About to call createDoctor API...');
+                    response = await createDoctor(doctorData);
+                    console.log('📥 createDoctor returned:', response);
+                } catch (apiError) {
+                    console.error('🔥 API Error caught:', apiError);
+                    console.error('🔥 API Error details:', {
+                        message: apiError.message,
+                        status: apiError.response?.status,
+                        data: apiError.response?.data,
+                        headers: apiError.response?.headers
+                    });
+
+                    // ✅ Dismiss loading message
+                    messageApi.destroy('creating');
+
+                    throw apiError; // Re-throw để handle ở catch bên ngoài
+                }
+
+                // ✅ Dismiss loading message
+                messageApi.destroy('creating');
+
+                // ✅ Check response với logging chi tiết
+                console.log('🔍 Checking response success...');
+                console.log('- response:', response);
+                console.log('- response === true:', response === true);
+                console.log('- response?.success:', response?.success);
+                console.log('- response?.status:', response?.status);
+
+                const isSuccess = (
+                    response === true ||
+                    response?.success === true ||
+                    response?.success !== false ||
+                    (response?.status >= 200 && response?.status < 300) ||
+                    response?.message?.toLowerCase().includes('success') ||
+                    response?.result ||
+                    (!response?.error && response !== false && response !== null)
+                );
+
+                console.log('🎯 isSuccess determined as:', isSuccess);
+
+                if (isSuccess) {
+                    console.log('✅ Doctor created successfully');
+
+                    // ✅ Show success message
+                    messageApi.success({
+                        content: '🎉 Doctor created successfully!',
+                        duration: 4,
+                    });
+
+                    // ✅ Also dispatch to Redux store (optional)
                     dispatch(setMessage({
                         type: 'success',
-                        content: '🎉 Doctor created successfully!',
+                        content: '🎉 Doctor account has been created successfully!',
                         duration: 4
                     }));
 
+                    // Reset form
                     form.resetFields();
                     setFileList([]);
                     setCurrentStep(0);
                     setFormData({});
-                    onSuccess();
+                    setSelectedProvince(null);
+                    setWards([]);
+
+                    // ✅ Close modal sau một chút delay để user thấy success message
+                    setTimeout(() => {
+                        onSuccess();
+                    }, 1500);
+
                 } else {
-                    const errorMessage = response?.message || response?.error || 'Failed to create doctor';
+                    const errorMessage = response?.message || response?.error || response?.title || 'Failed to create doctor';
+                    console.error('❌ Create failed with message:', errorMessage);
+
+                    // ✅ Show error message
+                    messageApi.error({
+                        content: `❌ ${errorMessage}`,
+                        duration: 8,
+                    });
+
                     throw new Error(errorMessage);
                 }
             }
         } catch (error) {
-            console.error('❌ Error creating staff:', error);
+            console.error('❌ Error in handleSubmit:', error);
+            console.error('🔍 Error stack:', error.stack);
 
             let errorMessage = `Failed to create ${staffType}. Please try again.`;
 
             if (error.response?.data) {
                 console.log('🔍 API Error Details:', error.response.data);
-                errorMessage = error.response.data.message || error.response.data.title || errorMessage;
+
+                if (typeof error.response.data === 'string') {
+                    errorMessage = error.response.data;
+                } else if (error.response.data.message) {
+                    errorMessage = error.response.data.message;
+                } else if (error.response.data.title) {
+                    errorMessage = error.response.data.title;
+                } else if (error.response.data.errors) {
+                    const validationErrors = Object.values(error.response.data.errors).flat();
+                    errorMessage = validationErrors.join(', ');
+                } else if (error.response.data.error) {
+                    errorMessage = error.response.data.error;
+                }
             } else if (error.message) {
                 errorMessage = error.message;
             }
 
+            console.log('📤 Displaying error message:', errorMessage);
+
+            // ✅ Show error message
+            messageApi.error({
+                content: `❌ ${errorMessage}`,
+                duration: 8,
+            });
+
+            // ✅ Also dispatch to Redux store (optional)
             dispatch(setMessage({
                 type: 'error',
-                content: errorMessage,
+                content: `❌ ${errorMessage}`,
                 duration: 8
             }));
 
         } finally {
+            console.log('🏁 handleSubmit finally block');
             setLoading(false);
         }
     };
 
-
     const nextStep = async () => {
         try {
-
             let fieldsToValidate = [];
 
             switch (currentStep) {
@@ -305,7 +542,6 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                 const values = await form.validateFields(fieldsToValidate);
                 console.log(`✅ Step ${currentStep} validated values:`, values);
 
-
                 setFormData(prev => ({
                     ...prev,
                     ...values
@@ -321,6 +557,14 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
             const errorFields = error.errorFields || [];
             if (errorFields.length > 0) {
                 const missingFields = errorFields.map(field => field.name[0]).join(', ');
+
+                // ✅ Show validation error message
+                messageApi.error({
+                    content: `Please complete the following fields: ${missingFields}`,
+                    duration: 6,
+                });
+
+                // ✅ Also dispatch to Redux store
                 dispatch(setMessage({
                     type: 'error',
                     content: `Please complete the following fields: ${missingFields}`,
@@ -330,9 +574,7 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
         }
     };
 
-
     const prevStep = () => {
-
         const currentValues = form.getFieldsValue();
         setFormData(prev => ({
             ...prev,
@@ -342,11 +584,9 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
         setCurrentStep(currentStep - 1);
     };
 
-
     const handleUpload = ({ fileList: newFileList }) => {
         setFileList(newFileList);
     };
-
 
     const steps = [
         {
@@ -367,7 +607,6 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
     ];
 
     const renderProfessionalStep = () => {
-
         const availableSpecializations = hospitalSpecializations && hospitalSpecializations.length > 0
             ? hospitalSpecializations
             : specializations || [];
@@ -395,7 +634,6 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     <MedicineBoxOutlined style={{ marginRight: 8 }} />
                     Professional Information
                 </h3>
-
 
                 <Alert
                     message={`Hospital Assignment: ${currentHospital?.name || user?.hospitals?.[0]?.name || 'Loading...'}`}
@@ -445,7 +683,6 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             rules={[{ required: true, message: 'Please select department' }]}
                         >
                             <Select placeholder="Select department" showSearch>
-
                                 {availableDepartments?.map(dept => (
                                     <Option key={dept.id} value={dept.id}>
                                         🏥 {dept.name} (ID: {dept.id})
@@ -512,7 +749,6 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     </Col>
                 </Row>
 
-
                 <div style={{ marginTop: 16, padding: 8, background: '#f0f0f0', fontSize: '12px' }}>
                     <strong>Debug Info:</strong>
                     <br />User Hospital ID: {user?.hospitals?.[0]?.id || 'Not found'}
@@ -533,7 +769,6 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
         const allData = { ...formData, ...currentValues };
 
         console.log('📋 Review data:', allData);
-
 
         const availableDepartments = hospitalDepartments && hospitalDepartments.length > 0
             ? hospitalDepartments
@@ -605,7 +840,6 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                                     <p><strong>Additional Specializations:</strong> {additionalSpecs.join(', ')}</p>
                                 )}
                                 <p><strong>Description:</strong> {allData.description ? `${allData.description.substring(0, 100)}...` : 'Not provided'}</p>
-
 
                                 <div style={{ marginTop: 16, padding: 8, background: '#f0f0f0', fontSize: '12px' }}>
                                     <strong>API Payload Preview:</strong>
@@ -776,38 +1010,94 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             </Col>
                         </Row>
 
-
+                        {/* ✅ Updated Province and Ward selection */}
                         <Row gutter={16}>
                             <Col xs={24} md={8}>
                                 <Form.Item
                                     name="province"
-                                    label="Province/City"
-                                    rules={[{ required: true, message: 'Please enter province' }]}
+                                    label="Tỉnh/Thành phố"
+                                    rules={[{ required: true, message: 'Vui lòng chọn tỉnh/thành phố!' }]}
                                 >
-                                    <Input placeholder="Ho Chi Minh City" />
+                                    <Select
+                                        placeholder="Chọn tỉnh/thành phố"
+                                        showSearch
+                                        loading={loadingProvinces}
+                                        filterOption={(input, option) =>
+                                            (option?.label ?? "")
+                                                .toLowerCase()
+                                                .includes(input.toLowerCase())
+                                        }
+                                        options={provinces.map((p) => ({
+                                            label: p.province,
+                                            value: p.province,
+                                        }))}
+                                        allowClear
+                                        onSelect={(value) => {
+                                            console.log("🏙️ Province selected:", value);
+                                        }}
+                                    />
                                 </Form.Item>
                             </Col>
 
                             <Col xs={24} md={8}>
                                 <Form.Item
                                     name="ward"
-                                    label="District/Ward"
-                                    rules={[{ required: true, message: 'Please enter district' }]}
+                                    label="Phường/Xã"
+                                    rules={[{ required: true, message: 'Vui lòng chọn phường/xã!' }]}
                                 >
-                                    <Input placeholder="District 1" />
+                                    <Select
+                                        placeholder={
+                                            selectedProvince
+                                                ? "Chọn phường/xã"
+                                                : "Chọn tỉnh/thành phố trước"
+                                        }
+                                        showSearch
+                                        disabled={!selectedProvince}
+                                        loading={selectedProvince && wards.length === 0}
+                                        options={wards.map((w) => ({
+                                            label: w.name,
+                                            value: w.name
+                                        }))}
+                                        filterOption={(input, option) =>
+                                            (option?.label ?? "")
+                                                .toLowerCase()
+                                                .includes(input.toLowerCase())
+                                        }
+                                        allowClear
+                                        onSelect={(value) => {
+                                            console.log("🏘️ Ward selected:", value);
+                                        }}
+                                    />
                                 </Form.Item>
                             </Col>
 
                             <Col xs={24} md={8}>
                                 <Form.Item
                                     name="streetAddress"
-                                    label="Street Address"
-                                    rules={[{ required: true, message: 'Please enter street address' }]}
+                                    label="Số nhà, đường"
+                                    rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}
                                 >
                                     <Input placeholder="123 Nguyen Hue Street" />
                                 </Form.Item>
                             </Col>
                         </Row>
+
+                        {/* ✅ Debug info for provinces (remove in production) */}
+                        {process.env.NODE_ENV === 'development' && (
+                            <div style={{
+                                background: "#f0f0f0",
+                                padding: 12,
+                                borderRadius: 6,
+                                fontSize: '12px',
+                                marginTop: 16
+                            }}>
+                                <strong>🔍 Province Debug Info:</strong><br />
+                                Provinces loaded: {provinces.length}<br />
+                                Selected province: {selectedProvince || "None"}<br />
+                                Available wards: {wards.length}<br />
+                                Loading provinces: {loadingProvinces ? "Yes" : "No"}
+                            </div>
+                        )}
                     </div>
                 );
 
@@ -823,101 +1113,105 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
     };
 
     return (
-        <Modal
-            title={
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <UserAddOutlined style={{
-                        color: staffType === 'doctor' ? '#1890ff' : '#52c41a',
-                        marginRight: 8,
-                        fontSize: '20px'
-                    }} />
-                    <span style={{ fontSize: '18px', fontWeight: 600 }}>
-                        Add New {staffType === 'doctor' ? 'Doctor' : 'Nurse'}
-                    </span>
-                </div>
-            }
-            open={visible}
-            onCancel={onCancel}
-            footer={null}
-            width={1100}
-            destroyOnClose
-            style={{ top: 20 }}
-        >
-            <Spin spinning={loading}>
-                <div style={{ maxHeight: '75vh', overflowY: 'auto', padding: '0 4px' }}>
-                    <div style={{ marginBottom: 32 }}>
-                        <Steps current={currentStep} size="small">
-                            {steps.map((step, index) => (
-                                <Step
-                                    key={index}
-                                    title={step.title}
-                                    description={step.description}
-                                    icon={step.icon}
-                                />
-                            ))}
-                        </Steps>
+        <>
+            {contextHolder}
+            <Modal
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <UserAddOutlined style={{
+                            color: staffType === 'doctor' ? '#1890ff' : '#52c41a',
+                            marginRight: 8,
+                            fontSize: '20px'
+                        }} />
+                        <span style={{ fontSize: '18px', fontWeight: 600 }}>
+                            Add New {staffType === 'doctor' ? 'Doctor' : 'Nurse'}
+                        </span>
                     </div>
-
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        preserve={true}
-                    >
-                        {renderStepContent()}
-
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            gap: 12,
-                            paddingTop: 16,
-                            borderTop: '1px solid #f0f0f0'
-                        }}>
-                            <div>
-                                {currentStep > 0 && (
-                                    <Button onClick={prevStep} size="large">
-                                        Previous
-                                    </Button>
-                                )}
-                            </div>
-
-                            <div style={{ display: 'flex', gap: 12 }}>
-                                <Button onClick={onCancel} size="large">
-                                    Cancel
-                                </Button>
-
-                                {currentStep < steps.length - 1 ? (
-                                    <Button
-                                        type="primary"
-                                        onClick={nextStep}
-                                        size="large"
-                                        style={{
-                                            backgroundColor: staffType === 'doctor' ? '#1890ff' : '#52c41a',
-                                            borderColor: staffType === 'doctor' ? '#1890ff' : '#52c41a'
-                                        }}
-                                    >
-                                        Next
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        type="primary"
-                                        onClick={handleSubmit}
-                                        loading={loading}
-                                        size="large"
-                                        icon={<SaveOutlined />}
-                                        style={{
-                                            backgroundColor: staffType === 'doctor' ? '#1890ff' : '#52c41a',
-                                            borderColor: staffType === 'doctor' ? '#1890ff' : '#52c41a'
-                                        }}
-                                    >
-                                        Create {staffType === 'doctor' ? 'Doctor' : 'Nurse'}
-                                    </Button>
-                                )}
-                            </div>
+                }
+                open={visible}
+                onCancel={onCancel}
+                footer={null}
+                width={1100}
+                destroyOnClose
+                style={{ top: 20 }}
+            >
+                <Spin spinning={loading}>
+                    <div style={{ maxHeight: '75vh', overflowY: 'auto', padding: '0 4px' }}>
+                        <div style={{ marginBottom: 32 }}>
+                            <Steps current={currentStep} size="small">
+                                {steps.map((step, index) => (
+                                    <Step
+                                        key={index}
+                                        title={step.title}
+                                        description={step.description}
+                                        icon={step.icon}
+                                    />
+                                ))}
+                            </Steps>
                         </div>
-                    </Form>
-                </div>
-            </Spin>
-        </Modal>
+
+                        <Form
+                            form={form}
+                            layout="vertical"
+                            preserve={true}
+                            onValuesChange={onFormValuesChange} // ✅ Add onValuesChange handler
+                        >
+                            {renderStepContent()}
+
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                gap: 12,
+                                paddingTop: 16,
+                                borderTop: '1px solid #f0f0f0'
+                            }}>
+                                <div>
+                                    {currentStep > 0 && (
+                                        <Button onClick={prevStep} size="large">
+                                            Previous
+                                        </Button>
+                                    )}
+                                </div>
+
+                                <div style={{ display: 'flex', gap: 12 }}>
+                                    <Button onClick={onCancel} size="large">
+                                        Cancel
+                                    </Button>
+
+                                    {currentStep < steps.length - 1 ? (
+                                        <Button
+                                            type="primary"
+                                            onClick={nextStep}
+                                            size="large"
+                                            style={{
+                                                backgroundColor: staffType === 'doctor' ? '#1890ff' : '#52c41a',
+                                                borderColor: staffType === 'doctor' ? '#1890ff' : '#52c41a'
+                                            }}
+                                        >
+                                            Next
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            type="primary"
+                                            onClick={handleSubmit}
+                                            loading={loading}
+                                            size="large"
+                                            icon={<SaveOutlined />}
+                                            style={{
+                                                backgroundColor: staffType === 'doctor' ? '#1890ff' : '#52c41a',
+                                                borderColor: staffType === 'doctor' ? '#1890ff' : '#52c41a'
+                                            }}
+                                        >
+                                            Create {staffType === 'doctor' ? 'Doctor' : 'Nurse'}
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </Form>
+                    </div>
+                </Spin>
+            </Modal>
+        </>
     );
 };
 

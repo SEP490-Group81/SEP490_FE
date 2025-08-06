@@ -31,7 +31,7 @@ import {
     CloseCircleOutlined,
     UserAddOutlined
 } from '@ant-design/icons';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setMessage } from '../../../redux/slices/messageSlice';
 import {
     deleteDoctor,
@@ -39,11 +39,11 @@ import {
     getAllDoctors
 } from '../../../services/doctorService';
 
-
 import AddStaff from './AddStaff';
 import EditStaff from './EditStaff';
 import ViewStaff from './ViewStaff';
 import DeleteStaff from './DeleteStaff';
+import { getStaffNurseByHospitalId } from '../../../services/staffNurseService';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -74,16 +74,30 @@ const StaffManagementPage = () => {
         departments: 0
     });
 
-
     const [addModalVisible, setAddModalVisible] = useState(false);
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [viewModalVisible, setViewModalVisible] = useState(false);
     const [selectedStaff, setSelectedStaff] = useState(null);
-    const [staffType, setStaffType] = useState('doctor'); 
-
+    const [staffType, setStaffType] = useState('doctor');
+    const [selectedViewStaff, setSelectedViewStaff] = useState(null);
+    const [hospitalId, setHospitalId] = useState(null);
     const dispatch = useDispatch();
 
+    // ✅ Get user from Redux store
+    const user = useSelector((state) => state.user?.user);
     
+    // ✅ Extract hospitalId when user data is available
+    useEffect(() => {
+        if (user && user.hospitals && user.hospitals.length > 0) {
+            const currentHospitalId = user.hospitals[0].id;
+            console.log('🏥 Hospital ID extracted from user:', currentHospitalId);
+            console.log('🏥 Hospital name:', user.hospitals[0].name);
+            setHospitalId(currentHospitalId);
+        } else {
+            console.warn('⚠️ No hospital found in user data:', user);
+        }
+    }, [user]);
+
     const departments = [
         { id: 1, name: 'Cardiology' },
         { id: 2, name: 'Neurology' },
@@ -113,165 +127,26 @@ const StaffManagementPage = () => {
         'Recovery'
     ];
 
-   
-    const sampleNurses = [
-        {
-            id: 101,
-            type: 'nurse',
-            name: 'Nurse Sarah Wilson',
-            fullname: 'Nurse Sarah Wilson',
-            email: 'sarah.wilson@hospital.com',
-            phone: '+1-555-1111',
-            phoneNumber: '+1-555-1111',
-            specialization: 'Critical Care',
-            departmentId: 3,
-            departmentName: 'Emergency',
-            licenseNumber: 'RN-2024-001',
-            experience: '8 years',
-            status: 'active',
-            avatar: '',
-            avatarUrl: '',
-            gender: false,
-            dob: '1990-05-15',
-            shift: 'Day Shift (7AM-7PM)',
-            schedule: 'Day Shift (7AM-7PM)',
-            certifications: 'BLS, ACLS, PALS',
-            education: 'BLS, ACLS, PALS',
-            rating: 4.8,
-            totalPatients: 850,
-            consultationFee: 0,
-            createdAt: '2022-01-10T08:00:00Z',
-            cccd: '123456789012',
-            province: 'Ho Chi Minh City',
-            ward: 'District 1',
-            streetAddress: '123 Nguyen Hue Street'
-        },
-        {
-            id: 102,
-            type: 'nurse',
-            name: 'Nurse Michael Brown',
-            fullname: 'Nurse Michael Brown',
-            email: 'michael.brown@hospital.com',
-            phone: '+1-555-2222',
-            phoneNumber: '+1-555-2222',
-            specialization: 'Intensive Care',
-            departmentId: 1,
-            departmentName: 'Cardiology',
-            licenseNumber: 'RN-2024-002',
-            experience: '12 years',
-            status: 'active',
-            avatar: '',
-            avatarUrl: '',
-            gender: true,
-            dob: '1985-11-22',
-            shift: 'Night Shift (7PM-7AM)',
-            schedule: 'Night Shift (7PM-7AM)',
-            certifications: 'BLS, ACLS, CCRN',
-            education: 'BLS, ACLS, CCRN',
-            rating: 4.9,
-            totalPatients: 1200,
-            consultationFee: 0,
-            createdAt: '2020-08-15T09:00:00Z',
-            cccd: '987654321098',
-            province: 'Ho Chi Minh City',
-            ward: 'District 3',
-            streetAddress: '456 Le Loi Street'
-        },
-        {
-            id: 103,
-            type: 'nurse',
-            name: 'Nurse Emily Davis',
-            fullname: 'Nurse Emily Davis',
-            email: 'emily.davis@hospital.com',
-            phone: '+1-555-3333',
-            phoneNumber: '+1-555-3333',
-            specialization: 'Pediatrics',
-            departmentId: 4,
-            departmentName: 'Pediatrics',
-            licenseNumber: 'RN-2024-003',
-            experience: '6 years',
-            status: 'active',
-            avatar: '',
-            avatarUrl: '',
-            gender: false,
-            dob: '1992-03-08',
-            shift: 'Day Shift (7AM-7PM)',
-            schedule: 'Day Shift (7AM-7PM)',
-            certifications: 'BLS, PALS, NRP',
-            education: 'BLS, PALS, NRP',
-            rating: 4.7,
-            totalPatients: 650,
-            consultationFee: 0,
-            createdAt: '2023-02-20T10:00:00Z',
-            cccd: '456789123456',
-            province: 'Ho Chi Minh City',
-            ward: 'District 2',
-            streetAddress: '789 Dong Khoi Street'
-        }
-    ];
-
-
+    // ✅ Simplified fetchStaff without any fallback/callback logic
     const fetchStaff = async () => {
+        if (!hospitalId) {
+            console.warn('⚠️ No hospital ID available, cannot fetch staff');
+            return;
+        }
+
         setLoading(true);
         try {
             console.log('🔄 Fetching staff data...');
+            console.log('🏥 Using hospital ID:', hospitalId);
 
-            
+            // ✅ Fetch doctors from API
+            console.log('🔄 Fetching doctors...');
             const doctorResponse = await getAllDoctors();
             console.log('📥 Doctor API Response:', doctorResponse);
 
             let doctors = [];
-
-            if (doctorResponse && doctorResponse.success && doctorResponse.result) {
-                console.log('📦 Response has result array, length:', doctorResponse.result.length);
-
-                doctors = doctorResponse.result.map((doctor, index) => {
-                    console.log(`👨‍⚕️ Doctor ${index + 1}:`, doctor);
-
-
-                    const user = doctor.user || {};
-
-                    return {
-                        id: doctor.id || user.id || `doctor-${index}`,
-                        type: 'doctor',
-                        name: user.fullname || user.userName || doctor.description || 'Unknown Doctor',
-                        fullname: user.fullname || user.userName || doctor.description || 'Unknown Doctor',
-                        email: user.email || `doctor${index + 1}@hospital.com`,
-                        phone: user.phoneNumber || 'N/A',
-                        phoneNumber: user.phoneNumber || 'N/A',
-                        userName: user.userName || '',
-
-
-                        description: doctor.description || 'No description',
-                        practicingFrom: doctor.practicingFrom || new Date().toISOString(),
-
-
-                        specialization: 'General Medicine',
-                        departmentId: 1,
-                        departmentName: getDepartmentName(1),
-                        licenseNumber: `MD${doctor.id || index}`,
-                        experience: '5 years',
-                        education: 'Medical Degree',
-                        status: 'active',
-                        avatarUrl: user.avatarUrl || '',
-                        avatar: user.avatarUrl || '',
-                        gender: null,
-                        dob: null,
-                        consultationFee: 200000,
-                        totalPatients: Math.floor(Math.random() * 1000),
-                        rating: (4 + Math.random()).toFixed(1),
-                        createdAt: doctor.practicingFrom || new Date().toISOString(),
-                        schedule: 'Mon-Fri: 8:00-17:00',
-                        cccd: '',
-                        province: 'Ho Chi Minh City',
-                        ward: 'District 1',
-                        streetAddress: '',
-                        job: 'Doctor'
-                    };
-                });
-            } else if (Array.isArray(doctorResponse)) {
-
-                console.log('📋 Response is direct array, length:', doctorResponse.length);
+            if (Array.isArray(doctorResponse)) {
+                console.log('📋 Processing doctors, count:', doctorResponse.length);
                 doctors = doctorResponse.map((doctor, index) => {
                     const user = doctor.user || {};
                     return {
@@ -283,39 +158,107 @@ const StaffManagementPage = () => {
                         phone: user.phoneNumber || 'N/A',
                         phoneNumber: user.phoneNumber || 'N/A',
                         userName: user.userName || '',
+                        avatarUrl: user.avatarUrl || '',
+                        avatar: user.avatarUrl || '',
+                        gender: user.gender,
+                        dob: user.dob,
+                        cccd: user.cccd || '',
+                        province: user.province,
+                        ward: user.ward,
+                        streetAddress: user.streetAddress || '',
+                        job: user.job || 'Doctor',
                         description: doctor.description || 'No description',
                         practicingFrom: doctor.practicingFrom || new Date().toISOString(),
                         specialization: 'General Medicine',
                         departmentId: 1,
                         departmentName: getDepartmentName(1),
-                        licenseNumber: `MD${doctor.id || index}`,
+                        licenseNumber: `Doc-${doctor.id || index}`,
                         experience: '5 years',
                         education: 'Medical Degree',
                         status: 'active',
-                        avatarUrl: user.avatarUrl || '',
-                        avatar: user.avatarUrl || '',
-                        gender: null,
-                        dob: null,
                         consultationFee: 200000,
                         totalPatients: Math.floor(Math.random() * 1000),
                         rating: (4 + Math.random()).toFixed(1),
                         createdAt: doctor.practicingFrom || new Date().toISOString(),
                         schedule: 'Mon-Fri: 8:00-17:00',
-                        cccd: '',
-                        province: 'Ho Chi Minh City',
-                        ward: 'District 1',
-                        streetAddress: '',
-                        job: 'Doctor'
+                        originalData: {
+                            doctor: doctor,
+                            user: user,
+                            hospitalAffiliations: doctor.hospitalAffiliations || [],
+                            specializations: doctor.specializations || []
+                        }
                     };
                 });
             } else {
-                console.warn('⚠️ Unexpected API response format:', doctorResponse);
+                console.warn('⚠️ Unexpected doctor API response format:', doctorResponse);
+                doctors = []; // ✅ Empty array instead of fallback
             }
 
-            console.log('✅ Transformed doctors:', doctors);
+            console.log('✅ Processed doctors:', doctors);
 
+            // ✅ Fetch nurses from API - no fallback
+            console.log('🔄 Fetching nurses for hospital ID:', hospitalId);
+            const nurseResponse = await getStaffNurseByHospitalId(hospitalId);
+            console.log('📥 Nurse API Response:', nurseResponse);
 
+            let nurses = [];
+            if (Array.isArray(nurseResponse)) {
+                console.log('📋 Processing nurses, count:', nurseResponse.length);
+                nurses = nurseResponse.map((nurse, index) => {
+                    const nurseUser = nurse || {};
+                    console.log(`👩‍⚕️ Processing nurse ${index + 1}:`, nurseUser);
+                    
+                    return {
+                        id: nurse.id || nurseUser.id || `nurse-${index}`,
+                        type: 'nurse',
+                        name: nurseUser.fullname || 'Unknown Nurse',
+                        fullname: nurseUser.fullname || 'Unknown Nurse',
+                        email: nurseUser.email || 'No email',
+                        phone: nurseUser.phoneNumber || 'No phone',
+                        phoneNumber: nurseUser.phoneNumber || 'No phone',
+                        userName: nurseUser.userName || '',
+                        avatarUrl: nurseUser.avatarUrl || '',
+                        avatar: nurseUser.avatarUrl || '',
+                        gender: nurseUser.gender,
+                        dob: nurseUser.dob,
+                        cccd: nurseUser.cccd || '',
+                        province: nurseUser.province,
+                        ward: nurseUser.ward,
+                        streetAddress: nurseUser.streetAddress || '',
+                        job: nurseUser.job || 'Nurse',
+                        description: nurse.description || 'No description',
+                        specialization: nurse.specialization || 'General Nursing',
+                        departmentId: nurse.departmentId || 1,
+                        departmentName: getDepartmentName(nurse.departmentId || 1),
+                        licenseNumber: `Nurse${nurse.id || index}`,
+                        experience: nurse.experience || '3 years',
+                        education: nurse.education || 'Nursing Degree',
+                        status: nurse.status || 'active',
+                        consultationFee: 0,
+                        totalPatients: nurse.totalPatients || Math.floor(Math.random() * 500),
+                        rating: nurse.rating || (4 + Math.random()).toFixed(1),
+                        createdAt: nurse.createdAt || new Date().toISOString(),
+                        schedule: nurse.schedule || 'Mon-Fri: 8:00-17:00',
+                        shift: nurse.shift || 'Day Shift (7AM-7PM)',
+                        certifications: nurse.certifications || 'BLS, CPR',
+                        originalData: {
+                            nurse: nurse,
+                            user: nurseUser,
+                            hospitalAffiliations: nurse.hospitalAffiliations || [],
+                            specializations: nurse.specializations || []
+                        }
+                    };
+                });
+            } else {
+                console.warn('⚠️ Unexpected nurse API response format:', nurseResponse);
+                nurses = []; // ✅ Empty array instead of fallback
+            }
+
+            console.log('✅ Processed nurses:', nurses);
+
+            // ✅ Apply filters
             let filteredDoctors = [...doctors];
+            let filteredNurses = [...nurses];
 
             if (searchText) {
                 filteredDoctors = filteredDoctors.filter(doctor =>
@@ -324,59 +267,44 @@ const StaffManagementPage = () => {
                     doctor.phoneNumber.toLowerCase().includes(searchText.toLowerCase()) ||
                     doctor.userName.toLowerCase().includes(searchText.toLowerCase())
                 );
-            }
 
-            if (departmentFilter !== 'all') {
-                filteredDoctors = filteredDoctors.filter(doctor => doctor.departmentId === parseInt(departmentFilter));
-            }
-
-            if (statusFilter !== 'all') {
-                filteredDoctors = filteredDoctors.filter(doctor => doctor.status === statusFilter);
-            }
-
-            if (specializationFilter !== 'all') {
-                filteredDoctors = filteredDoctors.filter(doctor => doctor.specialization === specializationFilter);
-            }
-
-            console.log('✅ Filtered doctors:', filteredDoctors);
-
-
-            let nurses = [...sampleNurses];
-
-
-            if (searchText) {
-                nurses = nurses.filter(nurse =>
+                filteredNurses = filteredNurses.filter(nurse =>
                     nurse.name.toLowerCase().includes(searchText.toLowerCase()) ||
-                    nurse.email.toLowerCase().includes(searchText.toLowerCase())
+                    nurse.email.toLowerCase().includes(searchText.toLowerCase()) ||
+                    nurse.phoneNumber.toLowerCase().includes(searchText.toLowerCase()) ||
+                    nurse.userName.toLowerCase().includes(searchText.toLowerCase())
                 );
             }
 
             if (departmentFilter !== 'all') {
-                nurses = nurses.filter(nurse => nurse.departmentId === parseInt(departmentFilter));
+                filteredDoctors = filteredDoctors.filter(doctor => doctor.departmentId === parseInt(departmentFilter));
+                filteredNurses = filteredNurses.filter(nurse => nurse.departmentId === parseInt(departmentFilter));
             }
 
             if (statusFilter !== 'all') {
-                nurses = nurses.filter(nurse => nurse.status === statusFilter);
+                filteredDoctors = filteredDoctors.filter(doctor => doctor.status === statusFilter);
+                filteredNurses = filteredNurses.filter(nurse => nurse.status === statusFilter);
             }
 
             if (specializationFilter !== 'all') {
-                nurses = nurses.filter(nurse => nurse.specialization === specializationFilter);
+                filteredDoctors = filteredDoctors.filter(doctor => doctor.specialization === specializationFilter);
+                filteredNurses = filteredNurses.filter(nurse => nurse.specialization === specializationFilter);
             }
 
-            console.log('✅ Filtered nurses:', nurses);
+            console.log('✅ Filtered doctors:', filteredDoctors);
+            console.log('✅ Filtered nurses:', filteredNurses);
 
-
+            // ✅ Combine staff based on active tab
             let allStaff = [];
-
             switch (activeTab) {
                 case 'doctors':
                     allStaff = filteredDoctors;
                     break;
                 case 'nurses':
-                    allStaff = nurses;
+                    allStaff = filteredNurses;
                     break;
                 default:
-                    allStaff = [...filteredDoctors, ...nurses];
+                    allStaff = [...filteredDoctors, ...filteredNurses];
                     break;
             }
 
@@ -388,15 +316,15 @@ const StaffManagementPage = () => {
                 total: allStaff.length
             }));
 
-
+            // ✅ Update stats
             const activeDoctors = doctors.filter(d => d.status === 'active').length;
             const inactiveDoctors = doctors.filter(d => d.status === 'inactive').length;
-            const activeNurses = sampleNurses.filter(n => n.status === 'active').length;
-            const inactiveNurses = sampleNurses.filter(n => n.status === 'inactive').length;
+            const activeNurses = nurses.filter(n => n.status === 'active').length;
+            const inactiveNurses = nurses.filter(n => n.status === 'inactive').length;
 
             setStats({
                 totalDoctors: doctors.length,
-                totalNurses: sampleNurses.length,
+                totalNurses: nurses.length,
                 activeDoctors,
                 activeNurses,
                 inactiveDoctors,
@@ -406,7 +334,7 @@ const StaffManagementPage = () => {
 
             console.log('📊 Updated stats:', {
                 totalDoctors: doctors.length,
-                totalNurses: sampleNurses.length,
+                totalNurses: nurses.length,
                 activeDoctors,
                 activeNurses,
                 inactiveDoctors,
@@ -420,22 +348,37 @@ const StaffManagementPage = () => {
                 content: 'Failed to fetch staff data. Please try again.',
                 duration: 4
             }));
+            // ✅ Set empty arrays instead of fallback data
             setStaff([]);
+            setStats({
+                totalDoctors: 0,
+                totalNurses: 0,
+                activeDoctors: 0,
+                activeNurses: 0,
+                inactiveDoctors: 0,
+                inactiveNurses: 0,
+                departments: 0
+            });
         } finally {
             setLoading(false);
         }
     };
 
+    // ✅ Only fetch when hospitalId is available
+    useEffect(() => {
+        if (hospitalId) {
+            fetchStaff();
+        }
+    }, [hospitalId, activeTab, pagination.current, pagination.pageSize, searchText, departmentFilter, statusFilter, specializationFilter]);
 
     const getDepartmentName = (departmentId) => {
         const dept = departments.find(d => d.id === departmentId);
         return dept ? dept.name : 'Unknown Department';
     };
 
-
     const handleView = (staffMember) => {
         console.log('👁️ Viewing staff:', staffMember);
-        setSelectedStaff(staffMember);
+        setSelectedStaff({ id: staffMember.id });
         setViewModalVisible(true);
     };
 
@@ -446,18 +389,16 @@ const StaffManagementPage = () => {
     };
 
     const handleDelete = (staffMember) => {
-    console.log('🗑️ Delete action triggered for:', staffMember);
-    setSelectedStaff(staffMember);
-    setDeleteModalVisible(true);
-};
-
+        console.log('🗑️ Delete action triggered for:', staffMember);
+        setSelectedStaff(staffMember);
+        setDeleteModalVisible(true);
+    };
 
     const handleDeleteSuccess = async () => {
         console.log('✅ Delete operation completed successfully');
         setDeleteModalVisible(false);
         setSelectedStaff(null);
 
-        
         try {
             await fetchStaff();
             console.log('🔄 Staff data refreshed after deletion');
@@ -492,12 +433,7 @@ const StaffManagementPage = () => {
                             fetchStaff();
                         }
                     } else {
-
-                        dispatch(setMessage({
-                            type: 'success',
-                            content: `${staffMember.name} has been ${newStatus === 'active' ? 'activated' : 'deactivated'}. (Mock)`,
-                            duration: 4
-                        }));
+                        // ✅ For nurses, just refresh without fallback message
                         fetchStaff();
                     }
                 } catch (error) {
@@ -510,7 +446,6 @@ const StaffManagementPage = () => {
             }
         });
     };
-
 
     const columns = [
         {
@@ -643,22 +578,14 @@ const StaffManagementPage = () => {
         },
     ];
 
-
-    useEffect(() => {
-        fetchStaff();
-    }, [activeTab, pagination.current, pagination.pageSize, searchText, departmentFilter, statusFilter, specializationFilter]);
-
-
     const handleTableChange = (newPagination) => {
         setPagination(newPagination);
     };
-
 
     const handleSearch = (value) => {
         setSearchText(value);
         setPagination(prev => ({ ...prev, current: 1 }));
     };
-
 
     const handleFilterChange = (filterType, value) => {
         switch (filterType) {
@@ -675,7 +602,6 @@ const StaffManagementPage = () => {
         setPagination(prev => ({ ...prev, current: 1 }));
     };
 
-
     const handleAddStaff = (type) => {
         setStaffType(type);
         setAddModalVisible(true);
@@ -683,7 +609,6 @@ const StaffManagementPage = () => {
 
     return (
         <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
-          
             <div style={{ marginBottom: 24 }}>
                 <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
                     <TeamOutlined style={{ marginRight: 12 }} />
@@ -694,7 +619,6 @@ const StaffManagementPage = () => {
                 </p>
             </div>
 
-           
             <Row gutter={16} style={{ marginBottom: 24 }}>
                 <Col xs={12} md={6}>
                     <Card>
@@ -738,9 +662,7 @@ const StaffManagementPage = () => {
                 </Col>
             </Row>
 
-            
             <Card>
-               
                 <div style={{
                     marginBottom: 24,
                     display: 'flex',
@@ -812,7 +734,6 @@ const StaffManagementPage = () => {
                     </Space>
                 </div>
 
-               
                 <Tabs
                     activeKey={activeTab}
                     onChange={setActiveTab}
@@ -847,7 +768,6 @@ const StaffManagementPage = () => {
                     />
                 </Tabs>
 
-               
                 <Table
                     columns={columns}
                     dataSource={staff}
@@ -865,7 +785,6 @@ const StaffManagementPage = () => {
                 />
             </Card>
 
-            
             <AddStaff
                 visible={addModalVisible}
                 onCancel={() => setAddModalVisible(false)}
@@ -890,11 +809,16 @@ const StaffManagementPage = () => {
                 specializations={specializations}
             />
 
-            <ViewStaff
-                visible={viewModalVisible}
-                onCancel={() => setViewModalVisible(false)}
-                staff={selectedStaff}
-            />
+            {viewModalVisible && selectedStaff && (
+                <ViewStaff
+                    visible={viewModalVisible}
+                    onCancel={() => {
+                        setViewModalVisible(false);
+                        setSelectedStaff(null);
+                    }}
+                    staff={selectedStaff}
+                />
+            )}
 
             <DeleteStaff
                 visible={deleteModalVisible}

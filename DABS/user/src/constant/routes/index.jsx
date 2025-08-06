@@ -39,6 +39,7 @@ import PaymentCancelled from "../../pages/Payment/PaymentCancelled.jsx";
 import PaymentSuccess from "../../pages/Payment/PaymentSuccess.jsx";
 
 
+
 export const routes = [
   //public
   {
@@ -65,6 +66,7 @@ export const routes = [
         path: "unauthorized",
         element: <ErrorPage /> // đã vẽ report 3
       },
+
       {
         path: "profile",
         element: <UpadteProfile /> // đã vẽ report 3
