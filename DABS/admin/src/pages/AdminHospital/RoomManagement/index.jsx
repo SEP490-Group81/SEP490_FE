@@ -25,7 +25,7 @@ const { Option } = Select;
 
 const ManageRoom = () => {
   const user = useSelector((state) => state.user.user);
-  const hospitalId = user.hospitals[0]?.id;
+  const hospitalId = user?.hospitals[0]?.id;
   const [rooms, setRooms] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editing, setEditing] = useState(null);

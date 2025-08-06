@@ -121,7 +121,7 @@ function HospitalDetail() {
                                 <Card
                                     title={<Title level={4} style={{ margin: 0, userSelect: 'none' }}>Danh sách bác sĩ</Title>}
                                     style={{ borderRadius: 16, boxShadow: '0 4px 15px rgba(0,0,0,0.1)', marginBottom: 28 }}
-                                    bodyStyle={{ padding: '12px 16px', maxHeight: 380, overflowY: 'auto' }}
+                                    bodyStyle={{ padding: '12px 16px', maxHeight: 250, overflowY: 'auto' }}
                                 >
                                     {doctors.length > 0 ? (
                                         <List

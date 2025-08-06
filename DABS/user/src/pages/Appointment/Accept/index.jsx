@@ -45,46 +45,46 @@ function AppointmentReviewPage() {
     }, [stepData?.hospitalId]);
 
     useEffect(() => {
-    const fetchPayment = async () => {
-        try {
-            const hospitalId = Number(stepData.hospitalId);
-            const userId = user.id;
-            console.log("Legend Here hospitalId: " + hospitalId + " userId: " + userId);
+        const fetchPayment = async () => {
+            try {
+                const hospitalId = Number(stepData.hospitalId);
+                const userId = user.id;
+                console.log("Legend Here hospitalId: " + hospitalId + " userId: " + userId);
 
-            const response = await getAllPayment(hospitalId, userId);
-            
-            // ✅ Check if response has result array
-            if (response && response.result && Array.isArray(response.result)) {
-                // ✅ Sort by createdOn (newest first) and get the latest
-                const sortedPayments = response.result.sort((a, b) => 
-                    new Date(b.createdOn) - new Date(a.createdOn)
-                );
-                
-                const latestPayment = sortedPayments[0]; // Get the newest one
-                const allPayments = sortedPayments; // All payments sorted
-                setLatestPayment(latestPayment);
-                console.log("📥 All payments fetched:", allPayments);
-                console.log("🆕 Latest payment:", latestPayment);
-                
-                setPayment(allPayments); // Set all payments
-                
-                
-                
-            } else {
-                console.log("⚠️ No payments found or invalid response format");
+                const response = await getAllPayment(hospitalId, userId);
+
+                // ✅ Check if response has result array
+                if (response && response.result && Array.isArray(response.result)) {
+                    // ✅ Sort by createdOn (newest first) and get the latest
+                    const sortedPayments = response.result.sort((a, b) =>
+                        new Date(b.createdOn) - new Date(a.createdOn)
+                    );
+
+                    const latestPayment = sortedPayments[0]; // Get the newest one
+                    const allPayments = sortedPayments; // All payments sorted
+                    setLatestPayment(latestPayment);
+                    console.log("📥 All payments fetched:", allPayments);
+                    console.log("🆕 Latest payment:", latestPayment);
+
+                    setPayment(allPayments); // Set all payments
+
+
+
+                } else {
+                    console.log("⚠️ No payments found or invalid response format");
+                    setPayment([]);
+                }
+
+            } catch (error) {
+                console.error('❌ Error fetching payments:', error);
                 setPayment([]);
             }
+        };
 
-        } catch (error) {
-            console.error('❌ Error fetching payments:', error);
-            setPayment([]);
+        if (stepData?.hospitalId && user?.id) {
+            fetchPayment();
         }
-    };
-    
-    if (stepData?.hospitalId && user?.id) {
-        fetchPayment();
-    }
-}, [stepData?.hospitalId, user?.id, dispatch]);
+    }, [stepData?.hospitalId, user?.id, dispatch]);
 
     useEffect(() => {
         if (messageState) {
@@ -161,54 +161,56 @@ function AppointmentReviewPage() {
             };
             console.log("pay load in booking confirm : " + JSON.stringify(payload));
             const bookingResponse = await createBookAppointment(payload);
-           //  navigate(`https://pay.payos.vn/web/${latestPayment.payOsId}/`); 
+            navigate(`https://pay.payos.vn/web/${latestPayment.payOsId}/`);
             dispatch(setMessage({ type: 'success', content: 'Đặt khám thành công! ' }));
             if (stepData.paymentType === 'online') {
-            console.log("💳 Online payment selected, getting payment link...");
-            
-            // ✅ Wait a moment then fetch latest payment
-            setTimeout(async () => {
-                try {
-                    const hospitalId = Number(stepData.hospitalId);
-                    const userId = user.id;
-                    
-                    const response = await getAllPayment(hospitalId, userId);
-                    
-                    if (response?.result && Array.isArray(response.result)) {
-                        const sortedPayments = response.result.sort((a, b) => 
-                            new Date(b.createdOn) - new Date(a.createdOn)
-                        );
-                        
-                        const newestPayment = sortedPayments[0];
-                        
-                        if (latestPayment?.payOsId) {
-                            console.log(" Redirecting to PayOS:", latestPayment.payOsId);
-                            window.location.href = `https://pay.payos.vn/web/${latestPayment.payOsId}/`;
-                        } else {
-                            console.error(" No payOsId found in newest payment");
-                            dispatch(setMessage({ 
-                                type: 'error', 
-                                content: 'Không thể tạo liên kết thanh toán. Vui lòng thử lại.' 
-                            }));
+                console.log("💳 Online payment selected, getting payment link...");
+
+                // ✅ Wait a moment then fetch latest payment
+                setTimeout(async () => {
+                    try {
+                        const hospitalId = Number(stepData.hospitalId);
+                        const userId = user.id;
+
+                        const response = await getAllPayment(hospitalId, userId);
+
+                        if (response?.result && Array.isArray(response.result)) {
+                            const sortedPayments = response.result.sort((a, b) =>
+                                new Date(b.createdOn) - new Date(a.createdOn)
+                            );
+
+                            const newestPayment = sortedPayments[0];
+
+                            if (latestPayment?.payOsId) {
+                                console.log(" Redirecting to PayOS:", latestPayment.payOsId);
+                                window.location.href = `https://pay.payos.vn/web/${latestPayment.payOsId}/`;
+                            } else {
+                                console.error(" No payOsId found in newest payment");
+                                dispatch(setMessage({
+                                    type: 'error',
+                                    content: 'Không thể tạo liên kết thanh toán. Vui lòng thử lại.'
+                                }));
+                            }
                         }
+                    } catch (error) {
+                        console.error(' Error getting payment link:', error);
+                        dispatch(setMessage({
+                            type: 'error',
+                            content: 'Có lỗi khi tạo liên kết thanh toán.'
+                        }));
                     }
-                } catch (error) {
-                    console.error(' Error getting payment link:', error);
-                    dispatch(setMessage({ 
-                        type: 'error', 
-                        content: 'Có lỗi khi tạo liên kết thanh toán.' 
-                    }));
-                }
-            }, 1000); // Wait 2 seconds for payment to be processed
-            
-        } else {
-            
-            dispatch(setMessage({ 
-                type: 'success', 
-                content: 'Đặt khám thành công! Vui lòng thanh toán tại cơ sở y tế.' 
-            }));
-            navigate('/appointments');
-        }
+                }, 500); // Wait 2 seconds for payment to be processed
+
+            } else {
+
+                dispatch(setMessage({
+                    type: 'success',
+                    content: 'Đặt khám thành công! Vui lòng thanh toán tại cơ sở y tế.'
+                }));
+                setTimeout(async () => {
+                    navigate('/appointments');
+                }, 1000);
+            }
         } catch (error) {
             dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn lịch khác! Bạn đã đặt lịch này rồi hoặc lịch đã quá thời gian để đặt. ' }));
         }

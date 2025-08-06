@@ -16,19 +16,21 @@ import { SearchOutlined, CreditCardOutlined, EyeOutlined } from '@ant-design/ico
 import { useNavigate } from 'react-router-dom';
 import viVN from 'antd/es/locale/vi_VN';
 import { getPayments } from '../../../../services/paymentService';
+import { useSelector } from 'react-redux';
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
 
 const NurseUnpaidBookingList = () => {
   const navigate = useNavigate();
-
+  const userDefault = useSelector((state) => state.user.user || null);
+  console.log('User Default:', userDefault);
   const [searchText, setSearchText] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(false);
   const [bookingList, setBookingList] = useState([]);
 
-    const statusMap = {
+  const statusMap = {
     1: { text: 'Đang chờ', color: 'gold' },
     2: { text: 'Hoàn thành', color: 'green' },
     3: { text: 'Lỗi', color: 'red' },
@@ -54,7 +56,8 @@ const NurseUnpaidBookingList = () => {
     const fetchPayments = async () => {
       setLoading(true);
       try {
-        const response = await getPayments(105);
+        const response = await getPayments(userDefault?.hospitals?.[0]?.id);
+        console.log('Payments Response:', JSON.stringify(response));
         const data = response?.result || [];
         const mapped = data.map(item => ({
           id: String(item.id),
@@ -70,6 +73,7 @@ const NurseUnpaidBookingList = () => {
           insuranceClaimInfo: item.insuranceClaimInfo,
         }));
         setBookingList(mapped);
+        console.log('Booking List:', JSON.stringify(mapped));
       } catch (error) {
         console.error('Failed to load payments:', error);
       } finally {
@@ -79,27 +83,31 @@ const NurseUnpaidBookingList = () => {
 
     fetchPayments();
   }, []);
+const filteredBookings = useMemo(() => {
+  return bookingList.filter((item) => {
+    const matchStatus = activeTab === 'all' || String(item.status) === activeTab;
 
-  const filteredBookings = useMemo(() => {
-    return bookingList.filter(
-      (item) =>
-        item.paymentMethod === 'offline' &&
-        (activeTab === 'all' || String(item.status) === activeTab) &&
-        (item.patientName.toLowerCase().includes(searchText.toLowerCase()) ||
-          item.phoneNumber.includes(searchText) ||
-          item.id.toLowerCase().includes(searchText.toLowerCase()))
-    );
-  }, [bookingList, searchText, activeTab]);
+    const searchLower = searchText.toLowerCase();
+    const matchSearch =
+      item.patientName.toLowerCase().includes(searchLower) ||
+      item.phoneNumber.includes(searchText) ||
+      item.id.toLowerCase().includes(searchLower);
+
+    return matchStatus && matchSearch;
+  });
+}, [bookingList, searchText, activeTab]);
 
   const statusCounts = useMemo(() => {
     const counts = { all: 0 };
-    Object.keys(statusMap).forEach((key) => (counts[key] = 0));
+    Object.keys(statusMap).forEach((key) => {
+      counts[key] = 0;
+    });
 
     bookingList.forEach((item) => {
       if (item.paymentMethod !== 'offline') return;
 
       counts.all += 1;
-      if (counts[item.status]) {
+      if (item.status in counts) {
         counts[item.status] += 1;
       }
     });
