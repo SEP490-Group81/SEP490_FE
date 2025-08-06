@@ -145,7 +145,7 @@ function Home() {
                         <h1>Kết nối Người Dân với Cơ sở & Dịch vụ Y tế hàng đầu</h1>
                     </Col>
                 </Row>
-                <Row justify="center">
+                {/* <Row justify="center">
                     <Col className="gutter-row" span={12} style={{ textAlign: 'center', marginBottom: 40 }}>
 
                         <Search
@@ -156,7 +156,7 @@ function Home() {
                             onSearch={onSearch}
                         />
                     </Col>
-                </Row>
+                </Row> */}
             </div>
 
 

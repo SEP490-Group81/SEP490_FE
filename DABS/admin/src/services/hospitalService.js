@@ -142,24 +142,48 @@ export const createHospital = async (hospitalData) => {
 
 // Update hospital
 export const updateHospital = async (hospitalData) => {
-  try {
-    const result = await putAuth(`/hospitals/update`, hospitalData);
-    console.log(`Hospital updated successfully:`, result);
-    return result;
-  } catch (error) {
-    console.error(`Error updating hospital with ID ${hospitalData.id}:`, error.message);
-    throw error;
-  }
+    try {
+        const result = await putAuth(`/hospitals/update`, hospitalData);
+        console.log(`Hospital updated successfully:`, result);
+        return result;
+    } catch (error) {
+        console.error(`Error updating hospital with ID ${hospitalData.id}:`, error.message);
+        throw error;
+    }
 };
 
 // Delete hospital
 export const deleteHospital = async (hospitalId) => {
     try {
-        const result = await deleteAuth(`/hospitals`,hospitalId);
+        const result = await deleteAuth(`/hospitals`, hospitalId);
         console.log(`Hospital with ID ${hospitalId} deleted successfully:`, result);
         return result.result;
     } catch (error) {
         console.error(`Error deleting hospital with ID ${hospitalId}:`, error.message);
         throw error;
     }
+};
+
+
+
+export const getSpecializationsByHospitalId = async (hospitalId) => {
+  try {
+    const result = await getAuth(`/hospitals/${hospitalId}/specialization`);
+    console.log(`🩺 Fetched specializations for hospital ${hospitalId}:`, result);
+    return result.result || result;
+  } catch (error) {
+    console.error(`❌ Error fetching specializations for hospital ${hospitalId}:`, error);
+    throw error;
+  }
+};
+
+export const getDoctorsBySpecialization = async (hospitalId) => {
+  try {
+    const result = await getAuth(`/hospitals/${hospitalId}/doctors/grouped-by-specialization`);
+    console.log(`👨‍⚕️ Fetched doctors by specialization for hospital ${hospitalId}:`, result);
+    return result.result || result;
+  } catch (error) {
+    console.error(`❌ Error fetching doctors by specialization for hospital ${hospitalId}:`, error);
+    throw error;
+  }
 };

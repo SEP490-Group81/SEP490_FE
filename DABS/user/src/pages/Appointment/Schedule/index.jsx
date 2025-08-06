@@ -6,6 +6,10 @@ import { LeftOutlined, EnvironmentOutlined, CalendarOutlined, SolutionOutlined, 
 import { useEffect, useState } from "react";
 import "./styles.scss";
 import { getHospitalSpecializationSchedule } from "../../../services/scheduleService";
+
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+
+dayjs.extend(isSameOrAfter);
 dayjs.locale('vi');
 
 
@@ -166,18 +170,18 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
                                 <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
                                 <span style={{ fontWeight: 500 }}>Dịch vụ:</span> {infomationValue.serviceName}
                             </div>
-                            <div style={{ marginBottom: 8 }}>
-                                <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
-                                <span style={{ fontWeight: 500 }}>Chuyên khoa:</span> {defaultValue?.specialty?.name}
-                            </div>
-                            <div style={{ marginBottom: 8 }}>
-                                <CalendarOutlined
-                                    style={{ color: "#00bfff", marginRight: 8 }}
-                                />
-                                <span style={{ fontWeight: 500 }}>
-                                    Bác sĩ: {defaultValue?.doctor?.user?.fullname}
-                                </span>
-                            </div>
+                            {defaultValue?.specialty?.name && (
+                                <div style={{ marginBottom: 8 }}>
+                                    <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
+                                    <span style={{ fontWeight: 500 }}>Chuyên khoa:</span> {defaultValue.specialty.name}
+                                </div>
+                            )}
+                            {defaultValue?.doctor?.user?.fullname && (
+                                <div style={{ marginBottom: 8 }}>
+                                    <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
+                                    <span style={{ fontWeight: 500 }}>Bác sĩ: {defaultValue.doctor.user.fullname}</span>
+                                </div>
+                            )}
                             <div style={{ marginBottom: 8 }}>
                                 <CalendarOutlined style={{ color: '#00bfff', marginRight: 8 }} />
                                 <span style={{ fontWeight: 500 }}>Ngày khám:</span> {selectedDate.format('DD/MM/YYYY')}
@@ -226,10 +230,10 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
                                         );
 
                                         const hasMorning = schedulesOfDay.some(s =>
-                                            dayjs(s.startTime, 'HH:mm:ss').isBefore(dayjs('11:30:00', 'HH:mm:ss'))
+                                            dayjs(s.startTime, 'HH:mm:ss').isBefore(dayjs('12:00:00', 'HH:mm:ss'))
                                         );
                                         const hasAfternoon = schedulesOfDay.some(s =>
-                                            dayjs(s.startTime, 'HH:mm:ss').isAfter(dayjs('12:30:00', 'HH:mm:ss'))
+                                            dayjs(s.startTime, 'HH:mm:ss').isSameOrAfter(dayjs('12:00:00', 'HH:mm:ss'))
                                         );
 
 

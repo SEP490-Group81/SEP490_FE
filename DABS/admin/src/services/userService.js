@@ -57,7 +57,7 @@ export const createUser = async (userData) => {
     throw error;
   }
 };
-// Update user
+
 // Update user
 export const updateUser = async (userId, userData) => {
   

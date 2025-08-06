@@ -11,9 +11,10 @@ import { clearMessage, setMessage } from '../../../redux/slices/messageSlice';
 const DoctorRequestLeave = () => {
     const { Title, Text } = Typography;
     const user = useSelector((state) => state.user.user);
+    console.log("user in RequestLeave:", JSON.stringify(user?.role?.id));
     const hospitalId = user?.hospitals?.[0]?.id;
     const doctorUserId = user?.id;
-
+    const roleName = user?.role?.id === 1 ? 'Bác Sĩ' : user?.role?.id === 7 ? 'Y Tá' : 'Nhân Viên'
     const [dataSource, setDataSource] = useState([]);
     const [showAddModal, setShowAddModal] = useState(false);
     const [showUpdateModal, setShowUpdateModal] = useState(false);
@@ -21,7 +22,22 @@ const DoctorRequestLeave = () => {
     const [searchText, setSearchText] = useState('');
     const messageState = useSelector((state) => state.message);
     const [messageApi, contextHolder] = message.useMessage();
+    const [flag, setFlag] = useState(false);
     const dispatch = useDispatch();
+
+    const handleSuccess = () => {
+        setFlag(flag => !flag);
+        setShowAddModal(false);
+        dispatch(setMessage({ type: "success", content: "Thêm đơn nghỉ phép thành công!" }));
+    };
+
+    const handleUpdateSuccess = () => {
+        setFlag(flag => !flag);
+        setShowUpdateModal(false);
+        setEditingRecord(null);
+        dispatch(setMessage({ type: "success", content: "Cập nhật đơn nghỉ phép thành công!" }));
+
+    };
 
     useEffect(() => {
         if (messageState) {
@@ -31,7 +47,7 @@ const DoctorRequestLeave = () => {
             });
             dispatch(clearMessage());
         }
-    }, [dispatch, messageApi]);
+    }, [dispatch, messageApi, messageState]);
 
     useEffect(() => {
         const fetchRequests = async () => {
@@ -56,7 +72,7 @@ const DoctorRequestLeave = () => {
             }
         };
         fetchRequests();
-    }, [hospitalId, doctorUserId]);
+    }, [hospitalId, doctorUserId, flag]);
 
     const filteredData = dataSource.filter((item) =>
         item.fullName.toLowerCase().includes(searchText.toLowerCase())
@@ -72,15 +88,7 @@ const DoctorRequestLeave = () => {
     };
 
 
-    const handleAddUserSuccess = (newRequest) => {
-        setShowAddModal(false);
-         dispatch(setMessage({ type: "success", content: "Thêm đơn nghỉ phép thành công!" }));
-    };
-    const handleUpdateSuccess = (updatedRecord) => {
-        setShowUpdateModal(false);
-        setEditingRecord(null);
-         dispatch(setMessage({ type: "success", content: "Cập nhật đơn nghỉ phép thành công!" }));
-    };
+
 
     const mapReasonToRequestType = (reason) => {
         switch (reason) {
@@ -112,7 +120,7 @@ const DoctorRequestLeave = () => {
                     };
                     await updateRequest(payload);
                     dispatch(setMessage({ type: "success", content: "Hủy đơn thành công!" }));
-            
+
                 } catch (error) {
                     console.error("Lỗi khi hủy đơn:", error);
                     message.error('Hủy đơn thất bại');
@@ -126,11 +134,6 @@ const DoctorRequestLeave = () => {
             title: 'Họ và tên',
             dataIndex: 'fullName',
             key: 'fullName',
-        },
-        {
-            title: 'Chức vụ',
-            dataIndex: 'position',
-            key: 'position',
         },
         {
             title: 'Ngày bắt đầu',
@@ -206,7 +209,7 @@ const DoctorRequestLeave = () => {
                             <Col>
                                 <Title level={2}>
                                     <UserOutlined style={{ marginRight: 12 }} />
-                                    Đơn xin nghỉ phép của bác sĩ
+                                    Đơn Xin Nghỉ Phép của {roleName}
                                 </Title>
                             </Col>
                             <Col>
@@ -223,44 +226,9 @@ const DoctorRequestLeave = () => {
                     </Col>
                 </Row>
 
-                <Row gutter={24} style={{ marginBottom: 24, justifyContent: 'space-between' }}>
-                    <Col xs={24} sm={8}>
-                        <Card style={{ textAlign: 'center' }}>
-                            <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
-                                {/* Bạn có thể tính toán số ngày nghỉ từ API hoặc update sau */}
-                                8/15
-                            </Title>
-                            <Text style={{ fontFamily: "Roboto", fontSize: 20, fontWeight: 500 }}>Số ngày đã nghỉ</Text>
-                        </Card>
-                    </Col>
-
-                    <Col xs={24} sm={8}>
-                        <Card style={{ textAlign: 'center' }}>
-                            <Title level={2} style={{ margin: 0, color: '#faad14' }}>
-                                0/3
-                            </Title>
-                            <Text style={{ fontFamily: "Roboto", fontSize: 20, fontWeight: 500 }}>Số ngày nghỉ lễ</Text>
-                        </Card>
-                    </Col>
-                </Row>
 
                 <Row gutter={[0, 24]}>
-                    <Col span={24}>
-                        <Card>
-                            <Row className="actions-row" gutter={[16, 16]}>
-                                <Col xs={24} sm={12} md={8} lg={6} className="search-container">
-                                    <Input.Search
-                                        placeholder="Tìm theo họ tên..."
-                                        value={searchText}
-                                        onChange={(e) => setSearchText(e.target.value)}
-                                        enterButton={<SearchOutlined />}
-                                        size="middle"
-                                        allowClear
-                                    />
-                                </Col>
-                            </Row>
-                        </Card>
-                    </Col>
+
                     <Col span={24}>
                         <Table
                             columns={columns}
@@ -276,19 +244,7 @@ const DoctorRequestLeave = () => {
                     <AddUser
                         visible={showAddModal}
                         onCancel={() => setShowAddModal(false)}
-                        onSuccess={(newRequestRaw) => {
-                            const newMapped = {
-                                key: newRequestRaw.id.toString(),
-                                fullName: newRequestRaw.requesterName,
-                                position: 'Bác sĩ chuyên khoa',
-                                department: newRequestRaw.department || '',
-                                startDate: newRequestRaw.startDate ? newRequestRaw.startDate.split('T')[0] : '',
-                                endDate: newRequestRaw.endDate ? newRequestRaw.endDate.split('T')[0] : '',
-                                status: newRequestRaw.status === 1 ? 'pending' : newRequestRaw.status === 2 ? 'approved' : 'completed',
-                                rawData: newRequestRaw,
-                            };
-                            handleAddUserSuccess(newMapped);
-                        }}
+                        onSuccess={handleSuccess}
                         userId={doctorUserId}
                         hospitalId={hospitalId}
                     />
@@ -301,19 +257,7 @@ const DoctorRequestLeave = () => {
                             setShowUpdateModal(false);
                             setEditingRecord(null);
                         }}
-                        onSuccess={(updatedRequestRaw) => {
-                            const updatedMapped = {
-                                key: updatedRequestRaw.id.toString(),
-                                fullName: updatedRequestRaw.requesterName,
-                                position: 'Bác sĩ chuyên khoa',
-                                department: updatedRequestRaw.department || '',
-                                startDate: updatedRequestRaw.startDate ? updatedRequestRaw.startDate.split('T')[0] : '',
-                                endDate: updatedRequestRaw.endDate ? updatedRequestRaw.endDate.split('T')[0] : '',
-                                status: updatedRequestRaw.status === 1 ? 'pending' : updatedRequestRaw.status === 2 ? 'approved' : 'completed',
-                                rawData: updatedRequestRaw,
-                            };
-                            handleUpdateSuccess(updatedMapped);
-                        }}
+                        onSuccess={handleUpdateSuccess}
                         initialValues={editingRecord.rawData}
                         hospitalId={hospitalId}
                         userId={doctorUserId}

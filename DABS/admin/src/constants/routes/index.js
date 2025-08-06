@@ -20,7 +20,6 @@ import AdminSystem from "../../pages/AdminSystem/DashBoard";
 import AdminSystemHeader from "../../components/LayoutCommon/admin-system-header";
 import DoctorRequestLeave from "../../pages/Doctor/DoctorRequestLeave";
 import AdminDoctorShiftManagement from "../../pages/AdminHospital/DoctorShiftManagement";
-import NurseShiftManagement from "../../pages/AdminHospital/NurseShiftManagement";
 import StaffShiftManagement from "../../pages/AdminHospital/StaffShiftManagement";
 import ManageRoom from "../../pages/AdminHospital/RoomManagement";
 import ManageSpecialist from "../../pages/AdminHospital/SpecialistManagement";
@@ -37,6 +36,9 @@ import AdjustBookingSchedule from "../../pages/Nurse/AdjustAppointmentSchedule";
 import NursePaymentConfirmation from "../../pages/Nurse/PaymentAdjust/ConfirmPayment";
 import NurseUnpaidBookingList from "../../pages/Nurse/PaymentAdjust/UnpaidBookingList";
 import StaffWorkSchedule from "../../pages/HospitalStaff/WorkSchedule";
+import StaffManagementPage from "../../pages/AdminHospital/DoctorManagement/StaffManagement";
+import PaymentSuccess from "../../pages/Payment/PaymentSuccess";
+import PaymentCancelled from "../../pages/Payment/PaymentCancelled";
 
 export const routes = [
   {
@@ -55,6 +57,18 @@ export const routes = [
         path: "unauthorized",
         element: <ErrorPage />
       },
+      {
+        path: '/payment/success',
+        element: <PaymentSuccess />
+      },
+      {
+        path: '/payment/cancelled',
+        element: <PaymentCancelled />
+      },
+      {
+        path: '/payment/cancel',
+        element: <PaymentCancelled />
+      }
     ],
   },
   {
@@ -76,15 +90,15 @@ export const routes = [
 
       },
       {
+        path: "staff-management",
+        element: <StaffManagementPage />
+      },
+      {
         path: "doctor-shift-management",
         element:
           <AdminDoctorShiftManagement />
       },
-      {
-        path: "nurse-shift-management",
-        element:
-          <NurseShiftManagement />
-      },
+
       {
         path: "staff-shift-management",
         element:
@@ -100,20 +114,12 @@ export const routes = [
         element:
           <ManageSpecialist />
       },
-      {
-        path: 'hospital-detail/:id',
-        element: <HospitalDetail />,
-        // requireAuth: true,
-        // roles: ['admin', 'systemAdmin', 'hospitalAdmin'], 
-      },
+
       {
         path: 'departments',
         element: <DepartmentManagement />,
       },
-      {
-        path: 'hospitals',
-        element: <HospitalManagement />,
-      },
+
       {
         path: "medical-service-management",
         element:
@@ -128,6 +134,10 @@ export const routes = [
         path: "hospital-statistic",
         element:
           <HospitalStatisticPage />
+      },
+      {
+        path: "payment-list",
+        element: <NurseUnpaidBookingList />
       },
     ]
   },
@@ -169,10 +179,14 @@ export const routes = [
         path: "staff-profile",
         element: <StaffProfile />
       },
-        {
+      {
         path: "work-schedule",
         element: <StaffWorkSchedule />
       },
+      {
+        path: "request-leave",
+        element: <DoctorRequestLeave />,
+      }
     ]
   },
   {
@@ -207,6 +221,10 @@ export const routes = [
         path: "payment-list",
         element: <NurseUnpaidBookingList />
       },
+      {
+        path: "request-leave",
+        element: <DoctorRequestLeave />,
+      }
     ]
   },
   {

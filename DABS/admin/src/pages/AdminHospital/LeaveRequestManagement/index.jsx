@@ -9,9 +9,25 @@ import {
 import "./style.scss";
 import viVN from "antd/es/locale/vi_VN";
 import { useSelector } from "react-redux";
-import { getRequestsByHospital } from "../../../services/requestService";
+import { getRequestsByHospital, updateRequest } from "../../../services/requestService";
 
 const { TabPane } = Tabs;
+
+const mapReasonToRequestType = (type) => {
+    switch (type) {
+        case 1:
+            return 'Nghỉ phép';
+        case 2:
+            return 'Nghỉ ốm';
+        case 3:
+            return 'Đi công tác';
+        case 4:
+            return "Khác";
+        default:
+            return 'Khác';
+    }
+};
+
 
 const LeaveRequestManagement = () => {
     const [leaveRequests, setLeaveRequests] = useState([]);
@@ -19,6 +35,43 @@ const LeaveRequestManagement = () => {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [activeTab, setActiveTab] = useState("all");
     const [searchText, setSearchText] = useState("");
+    const [modalLoading, setModalLoading] = useState(false);
+
+    const isRequestExpired = (startDate) => {
+        if (!startDate) return false;
+        const today = new Date();
+        const start = new Date(startDate);
+        today.setHours(0, 0, 0, 0);
+        start.setHours(0, 0, 0, 0);
+        return start < today;
+    };
+
+    const updateStatus = async (status) => {
+        if (!selectedRequest) return;
+
+        try {
+            setModalLoading(true);
+            const payload = {
+                requestId: selectedRequest.id,
+                type: selectedRequest.requestType,
+                status: status,
+                startDate: selectedRequest.startDate,
+                endDate: selectedRequest.endDate,
+                reason: selectedRequest.reason,
+            }
+            console.log("Cập nhật trạng thái:", JSON.stringify(payload));
+            await updateRequest(payload);
+            message.success("Cập nhật trạng thái thành công");
+            setSelectedRequest(null);
+            const result = await getRequestsByHospital(user.hospitals[0].id);
+            setLeaveRequests(result);
+        } catch (error) {
+            console.error("Lỗi khi cập nhật trạng thái:", error);
+            message.error("Cập nhật trạng thái thất bại");
+        } finally {
+            setModalLoading(false);
+        }
+    }
 
     useEffect(() => {
         const fetchStaffs = async () => {
@@ -27,8 +80,6 @@ const LeaveRequestManagement = () => {
             try {
                 const result = await getRequestsByHospital(user.hospitals[0].id);
                 setLeaveRequests(result);
-
-
             } catch (error) {
                 console.error("Lỗi khi tải danh sách xin nghỉ:", error);
 
@@ -94,8 +145,9 @@ const LeaveRequestManagement = () => {
         },
         {
             title: "Lý do",
-            dataIndex: "reason",
-            key: "reason",
+            dataIndex: "requestType",
+            key: "requestType",
+            render: (type) => mapReasonToRequestType(type),
         },
         {
             title: "Trạng thái",
@@ -106,6 +158,7 @@ const LeaveRequestManagement = () => {
                     1: { color: "orange", label: "Chờ duyệt" },
                     2: { color: "green", label: "Đã duyệt" },
                     3: { color: "red", label: "Đã từ chối" },
+                    4: { color: "default", label: "Đã hủy" },
                 };
                 const { color, label } = mapping[status] || { color: "default", label: "Không rõ" };
                 return <Tag color={color}>{label}</Tag>;
@@ -181,27 +234,39 @@ const LeaveRequestManagement = () => {
                     title="Chi tiết yêu cầu nghỉ phép"
                     open={!!selectedRequest}
                     onCancel={() => setSelectedRequest(null)}
+
                     footer={[
-                        <Button key="cancel" onClick={() => setSelectedRequest(null)}>Đóng</Button>,
-                        // Nếu status là Chờ duyệt (status === 1), hiển thị nút duyệt/từ chối
-                        selectedRequest?.status === 1 && (
-                            <Space key="actions">
+                        <Space key="actions">
+                            {/* <Button
+                                key="cancel"
+                                icon={<CloseOutlined />}
+                                loading={modalLoading}
+                                onClick={() => updateStatus(4)}
+                            >
+                                Huỷ đơn
+                            </Button> */}
+
+                            <>
                                 <Button
                                     icon={<CloseOutlined />}
                                     danger
-                                // onClick={() => updateStatus("rejected")}
+                                    loading={modalLoading}
+                                    onClick={() => updateStatus(3)}
+                                    disabled={isRequestExpired(selectedRequest?.startDate)} 
                                 >
                                     Từ chối
                                 </Button>
                                 <Button
                                     icon={<CheckOutlined />}
                                     type="primary"
-                                // onClick={() => updateStatus("approved")}
+                                    loading={modalLoading}
+                                    onClick={() => updateStatus(2)}
+                                    disabled={isRequestExpired(selectedRequest?.startDate)} 
                                 >
                                     Duyệt
                                 </Button>
-                            </Space>
-                        )
+                            </>
+                        </Space>
                     ]}
                 >
                     {selectedRequest && (
@@ -224,7 +289,7 @@ const LeaveRequestManagement = () => {
                                         new Date(selectedRequest.endDate).toLocaleDateString("vi-VN") : ""
                                 }</p>
 
-                            <p><b>Lý do:</b> {selectedRequest.reason}</p>
+                            <p><b>Lý do:</b> {mapReasonToRequestType(selectedRequest.requestType)}</p>
 
                             <p><b>Trạng thái:</b> {
                                 {
@@ -238,6 +303,7 @@ const LeaveRequestManagement = () => {
                 </Modal>
 
             </div>
+
         </ConfigProvider>
     );
 };

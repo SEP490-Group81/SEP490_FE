@@ -19,7 +19,7 @@ export const getAllDepartments = async (hospitalId) => {
 // Get department by ID
 export const getDepartmentById = async (id) => {
   try {
-    const result = await getAuth(`/department/${id}`);
+    const result = await getAuth(`/departments/${id}`);
     console.log(`Fetched department with ID ${id}:`, result);
     return result.result;
   } catch (error) {
@@ -31,7 +31,7 @@ export const getDepartmentById = async (id) => {
 // Create new department
 export const createDepartment = async (department) => {
   try {
-    const result = await postAuth(`/department/create`, department);
+    const result = await postAuth(`/departments/create`, department);
     console.log(`Department created successfully:`, result);
     return result;
   } catch (error) {
@@ -43,7 +43,7 @@ export const createDepartment = async (department) => {
 // Update department
 export const updateDepartment = async (departmentData) => {
   try {
-    const result = await putAuth(`/department/update`, departmentData);
+    const result = await putAuth(`/departments/update`, departmentData);
     console.log(`Department updated successfully:`, result);
     return result;
   } catch (error) {
@@ -55,7 +55,7 @@ export const updateDepartment = async (departmentData) => {
 // Delete department
 export const deleteDepartment = async (departmentId) => {
   try {
-    const result = await deleteAuth(`/department`, departmentId);
+    const result = await deleteAuth(`/departments`, departmentId);
     console.log(`Department deleted successfully:`, result);
     return result;
   } catch (error) {
@@ -67,7 +67,7 @@ export const deleteDepartment = async (departmentId) => {
 // Get departments for dropdown/select (simple list)
 export const getDepartmentsList = async () => {
   try {
-    const response = await getAuth('/department');
+    const response = await getAuth('/departments');
     const departments = Array.isArray(response)
       ? response
       : response?.data || response?.items || [];
@@ -95,7 +95,7 @@ export const getDepartmentsList = async () => {
 // Get department statistics
 export const getDepartmentStatistics = async () => {
   try {
-    const response = await getAuth('/department/statistics');
+    const response = await getAuth('/departments/statistics');
     return response;
   } catch (error) {
     console.error('Error fetching department statistics:', error);
@@ -144,6 +144,18 @@ export const getHospitalDepartments = async (hospitalId) => {
     return result.result;
   } catch (error) {
     console.error(`Error fetching departments for hospital ID ${hospitalId}:`, error.message);
+    throw error;
+  }
+};
+
+
+export const getDepartmentsByHospitalId = async (hospitalId) => {
+  try {
+    const result = await getAuth(`/departments?hospitalId=${hospitalId}`);
+    console.log(`🏥 Fetched departments for hospital ${hospitalId}:`, result);
+    return result.result || result;
+  } catch (error) {
+    console.error(`❌ Error fetching departments for hospital ${hospitalId}:`, error);
     throw error;
   }
 };

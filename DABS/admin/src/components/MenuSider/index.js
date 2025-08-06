@@ -4,6 +4,8 @@ import {
     BankOutlined,
     MedicineBoxOutlined,
     InboxOutlined,
+    HeatMapOutlined,
+    AndroidOutlined,
     LineChartOutlined,
     ExperimentOutlined,
     DashboardOutlined,
@@ -56,8 +58,8 @@ function MenuSider() {
             icon: <LineChartOutlined />,
         },
         {
-            key: "users",
-            label: <Link to="/admin-hospital/users">Nhân viên</Link>,
+            key: "staffs",
+            label: <Link to="/admin-hospital/staff-management">Nhân viên</Link>,
             icon: <TeamOutlined />,
         },
         {
@@ -90,11 +92,7 @@ function MenuSider() {
             label: <Link to="/admin-hospital/departments">Department Management</Link>,
             icon: <BankOutlined />
         },
-        {
-            key: "hospital-management",
-            label: <Link to="/admin-hospital/hospitals">Hospital Management</Link>,
-            icon: <MedicineBoxOutlined />
-        },
+
         {
             key: "medical-services",
             label: <Link to="/admin-hospital/medical-service-management">Dịch vụ y tế</Link>,
@@ -166,6 +164,11 @@ function MenuSider() {
             label: <Link to="/nurse/payment-list">Xử lý thanh toán</Link>,
             icon: <UnorderedListOutlined />,
         },
+        {
+            key: "request-leave",
+            label: <Link to="/nurse/request-leave">Xin nghỉ</Link>,
+            icon: <FormOutlined />,
+        },
     ];
 
     const staffItems = [
@@ -183,6 +186,11 @@ function MenuSider() {
             key: "work-schedule",
             label: <Link to="/staff/work-schedule">Lịch làm việc</Link>,
             icon: <ClockCircleOutlined />,
+        },
+        {
+            key: "request-leave",
+            label: <Link to="/staff/request-leave">Xin nghỉ</Link>,
+            icon: <FormOutlined />,
         },
     ];
     const getMenuItems = (role) => {
