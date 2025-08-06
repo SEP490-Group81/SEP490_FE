@@ -50,7 +50,7 @@ const WorkScheduleNurse = () => {
 
   useEffect(() => {
     const fetchDoctor = async () => {
-      if (!user.id) return;
+      if (!user?.id) return;
       const result = await getStaffNurseByUserId(user.id);
       if (result) {
         console.log("result staff nurse detail : " + result);
