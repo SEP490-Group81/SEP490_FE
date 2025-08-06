@@ -42,3 +42,15 @@ export const getStaffNurseByHospitalId = async (hospitalId) => {
     
   }
 }
+
+export const getStaffNurseByUserId = async (userId) => {
+  try {
+    const result = await getAuth(`/staffnurse/by_users/${userId}`);
+    return result.result;
+
+  } catch (error) {
+    console.error(`Error fetching staff nurses for hospital ID ${userId}:`, error.message);
+    throw error;
+    
+  }
+}
