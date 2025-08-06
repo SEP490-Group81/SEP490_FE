@@ -23,6 +23,8 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { useDispatch, useSelector } from 'react-redux';
+import viLocale from "@fullcalendar/core/locales/vi";
+
 import {
   PlusOutlined,
   CalendarOutlined,
@@ -32,7 +34,7 @@ import {
 } from "@ant-design/icons";
 import { getDoctorByHospitalId, getDoctorByUserId } from "../../../services/doctorService";
 import { useRef } from "react";
-import { createSchedule, getScheduleByDoctorId, updateSchedule } from "../../../services/scheduleService";
+import { createSchedule, deleteDoctorSchedule, getScheduleByDoctorId, updateSchedule } from "../../../services/scheduleService";
 import { getHospitalDepartments } from "../../../services/departmentService";
 import { getHospitalRooms } from "../../../services/roomService";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
@@ -129,12 +131,11 @@ const renderEventContent = (eventInfo) => {
         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         lineHeight: 1.3,
-        maxWidth: "100%",    
-        wordBreak: "break-word", 
         overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        gap: 4,
+        WebkitBoxOrient: "vertical",
+        display: "-webkit-box",
+        WebkitLineClamp: 6,
+          maxHeight: 150
       }}
     >
       {department && (
@@ -144,7 +145,7 @@ const renderEventContent = (eventInfo) => {
             color: "#2c3e50",
             marginBottom: 4,
             whiteSpace: "normal",
-         
+
             display: "-webkit-box",
             WebkitLineClamp: 1,
             WebkitBoxOrient: "vertical",
@@ -172,23 +173,21 @@ const renderEventContent = (eventInfo) => {
           {room}
         </div>
       )}
-      {/* <div
+      <div
         style={{
-          fontWeight: "700",
-          fontSize: 14,
-          color: "#34495e",
-          marginBottom: 6,
-          whiteSpace: "normal",  
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,     
-          WebkitBoxOrient: "vertical",
+           fontWeight: "700",
+            fontSize: 14,
+            color: "#34495e",
+            marginBottom: 6,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: 120,
         }}
         title={title}
       >
         {title.split(" - ")[0]}
-      </div> */}
+      </div>
 
       <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "6px 0" }} />
 
@@ -224,6 +223,8 @@ const AdminDoctorShiftManagement = () => {
   const [modalDetail, setModalDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [doctors, setDoctors] = useState([]);
+  const [shiftToDelete, setShiftToDelete] = useState(null);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [doctorDetail, setDoctorDetail] = useState(null);
   const [events, setEvents] = useState([]);
   const dispatch = useDispatch();
@@ -235,10 +236,11 @@ const AdminDoctorShiftManagement = () => {
   const [flag, setFlag] = useState(false);
   const [nurses, setNurses] = useState([]);
   const user = useSelector((state) => state.user.user);
-  console.log("user is: " + JSON.stringify(user));
-  console.log("hospital admin id is: " + user.hospitals[0]?.id);
-  console.log("hospital admin is: " + JSON.stringify(user));
-  console.log("doctor detail: " + JSON.stringify(doctorDetail));
+  const shiftSelectMode = editingShift ? undefined : "multiple";
+  // console.log("user is: " + JSON.stringify(user));
+  // console.log("hospital admin id is: " + user.hospitals[0]?.id);
+  // console.log("hospital admin is: " + JSON.stringify(user));
+  // console.log("doctor detail: " + JSON.stringify(doctorDetail));
   const isShiftDisabled = (event) => {
     if (!event) return true;
 
@@ -255,7 +257,7 @@ const AdminDoctorShiftManagement = () => {
   };
   useEffect(() => {
     const fetchDoctor = async () => {
-      if (!user.id) return;
+      if (!user?.id) return;
       const result = await getDoctorByHospitalId(user.hospitals[0]?.id);
       setSelectedDoctorId(result?.[0]?.user?.id || null);
       if (result) {
@@ -266,7 +268,7 @@ const AdminDoctorShiftManagement = () => {
       }
     };
     fetchDoctor();
-  }, [user.hospitals[0]?.id]);
+  }, [user?.hospitals[0]?.id]);
 
 
   useEffect(() => {
@@ -302,14 +304,14 @@ const AdminDoctorShiftManagement = () => {
   }, [messageState, dispatch]);
 
   useEffect(() => {
-    const hospitalId = user.hospitals[0]?.id;
+    const hospitalId = user?.hospitals[0]?.id;
     if (!hospitalId) return;
     const fetchData = async () => {
       const roomData = await getHospitalRooms(hospitalId);
       setRooms(roomData || []);
     };
     fetchData();
-  }, [user.hospitals[0]?.id]);
+  }, [user?.hospitals[0]?.id]);
 
   useEffect(() => {
     const fetchDoctor = async () => {
@@ -335,7 +337,10 @@ const AdminDoctorShiftManagement = () => {
   }, [doctorDetail, flag]);
 
 
-
+  const showDeleteConfirm = (shift) => {
+    setShiftToDelete(shift);
+    setDeleteConfirmVisible(true);
+  };
 
   const handleDatesSet = async (arg) => {
     if (!doctorDetail) return;
@@ -404,6 +409,7 @@ const AdminDoctorShiftManagement = () => {
             room: item.room?.name || "Không rõ",
             status,
             patients,
+            nurseId: item.nurseInfo?.id || null,
           },
         };
       });
@@ -462,7 +468,7 @@ const AdminDoctorShiftManagement = () => {
         const payload = {
           id: scheduleId,
           hospitalAffiliationId,
-          staffId: nurseId,
+          userId: nurseId,
           roomId,
           daysOfWeek,
           startTime: shiftTimesMap[shiftKey]?.startTime || "00:00:00",
@@ -488,7 +494,7 @@ const AdminDoctorShiftManagement = () => {
           reasonOfUnavailability: "",
         };
 
-        console.log("Payload tạo mới:", payload);
+        console.log("Payload tạo mới:", JSON.stringify(payload));
         await createSchedule(payload);
         setFlag(prev => !prev);
         dispatch(setMessage({ type: 'success', content: 'Tạo ca làm việc thành công!' }));
@@ -504,9 +510,6 @@ const AdminDoctorShiftManagement = () => {
 
     }
   };
-
-
-
 
   const onFinishBulk = async (values) => {
     const { doctorIds, weekdays, shift, dateRange } = values;
@@ -654,7 +657,6 @@ const AdminDoctorShiftManagement = () => {
             </Row>
 
             <Legend />
-
             <Row gutter={28}>
               <Col md={8} xs={24} style={{ marginBottom: 24 }}>
                 <div
@@ -781,6 +783,7 @@ const AdminDoctorShiftManagement = () => {
                   <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                     initialView="timeGridWeek"
+
                     ref={calendarRef}
                     eventContent={renderEventContent}
                     datesSet={handleDatesSet}
@@ -789,7 +792,7 @@ const AdminDoctorShiftManagement = () => {
                       center: "title",
                       end: "dayGridMonth,timeGridWeek,timeGridDay",
                     }}
-                    locale="vi"
+                    locale={viLocale}
                     events={events}
                     height={600}
                     eventClick={handleEventClick}
@@ -867,7 +870,7 @@ const AdminDoctorShiftManagement = () => {
                         <Select placeholder="Chọn Y tá" style={{ borderRadius: 8 }}>
                           {nurses.map((nurse) => (
                             <Option key={nurse?.id} value={nurse?.id}>
-                              {nurse?.fullname} - {nurse?.id} 
+                              {nurse?.fullname}
                             </Option>
                           ))}
                         </Select>
@@ -890,7 +893,7 @@ const AdminDoctorShiftManagement = () => {
                       label="Ca làm"
                       rules={[{ required: true, message: "Vui lòng chọn ca làm." }]}
                     >
-                      <Select mode="multiple" style={{ borderRadius: 8 }}>
+                      <Select mode={shiftSelectMode} style={{ borderRadius: 8 }}>
                         <Option value="morning">Sáng</Option>
                         <Option value="afternoon">Chiều</Option>
                       </Select>
@@ -937,11 +940,20 @@ const AdminDoctorShiftManagement = () => {
                 >
                   Sửa
                 </Button>,
+                // <Button
+                //   key="delete"
+                //   danger
+                //   disabled={isShiftDisabled(selectedEvent)}
+                //   onClick={() => onDeleteShift(selectedEvent.id)}
+                //   style={{ borderRadius: 8 }}
+                // >
+                //   Xoá
+                // </Button>,
                 <Button
                   key="delete"
                   danger
                   disabled={isShiftDisabled(selectedEvent)}
-                  onClick={() => onDeleteShift(selectedEvent.id)}
+                  onClick={() => showDeleteConfirm(selectedEvent)}
                   style={{ borderRadius: 8 }}
                 >
                   Xoá
@@ -997,6 +1009,32 @@ const AdminDoctorShiftManagement = () => {
                 <div>Không có dữ liệu lịch làm việc.</div>
               )}
             </Modal>
+
+            <Modal
+              visible={deleteConfirmVisible}
+              title="Xác nhận xóa ca làm việc?"
+              onOk={async () => {
+                try {
+                  console.log("Deleting shift:", shiftToDelete.id);
+                  await deleteDoctorSchedule(shiftToDelete.id);
+                  setFlag(prev => !prev);
+                  dispatch(setMessage({ type: 'success', content: 'Xóa ca làm việc thành công!' }));
+                } catch (error) {
+                  dispatch(setMessage({ type: 'error', content: 'Lỗi xoá ca làm việc!' }));
+                } finally {
+                  setDeleteConfirmVisible(false);
+                  setShiftToDelete(null);
+                  setModalDetail(false);
+                }
+              }}
+              onCancel={() => {
+                setDeleteConfirmVisible(false);
+                setShiftToDelete(null);
+              }}
+              okText="Xóa"
+              cancelText="Hủy"
+              centered
+            />
           </div>
         </div>
       </ConfigProvider>

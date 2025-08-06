@@ -35,6 +35,9 @@ import DoctorList from "../../pages/Doctor/DoctorList/index.jsx";
 import AppointmentDoctor from "../../pages/Appointment/Doctor/index.jsx";
 import UserBookingFlow from "../../pages/Appointment/Flow/index.jsx";
 import AppointmentReviewPage from "../../pages/Appointment/Accept/index.jsx";
+import PaymentCancelled from "../../pages/Payment/PaymentCancelled.jsx";
+import PaymentSuccess from "../../pages/Payment/PaymentSuccess.jsx";
+
 
 
 export const routes = [
@@ -48,15 +51,28 @@ export const routes = [
         element: <Home /> // đã vẽ report 3
       },
       {
+        path: '/payment/success',
+        element: <PaymentSuccess />
+      },
+      {
+        path: '/payment/cancelled',
+        element: <PaymentCancelled />
+      },
+      {
+        path: '/payment/cancel',
+        element: <PaymentCancelled />
+      },
+      {
         path: "unauthorized",
         element: <ErrorPage /> // đã vẽ report 3
       },
+
       {
         path: "profile",
         element: <UpadteProfile /> // đã vẽ report 3
       },
       {
-        path: "doctor-detail",
+        path: "doctor-detail/:doctorId",
         element: <DoctorDetail /> // đã vẽ report 3
       },
       {
@@ -182,7 +198,7 @@ export const routes = [
   },
   {
     path: "/appointment",
-    element: <ProtectedRoute allowedRoles={["Patient"]}><LayoutCommon /></ProtectedRoute>,
+    element: <LayoutCommon />,
     children: [
       {
         index: true,

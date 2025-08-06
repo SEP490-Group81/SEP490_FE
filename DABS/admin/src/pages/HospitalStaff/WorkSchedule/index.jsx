@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -9,6 +9,7 @@ import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { getScheduleByStaffNurseId } from "../../../services/scheduleService"; // API call
 import "dayjs/locale/vi";
+import { getStaffNurseByUserId } from "../../../services/staffNurseService";
 
 dayjs.locale("vi");
 
@@ -40,14 +41,29 @@ const LegendColor = () => (
 const StaffWorkSchedule = () => {
   const user = useSelector((state) => state.user.user);
   const hospitalId = user?.hospitals?.[0]?.id;
-  const userId = user?.id;
+ 
 
   const [events, setEvents] = React.useState([]);
   const [modalOpen, setModalOpen] = React.useState(false);
   const [selectedEvent, setSelectedEvent] = React.useState(null);
+  const [staffNurseDetail, setStaffNurseDetail] = useState(null);
+
+  useEffect(() => {
+    const fetchDoctor = async () => {
+      if (!user.id) return;
+      const result = await getStaffNurseByUserId(user.id);
+      if (result) {
+        console.log("result staff nurse detail : " + result);
+        setStaffNurseDetail(result);
+      } else {
+        console.error("Không tìm thấy thông tin bác sĩ.");
+      }
+    };
+    fetchDoctor();
+  }, [user?.id]);
 
   const handleDatesSet = async (arg) => {
-    if (!userId || !hospitalId) {
+    if (!staffNurseDetail?.staffId || !hospitalId) {
       setEvents([]);
       return;
     }
@@ -56,15 +72,15 @@ const StaffWorkSchedule = () => {
       const from = dayjs(arg.start).toISOString();
       const to = dayjs(arg.end).toISOString();
 
-      const data = await getScheduleByStaffNurseId(userId, from, to, hospitalId);
+      const data = await getScheduleByStaffNurseId(staffNurseDetail?.staffId, from, to, hospitalId);
       const schedules = data?.schedules || [];
 
       const now = dayjs();
 
       const eventsFormatted = schedules
         .filter(item => {
-         
-          return true; 
+
+          return true;
         })
         .map((item) => {
           const dateStr = item.workDate.split("T")[0];
@@ -100,7 +116,7 @@ const StaffWorkSchedule = () => {
               status,
               room: item.room?.name || "Không rõ",
               patients,
-             
+
               type: "shift",
             },
           };
@@ -156,7 +172,7 @@ const StaffWorkSchedule = () => {
     });
   };
 
-  
+
   const renderEventContent = (eventInfo) => {
     const { title, extendedProps } = eventInfo.event;
 
@@ -271,9 +287,8 @@ const StaffWorkSchedule = () => {
                   <List.Item key={patient.id}>
                     <List.Item.Meta
                       title={<b>{patient.name}</b>}
-                      description={`Tuổi: ${patient.age} | Ghi chú: ${
-                        patient.note || "Không có"
-                      }`}
+                      description={`Tuổi: ${patient.age} | Ghi chú: ${patient.note || "Không có"
+                        }`}
                     />
                   </List.Item>
                 )}

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuth, postAuth, putAuth } from '../utils/request';
 
 const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWRlbnRpZmllciI6IjEiLCJlbWFpbCI6ImFkbWluQGhvc3RuYW1lLmNvbSIsImZ1bGxOYW1lIjoiU3VwZXIgVXNlciIsIm5hbWUiOiJTdXBlciIsInN1cm5hbWUiOiJVc2VyIiwiaXBBZGRyZXNzIjoiMC4wLjAuMSIsImF2YXRhclVybCI6IiIsIm1vYmlsZXBob25lIjoiIiwiZXhwIjoxNzgxMjcwNDgzLCJpc3MiOiJodHRwczovL0JFLlNFUDQ5MC5uZXQiLCJhdWQiOiJCRS5TRVA0OTAifQ.kQIX9uvjN9UOPiBitp9JsO2DlPlFyIU4VTP1ZyM4k3Y";
 
@@ -129,6 +130,87 @@ export const addPaymentMethod = async (patientId, methodData) => {
     return response.data;
   } catch (error) {
     console.error('Error adding payment method:', error);
+    throw error;
+  }
+};
+
+export const getAllPayment = async (hospitalId,userId) => {
+  try {
+    const result = await getAuth('/payment?hospitalId=' + hospitalId + '&userId=' + userId);
+  console.log("API raw result:", result);
+  return result;
+  } catch (error) {
+    console.error(`Error fetching Payment`, error.message);
+        throw error;
+  }
+  
+
+}
+
+
+
+
+// ✅ Create payment link
+export const createPaymentLink = async (paymentData) => {
+  try {
+    console.log('🔄 Creating payment link:', paymentData);
+    const result = await postAuth('/payment/payos/create-payment-link', paymentData);
+    console.log('✅ Payment link created:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Error creating payment link:', error.message);
+    throw error;
+  }
+};
+
+// ✅ Handle transfer (webhook handler)
+export const handleTransfer = async (transferData) => {
+  try {
+    console.log('🔄 Handling transfer:', transferData);
+    const result = await postAuth('/payment/payos/transfer_handler', transferData);
+    console.log('✅ Transfer handled:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Error handling transfer:', error.message);
+    throw error;
+  }
+};
+
+// ✅ Confirm webhook
+export const confirmWebhook = async (webhookData) => {
+  try {
+    console.log('🔄 Confirming webhook:', webhookData);
+    const result = await postAuth('/payment/payos/confirm-webhook', webhookData);
+    console.log('✅ Webhook confirmed:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Error confirming webhook:', error.message);
+    throw error;
+  }
+};
+
+// ✅ Get payment by order ID
+export const getPaymentByOrderId = async (orderId) => {
+  try {
+    console.log('🔄 Fetching payment for order:', orderId);
+    const result = await getAuth(`/payment/payos/${orderId}`);
+    console.log('✅ Payment data fetched:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Error fetching payment:', error.message);
+    throw error;
+  }
+};
+
+// ✅ Cancel payment
+export const cancelPayment = async (orderId, cancelData) => {
+  try {
+    console.log('🔄 Cancelling payment for order:', orderId);
+    const result = await putAuth(`/payment/payos/${orderId}/cancel`, cancelData);
+    console.log('✅ Payment cancelled:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Error cancelling payment:', error.message);
     throw error;
   }
 };

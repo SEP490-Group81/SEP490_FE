@@ -62,24 +62,31 @@ export default function ServiceFlowModal({ open, onCancel, onSave, flowData }) {
     }, [flowData]);
 
     const handleDragEnd = (event) => {
-        const { active, over } = event;
-        if (!over || active.id === over.id) return;
+        // const { active, over } = event;
+        // if (!over || active.id === over.id) return;
 
-        const activeStep = steps.find((s) => s.id === active.id);
-        const overIndex = steps.findIndex((s) => s.id === over.id);
+        // const activeStep = steps.find((s) => s.id === active.id);
+        // const overIndex = steps.findIndex((s) => s.id === over.id);
 
-        if (activeStep.steps.name === "Chọn Phương Thức Thanh Toán" && overIndex === 0) {
-            dispatch(setMessage({ type: 'error', content: `Không thể đặt bước 'Thanh toán' lên đầu quy trình.` }));
+        // if (activeStep.steps.name === "Chọn Phương Thức Thanh Toán" && overIndex === 0) {
+        //     dispatch(setMessage({ type: 'error', content: `Không thể đặt bước 'Thanh toán' lên đầu quy trình.` }));
 
-            return;
-        }
+        //     return;
+        // }
 
-        const oldIndex = steps.findIndex((s) => s.id === active.id);
-        const newIndex = overIndex;
-        setSteps((prev) => arrayMove(prev, oldIndex, newIndex));
+        // const oldIndex = steps.findIndex((s) => s.id === active.id);
+        // const newIndex = overIndex;
+        // setSteps((prev) => arrayMove(prev, oldIndex, newIndex));
+        return;
     };
 
     const handleToggleStep = (id) => {
+        const index = steps.findIndex((s) => s.id === id);
+
+        if (index >= steps.length - 2) {
+            dispatch(setMessage({ type: 'error', content: "Không thể thay đổi trạng thái 2 bước cuối cùng" }));
+            return;
+        }
         setSteps((prev) =>
             prev.map((s) => (s.id === id ? { ...s, status: !s.status } : s))
         );
