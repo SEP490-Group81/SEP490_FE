@@ -77,6 +77,7 @@ const authSlice = createSlice({
         isLoading: false,
         isInitializing: true,
         error: null,
+        isLoggedOut: false,
     },
     reducers: {
         updateAccessToken: (state, action) => {
@@ -87,9 +88,20 @@ const authSlice = createSlice({
             state.accessToken = null;
             state.isInitializing = false;
             localStorage.clear();
+            state.isLoggedOut = false;
             deleteCookie('refreshToken');
         },
-
+        logoutHand: (state) => {
+            state.user = null;
+            state.accessToken = null;
+            state.isInitializing = false;
+            state.isLoggedOut = true;
+            localStorage.clear();
+            deleteCookie('refreshToken');
+        },
+        setIsLoggedOut: (state, action) => {
+            state.isLoggedOut = action.payload;
+        },
         updateUserSlice: (state, action) => {
             state.user = { ...state.user, ...action.payload };
             // localStorage.setItem('user', JSON.stringify(state.user));
@@ -103,12 +115,15 @@ const authSlice = createSlice({
         builder
             .addCase(loginUser.pending, (state) => {
                 state.isLoading = true;
+                state.isInitializing = true;
+                state.isLoggedOut = false;
                 state.error = null;
 
             })
             .addCase(loginUser.fulfilled, (state, action) => {
                 state.isLoading = false;
                 state.user = action.payload.user;
+                state.isInitializing = false;
                 state.accessToken = action.payload.accessToken;
 
                 // localStorage.setItem('accessToken', state.accessToken);
@@ -116,16 +131,20 @@ const authSlice = createSlice({
             })
             .addCase(loginUser.rejected, (state, action) => {
                 state.isLoading = false;
+                state.isInitializing = false;
                 state.error = action.payload || 'Login failed';
                 console.error('Login failed:', action.error.message);
             })
 
             .addCase(refreshToken.pending, (state) => {
                 state.isLoading = true;
+                state.isInitializing = true;
+                state.isLoggedOut = false;
                 state.error = null;
             })
             .addCase(refreshToken.fulfilled, (state, action) => {
                 state.isLoading = false;
+                state.isInitializing = false;
                 state.user = action.payload.user;
                 state.accessToken = action.payload.accessToken;
                 console.log('User after token refresh:', action.payload.user);
@@ -134,10 +153,12 @@ const authSlice = createSlice({
             })
             .addCase(refreshToken.rejected, (state, action) => {
                 state.isLoading = false;
+                state.isInitializing = false;
+                state.isLoggedOut = true;
                 state.error = action.payload || 'Token refresh failed';
             });
     },
 });
 
-export const { logout, updateAccessToken, updateUserSlice, setUser } = authSlice.actions;
+export const { logout, updateAccessToken, updateUserSlice, setUser, setIsLoggedOut, logoutHand } = authSlice.actions;
 export default authSlice.reducer;
