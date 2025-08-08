@@ -39,6 +39,7 @@ import StaffWorkSchedule from "../../pages/HospitalStaff/WorkSchedule";
 import StaffManagementPage from "../../pages/AdminHospital/DoctorManagement/StaffManagement";
 import PaymentSuccess from "../../pages/Payment/PaymentSuccess";
 import PaymentCancelled from "../../pages/Payment/PaymentCancelled";
+import MyHospital from "../../pages/AdminHospital/HospitalDetail/HospitalDetail";
 
 export const routes = [
   {
@@ -88,6 +89,10 @@ export const routes = [
         ,
         // requireAuth: true,
 
+      },
+      {
+        path: "hospital-detail",
+        element: <MyHospital />,
       },
       {
         path: "staff-management",
