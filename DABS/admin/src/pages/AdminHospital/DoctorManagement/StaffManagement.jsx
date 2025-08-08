@@ -55,6 +55,8 @@ const { TabPane } = Tabs;
 
 const StaffManagementPage = () => {
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+    const [staffToDelete, setStaffToDelete] = useState(null);
     const [activeTab, setActiveTab] = useState('all');
     const [staff, setStaff] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -471,10 +473,11 @@ const StaffManagementPage = () => {
             if (isSuccess) {
                 dispatch(setMessage({
                     type: 'success',
-                    content: `${staffMember.type === 'doctor' ? 'Doctor' : 'Nurse'} deleted successfully!`,
+                    content: `${staffMember.type === 'doctor' ? 'Bác sĩ' : 'Y tá'} đã được xóa thành công!`,
                     duration: 4
                 }));
-                fetchStaff(); // Refresh the staff list
+                await fetchStaff(); // Refresh the staff list
+                return Promise.resolve();
             } else {
                 throw new Error(deleteResponse?.message || `Failed to delete ${staffMember.type}`);
             }
@@ -482,7 +485,7 @@ const StaffManagementPage = () => {
         } catch (error) {
             console.error(`❌ Error deleting ${staffMember.type}:`, error);
 
-            let errorMessage = `Failed to delete ${staffMember.type}`;
+            let errorMessage = `Không thể xóa ${staffMember.type}`;
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
             } else if (error.message) {
@@ -494,44 +497,35 @@ const StaffManagementPage = () => {
                 content: errorMessage,
                 duration: 4
             }));
+            return Promise.reject(error);
         }
     };
 
     const showDeleteConfirm = (staffMember) => {
-        const staffType = staffMember.type === 'doctor' ? 'Doctor' : 'Nurse';
-        const apiMethod = staffMember.type === 'doctor' ? 'deleteDoctor' : 'deleteUser';
-        const serviceType = staffMember.type === 'doctor' ? 'doctorService' : 'userService';
+        console.log('🚨 showDeleteConfirm called with:', staffMember);
+        setStaffToDelete(staffMember);
+        setDeleteConfirmVisible(true);
+    };
 
-        Modal.confirm({
-            title: `Delete ${staffType}`,
-            icon: <DeleteOutlined style={{ color: '#ff4d4f' }} />,
-            content: (
-                <div>
-                    <p>Are you sure you want to delete <strong>{staffMember.name}</strong>?</p>
-                    <div style={{
-                        background: '#f5f5f5',
-                        padding: '8px 12px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        color: '#666',
-                        marginTop: 8
-                    }}>
-                        <div><strong>Type:</strong> {staffType}</div>
-                        <div><strong>API:</strong> {apiMethod}</div>
-                        <div><strong>Service:</strong> {serviceType}</div>
-                        <div style={{ color: '#ff4d4f', marginTop: 4 }}>
-                            This action cannot be undone.
-                        </div>
-                    </div>
-                </div>
-            ),
-            okText: `Yes, Delete ${staffType}`,
-            okType: 'danger',
-            cancelText: 'Cancel',
-            onOk() {
-                handleDeleteStaff(staffMember);
-            },
-        });
+    const handleConfirmDelete = async () => {
+        if (!staffToDelete) return;
+        
+        console.log('🆗 Delete confirmed, calling handleDeleteStaff...');
+        try {
+            setDeleteConfirmVisible(false);
+            await handleDeleteStaff(staffToDelete);
+            console.log('✅ Delete completed successfully');
+        } catch (error) {
+            console.error('❌ Delete failed:', error);
+        } finally {
+            setStaffToDelete(null);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        console.log('❌ Delete cancelled');
+        setDeleteConfirmVisible(false);
+        setStaffToDelete(null);
     };
 
     // const handleView = (staffMember) => {
@@ -744,7 +738,10 @@ const StaffManagementPage = () => {
                                 type="text"
                                 danger
                                 icon={<DeleteOutlined />}
-                                onClick={() => showDeleteConfirm(staffMember)} // ✅ Enhanced confirm
+                                onClick={() => {
+                                    console.log('🔥 Delete button clicked for:', staffMember);
+                                    showDeleteConfirm(staffMember);
+                                }}
                             />
                         </Tooltip>
                     </Space>
@@ -892,7 +889,28 @@ const StaffManagementPage = () => {
                         </Select>
                     </Space>
 
-                    {addingStaffType === 'doctor' ? (
+                    <Space>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => handleAddStaff('doctor')}
+                        >
+                            Thêm Bác sĩ
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<UserAddOutlined />}
+                            onClick={() => handleAddStaff('nurse')}
+                            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                        >
+                            Thêm Y tá
+                        </Button>
+                    </Space>
+                </div>
+
+                {/* Add Staff Modals */}
+                {addModalVisible && (
+                    addingStaffType === 'doctor' ? (
                         <AddStaff
                             visible={addModalVisible}
                             onCancel={() => setAddModalVisible(false)}
@@ -900,7 +918,7 @@ const StaffManagementPage = () => {
                                 setAddModalVisible(false);
                                 fetchStaff();
                             }}
-                            staffType={addingStaffType} // ✅ Pass addingStaffType
+                            staffType={addingStaffType}
                             departments={departments}
                             specializations={specializations}
                         />
@@ -913,8 +931,8 @@ const StaffManagementPage = () => {
                                 fetchStaff();
                             }}
                         />
-                    )}
-                </div>
+                    )
+                )}
 
                 <Tabs
                     activeKey={activeTab}
@@ -1010,20 +1028,48 @@ const StaffManagementPage = () => {
                 )
             )}
 
-            {editModalVisible && selectedStaff && (
-                <EditStaff
-                    visible={editModalVisible}
-                    onCancel={() => setEditModalVisible(false)}
-                    onSuccess={() => {
-                        setEditModalVisible(false);
-                        fetchStaff();
-                    }}
-                    staff={selectedStaff}
-                    departments={departments}
-                    specializations={specializations}
-                    staffType={selectedStaff.type} // ✅ Pass actual staff type
-                />
-            )}
+            {/* Delete Confirmation Modal */}
+            <Modal
+                title={
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <DeleteOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
+                        Xóa {staffToDelete?.type === 'doctor' ? 'Bác sĩ' : 'Y tá'}
+                    </div>
+                }
+                open={deleteConfirmVisible}
+                onOk={handleConfirmDelete}
+                onCancel={handleCancelDelete}
+                okText={`Có, xóa ${staffToDelete?.type === 'doctor' ? 'Bác sĩ' : 'Y tá'}`}
+                cancelText="Hủy"
+                okButtonProps={{
+                    danger: true,
+                    type: 'primary'
+                }}
+                width={500}
+            >
+                {staffToDelete && (
+                    <div>
+                        <p>Bạn có chắc chắn muốn xóa <strong>{staffToDelete.name}</strong>?</p>
+                        <div style={{
+                            background: '#f5f5f5',
+                            padding: '12px 16px',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            color: '#666',
+                            marginTop: 16
+                        }}>
+                            <div><strong>Loại:</strong> {staffToDelete.type === 'doctor' ? 'Bác sĩ' : 'Y tá'}</div>
+                            <div><strong>Email:</strong> {staffToDelete.email}</div>
+                            <div><strong>API:</strong> {staffToDelete.type === 'doctor' ? 'deleteDoctor' : 'deleteUser'}</div>
+                            <div><strong>Service:</strong> {staffToDelete.type === 'doctor' ? 'doctorService' : 'userService'}</div>
+                            <div style={{ color: '#ff4d4f', marginTop: 8, fontWeight: 500 }}>
+                                ⚠️ Hành động này không thể hoàn tác.
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
             <DeleteStaff
                 visible={deleteModalVisible}
                 onCancel={handleDeleteCancel}
