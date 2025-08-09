@@ -63,9 +63,8 @@ const ProjectIntroWithAboutUs = () => {
                 margin: "40px auto",
                 padding: "24px",
                 fontFamily: "'Poppins', sans-serif",
-                backgroundColor: "#e0f7fa",
-                borderRadius: 12,
-                boxShadow: "0 8px 24px rgba(26,115,232,0.15)",
+                backgroundColor: "transparent", 
+
                 color: "#003553",
             }}
         >
@@ -77,13 +76,23 @@ const ProjectIntroWithAboutUs = () => {
                 Về chúng tôi
             </Title>
 
-            <Paragraph
-                style={{ textAlign: "center", maxWidth: 700, margin: "0 auto 40px" }}
-            >
-                Chúng tôi là nhóm 5 thành viên đến từ lớp SEP490_Group81, Đại học FPT. Dự án
-                này là đồ án tốt nghiệp của chúng tôi, với mong muốn xây dựng một hệ
-                thống đặt lịch khám bệnh trực tuyến thân thiện và hiệu quả.
-            </Paragraph>
+           <Paragraph
+  style={{
+    textAlign: "center",
+    maxWidth: 700,
+    margin: "0 auto 40px",
+    fontWeight: 600,
+    fontSize: 18,
+   
+    lineHeight: 1.6,
+    textShadow: "0 1px 3px rgba(0,0,0,0.1)",
+  }}
+>
+  Chúng tôi là nhóm 5 thành viên đến từ lớp SEP490_Group81, Đại học FPT. Dự án
+  này là đồ án tốt nghiệp của chúng tôi, với mong muốn xây dựng một hệ
+  thống đặt lịch khám bệnh trực tuyến thân thiện và hiệu quả.
+</Paragraph>
+
 
             <Row gutter={[24, 24]} justify="center">
                 {members.map((member, idx) => (

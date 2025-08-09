@@ -24,9 +24,8 @@ const UserGuide = () => {
                 margin: "40px auto",
                 padding: "24px",
                 fontFamily: "'Poppins', sans-serif",
-                backgroundColor: "#e0f7fa", 
+                backgroundColor: "transparent", 
                 borderRadius: 12,
-                boxShadow: "0 6px 20px rgba(26,115,232,0.15)",
             }}
         >
     
@@ -37,14 +36,12 @@ const UserGuide = () => {
                 Hướng dẫn sử dụng hệ thống DABS
             </Title>
 
-            {/* Đăng ký, Đăng nhập, Quên mật khẩu */}
             <Card
                 bordered={false}
                 style={{
                     marginBottom: 40,
                     borderRadius: 12,
                     backgroundColor: "#ffffff",
-                    boxShadow: "0 3px 10px rgba(26,115,232,0.1)",
                     padding: 24,
                 }}
             >
