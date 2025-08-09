@@ -9,9 +9,8 @@ import {
     CalendarOutlined,
     WalletOutlined,
     UserSwitchOutlined,
-    CloseCircleOutlined,
     RobotOutlined,
-    EnvironmentOutlined
+    EnvironmentOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text, Paragraph } = Typography;
@@ -23,19 +22,22 @@ const UserGuide = () => {
             style={{
                 maxWidth: 960,
                 margin: "40px auto",
-                padding: "0 24px",
+                padding: "24px",
                 fontFamily: "'Poppins', sans-serif",
-                backgroundColor: "#f0f5ff",
+                backgroundColor: "#e0f7fa", 
                 borderRadius: 12,
                 boxShadow: "0 6px 20px rgba(26,115,232,0.15)",
             }}
         >
+    
             <Title
                 level={2}
                 style={{ textAlign: "center", color: "#1a73e8", marginBottom: 36 }}
             >
                 Hướng dẫn sử dụng hệ thống DABS
             </Title>
+
+            {/* Đăng ký, Đăng nhập, Quên mật khẩu */}
             <Card
                 bordered={false}
                 style={{
@@ -43,6 +45,7 @@ const UserGuide = () => {
                     borderRadius: 12,
                     backgroundColor: "#ffffff",
                     boxShadow: "0 3px 10px rgba(26,115,232,0.1)",
+                    padding: 24,
                 }}
             >
                 <Title level={4} style={{ color: "#004876", marginBottom: 24 }}>
@@ -57,7 +60,8 @@ const UserGuide = () => {
                     <Step
                         title={
                             <Text strong>
-                                <UserAddOutlined style={{ color: "#1890ff" }} /> Đăng ký tài khoản
+                                <UserAddOutlined style={{ color: "#1890ff", marginRight: 8 }} />
+                                Đăng ký tài khoản
                             </Text>
                         }
                         description={
@@ -76,7 +80,8 @@ const UserGuide = () => {
                     <Step
                         title={
                             <Text strong>
-                                <LoginOutlined style={{ color: "#52c41a" }} /> Đăng nhập hệ thống
+                                <LoginOutlined style={{ color: "#52c41a", marginRight: 8 }} />
+                                Đăng nhập hệ thống
                             </Text>
                         }
                         description={
@@ -89,7 +94,8 @@ const UserGuide = () => {
                     <Step
                         title={
                             <Text strong>
-                                <UnlockOutlined style={{ color: "#faad14" }} /> Quên mật khẩu
+                                <UnlockOutlined style={{ color: "#d48806", marginRight: 8 }} />
+                                Quên mật khẩu
                             </Text>
                         }
                         description={
@@ -102,6 +108,7 @@ const UserGuide = () => {
                 </Steps>
             </Card>
 
+            {/* Xem thông tin cơ sở y tế */}
             <Card
                 bordered={false}
                 style={{
@@ -109,12 +116,17 @@ const UserGuide = () => {
                     borderRadius: 12,
                     backgroundColor: "#ffffff",
                     boxShadow: "0 3px 10px rgba(26,115,232,0.1)",
+                    padding: 24,
                 }}
             >
                 <Title level={4} style={{ color: "#004876", marginBottom: 24 }}>
                     Xem thông tin cơ sở y tế và chuyên khoa
                 </Title>
-                <Space direction="vertical" size="large" style={{ maxWidth: 700 }}>
+                <Space
+                    direction="vertical"
+                    size="large"
+                    style={{ maxWidth: 700, color: "#333" }}
+                >
                     <Text>
                         <TeamOutlined style={{ color: "#1890ff", marginRight: 8 }} /> Truy cập danh
                         sách bệnh viện, phòng khám trực tuyến.
@@ -130,6 +142,7 @@ const UserGuide = () => {
                 </Space>
             </Card>
 
+            {/* Đặt lịch khám từng bước */}
             <Card
                 bordered={false}
                 style={{
@@ -137,6 +150,7 @@ const UserGuide = () => {
                     borderRadius: 12,
                     backgroundColor: "#ffffff",
                     boxShadow: "0 3px 10px rgba(26,115,232,0.1)",
+                    padding: 24,
                 }}
             >
                 <Title level={4} style={{ color: "#004876", marginBottom: 24 }}>
@@ -151,29 +165,36 @@ const UserGuide = () => {
                     <Step
                         title={
                             <Text strong>
-                                <CalendarOutlined /> Chọn dịch vụ muốn khám.
+                                <CalendarOutlined style={{ marginRight: 8 }} />
+                                Chọn dịch vụ muốn khám.
                             </Text>
                         }
                         description={<Paragraph>Chọn dịch vụ theo ý muốn.</Paragraph>}
                     />
                     <Step
-                        title={<Text strong><TeamOutlined /> Chọn chuyên khoa và bác sĩ phù hợp.</Text>}
+                        title={
+                            <Text strong>
+                                <TeamOutlined style={{ marginRight: 8 }} /> Chọn chuyên khoa phù hợp.
+                            </Text>
+                        }
                         description={
                             <>
                                 <Paragraph>
                                     Chọn chuyên khoa và bác sĩ phù hợp với tình trạng sức khỏe của bạn.
                                 </Paragraph>
-                                <Paragraph style={{ color: '#d48806' }} type="warning">
-                                    <strong>Lưu ý:</strong> Một số dịch vụ trực tiếp không yêu cầu chọn chuyên khoa hoặc bác sĩ. Trong trường hợp này, bạn có thể bỏ qua bước này và tiếp tục bước đặt lịch và thanh toán.
+                                <Paragraph style={{ color: "#d48806" }} type="warning">
+                                    <strong>Lưu ý:</strong> Một số dịch vụ trực tiếp không yêu cầu chọn
+                                    chuyên khoa hoặc bác sĩ. Bạn có thể bỏ qua bước này và tiếp tục đặt
+                                    lịch, thanh toán.
                                 </Paragraph>
-
                             </>
                         }
                     />
                     <Step
                         title={
                             <Text strong>
-                                <CalendarOutlined /> Chọn thời gian phù hợp.
+                                <CalendarOutlined style={{ marginRight: 8 }} />
+                                Chọn thời gian phù hợp.
                             </Text>
                         }
                         description={<Paragraph>Chọn khung giờ lịch khám theo ý muốn.</Paragraph>}
@@ -181,7 +202,8 @@ const UserGuide = () => {
                     <Step
                         title={
                             <Text strong>
-                                <WalletOutlined /> Chọn phương thức thanh toán và xác nhận lịch hẹn
+                                <WalletOutlined style={{ marginRight: 8 }} />
+                                Chọn phương thức thanh toán và xác nhận lịch hẹn
                             </Text>
                         }
                         description={
@@ -193,7 +215,8 @@ const UserGuide = () => {
                     <Step
                         title={
                             <Text strong>
-                                <UserSwitchOutlined /> Cập nhật thông tin cá nhân trước khi đến khám
+                                <UserSwitchOutlined style={{ marginRight: 8 }} />
+                                Cập nhật thông tin cá nhân trước khi đến khám
                             </Text>
                         }
                         description={
@@ -205,6 +228,7 @@ const UserGuide = () => {
                 </Steps>
             </Card>
 
+            {/* Huỷ lịch hẹn */}
             <Card
                 bordered={false}
                 style={{
@@ -212,6 +236,7 @@ const UserGuide = () => {
                     borderRadius: 12,
                     backgroundColor: "#ffffff",
                     boxShadow: "0 3px 10px rgba(26,115,232,0.1)",
+                    padding: 24,
                 }}
             >
                 <Title level={4} style={{ color: "#004876", marginBottom: 24 }}>
@@ -224,6 +249,7 @@ const UserGuide = () => {
                 </Text>
             </Card>
 
+            {/* Chatbot hỗ trợ */}
             <Card
                 bordered={false}
                 style={{
@@ -231,6 +257,7 @@ const UserGuide = () => {
                     borderRadius: 12,
                     backgroundColor: "#ffffff",
                     boxShadow: "0 3px 10px rgba(26,115,232,0.1)",
+                    padding: 24,
                 }}
             >
                 <Title level={4} style={{ color: "#004876", marginBottom: 24 }}>
@@ -254,8 +281,7 @@ const UserGuide = () => {
                     fontSize: 14,
                 }}
             >
-                © {new Date().getFullYear()} DABS Medical Booking - Hỗ trợ sức khỏe thông
-                minh
+                © {new Date().getFullYear()} DABS Medical Booking - Hỗ trợ sức khỏe thông minh
             </Text>
         </div>
     );

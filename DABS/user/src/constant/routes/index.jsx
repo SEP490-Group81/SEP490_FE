@@ -38,6 +38,7 @@ import AppointmentReviewPage from "../../pages/Appointment/Accept/index.jsx";
 import PaymentCancelled from "../../pages/Payment/PaymentCancelled.jsx";
 import PaymentSuccess from "../../pages/Payment/PaymentSuccess.jsx";
 import UserGuide from "../../pages/Guide/index.jsx";
+import ProjectIntroPatient from "../../pages/Introduction/index.jsx";
 
 
 
@@ -50,6 +51,11 @@ export const routes = [
       {
         index: true,
         element: <Home /> // đã vẽ report 3
+      },
+      {
+        path: '/about-us',
+        element: <ProjectIntroPatient />
+
       },
       {
         path: '/user-guide',
