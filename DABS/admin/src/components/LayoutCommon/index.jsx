@@ -10,14 +10,14 @@ import Notify from "../Notify";
 import MenuSider from "../MenuSider";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { logout } from "../../redux/slices/userSlice";
+import { logout, logoutHand } from "../../redux/slices/userSlice";
 import { useNavigate } from "react-router-dom";
 function LayoutCommon() {
     const [collapsed, setCallapsed] = useState(false);
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const handleLogout = () => {
-        dispatch(logout());
+        dispatch(logoutHand());
         navigate("/login");
     };
     return (

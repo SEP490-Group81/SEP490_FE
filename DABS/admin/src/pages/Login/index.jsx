@@ -4,7 +4,7 @@ import { LockOutlined, HomeOutlined, MailOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { clearMessage, setMessage } from "../../redux/slices/messageSlice";
-import { loginUser } from "../../redux/slices/userSlice";
+import { loginUser, setIsLoggedOut } from "../../redux/slices/userSlice";
 import {
     DOCTOR,
     NURSE,
@@ -18,9 +18,11 @@ const { Title } = Typography;
 function Login() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { user } = useSelector((state) => state.user);
+    const { user, isLoggedOut } = useSelector((state) => state.user);
     const [messageApi, contextHolder] = message.useMessage();
     const messageState = useSelector((state) => state.message)
+
+
     useEffect(() => {
         if (messageState) {
             messageApi.open({

@@ -393,7 +393,8 @@ const AdminDoctorShiftManagement = () => {
               age,
               note: appt.note || "",
               gender: appt.patient.gender ? "Nam" : "Nữ",
-              service: appt.service?.name || "Không rõ",
+              serviceName: appt.serviceName || "Không rõ",
+              servicePrice: appt.servicePrice || 0,
             };
           }) || [];
 
@@ -997,7 +998,7 @@ const AdminDoctorShiftManagement = () => {
                       <List.Item key={p.id}>
                         <List.Item.Meta
                           title={<b>{p.name}</b>}
-                          description={`Tuổi: ${p.age} | Giới tính: ${p.gender} | Dịch vụ: ${p.service} | Ghi chú: ${p.note || "Không có"}`}
+                          description={`Tuổi: ${p.age} | Giới tính: ${p.gender} | Dịch vụ: ${p.serviceName} | Giá: ${p.servicePrice} | Ghi chú: ${p.note || "Không có"}`}
                         />
                       </List.Item>
                     )}

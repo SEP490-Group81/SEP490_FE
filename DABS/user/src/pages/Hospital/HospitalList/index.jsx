@@ -50,7 +50,7 @@ function HospitalList() {
         margin: "0 auto",
         padding: "32px 20px",
         fontFamily: "'Poppins', sans-serif",
-        backgroundColor: "#f7f9fc", // nền tổng thể nhẹ nhàng
+        backgroundColor: "#f7f9fc",
         minHeight: "100vh",
       }}
     >
@@ -62,7 +62,7 @@ function HospitalList() {
       >
         <h1
           style={{
-            color: "#1a73e8", // xanh mới, dễ nhìn
+            color: "#1a73e8",
             fontSize: "42px",
             fontWeight: 700,
             marginBottom: 8,
@@ -92,7 +92,7 @@ function HospitalList() {
             width: "100%",
             maxWidth: 520,
             borderRadius: 10,
-            boxShadow: "0 4px 15px rgba(26,115,232,0.15)", // đổ bóng nhẹ
+            boxShadow: "0 4px 15px rgba(26,115,232,0.15)", 
           }}
         />
       </div>
@@ -111,7 +111,7 @@ function HospitalList() {
                   background: "#ffffff",
                   boxShadow:
                     selectedHospital?.id === item.id
-                      ? "0 6px 18px rgba(26,115,232,0.3)" // đổ bóng nổi bật bệnh viện đang chọn
+                      ? "0 6px 18px rgba(26,115,232,0.3)" 
                       : "0 3px 10px rgba(0,0,0,0.07)",
                   cursor: "pointer",
                   transition: "box-shadow 0.3s ease-in-out",
@@ -172,7 +172,7 @@ function HospitalList() {
                         size="middle"
                         style={{ borderRadius: 8, padding: "0 20px" }}
                         onClick={(e) => {
-                          e.stopPropagation(); // tránh trigger setSelectedHospital khi nhấn nút
+                          e.stopPropagation(); 
                           navigate(`/appointment?hospitalId=${item.id}`);
                         }}
                       >

@@ -37,6 +37,7 @@ import UserBookingFlow from "../../pages/Appointment/Flow/index.jsx";
 import AppointmentReviewPage from "../../pages/Appointment/Accept/index.jsx";
 import PaymentCancelled from "../../pages/Payment/PaymentCancelled.jsx";
 import PaymentSuccess from "../../pages/Payment/PaymentSuccess.jsx";
+import UserGuide from "../../pages/Guide/index.jsx";
 
 
 
@@ -49,6 +50,11 @@ export const routes = [
       {
         index: true,
         element: <Home /> // đã vẽ report 3
+      },
+      {
+        path: '/user-guide',
+        element: <UserGuide />
+
       },
       {
         path: '/payment/success',

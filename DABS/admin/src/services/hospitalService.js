@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { deleteAuth, getAuth, postAuth, putAuth } from '../utils/request';
+import { deleteAuth, get, getAuth, postAuth, putAuth } from '../utils/request';
 
 // Token cho authorization
 const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWRlbnRpZmllciI6IjEiLCJlbWFpbCI6ImFkbWluQGhvc3RuYW1lLmNvbSIsImZ1bGxOYW1lIjoiU3VwZXIgVXNlciIsIm5hbWUiOiJTdXBlciIsInN1cm5hbWUiOiJVc2VyIiwiaXBBZGRyZXNzIjoiMC4wLjAuMSIsImF2YXRhclVybCI6IiIsIm1vYmlsZXBob25lIjoiIiwiZXhwIjoxNzgxMjcwNDgzLCJpc3MiOiJodHRwczovL0JFLlNFUDQ5MC5uZXQiLCJhdWQiOiJCRS5TRVA0OTAifQ.kQIX9uvjN9UOPiBitp9JsO2DlPlFyIU4VTP1ZyM4k3Y";
@@ -168,7 +168,7 @@ export const deleteHospital = async (hospitalId) => {
 
 export const getSpecializationsByHospitalId = async (hospitalId) => {
   try {
-    const result = await getAuth(`/hospitals/${hospitalId}/specialization`);
+    const result = await get(`/hospitals/${hospitalId}/specialization`);
     console.log(`🩺 Fetched specializations for hospital ${hospitalId}:`, result);
     return result.result || result;
   } catch (error) {

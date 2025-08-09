@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -42,7 +42,7 @@ const WorkScheduleNurse = () => {
   const user = useSelector((state) => state.user.user);
   console.log("Current user:", user);
   const hospitalId = user?.hospitals?.[0]?.id;
-
+  const calendarRef = useRef();
   const [events, setEvents] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -50,7 +50,7 @@ const WorkScheduleNurse = () => {
 
   useEffect(() => {
     const fetchDoctor = async () => {
-      if (!user.id) return;
+      if (!user?.id) return;
       const result = await getStaffNurseByUserId(user.id);
       if (result) {
         console.log("result staff nurse detail : " + result);
@@ -62,7 +62,7 @@ const WorkScheduleNurse = () => {
     fetchDoctor();
   }, [user?.id]);
 
-  const handleDatesSet = async (arg) => {
+  const handleDatesSet = useCallback(async (arg) => {
     if (!staffNurseDetail?.staffId || !hospitalId) {
       setEvents([]);
       return;
@@ -118,10 +118,20 @@ const WorkScheduleNurse = () => {
 
       setEvents(eventsFormatted);
     } catch (error) {
-      console.error("Lỗi khi tải lịch trực:", error);
+      console.error("Lỗi khi tải lịch làm việc nhân viên:", error);
       setEvents([]);
     }
-  };
+  },
+    [staffNurseDetail, hospitalId]
+  );
+
+  useEffect(() => {
+    if (staffNurseDetail && hospitalId && calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      const view = calendarApi.view;
+      handleDatesSet({ start: view.activeStart, end: view.activeEnd });
+    }
+  }, [staffNurseDetail, hospitalId, handleDatesSet]);
 
   const handleEventClick = ({ event }) => {
     setSelectedEvent(event);
@@ -276,6 +286,7 @@ const WorkScheduleNurse = () => {
         <FullCalendar
           plugins={[timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
+          ref={calendarRef}
           locale={viLocale}
           events={events}
           height={600}
