@@ -101,10 +101,10 @@ const MyHospital = () => {
 
     const getHospitalType = (type) => {
         switch (type) {
-            case 1: return 'General Hospital';
-            case 2: return 'Specialized Hospital';
-            case 3: return 'Community Hospital';
-            default: return 'Hospital';
+            case 1: return 'Bệnh viện Đa khoa';
+            case 2: return 'Bệnh viện Chuyên khoa';
+            case 3: return 'Bệnh viện Cộng đồng';
+            default: return 'Bệnh viện';
         }
     };
 
@@ -119,16 +119,16 @@ const MyHospital = () => {
 
     // ✅ Format time from API response
     const formatTime = (timeString) => {
-        if (!timeString) return 'N/A';
+        if (!timeString) return 'Chưa có thông tin';
         try {
             const date = new Date(timeString);
-            return date.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
+            return date.toLocaleTimeString('vi-VN', {
+                hour: '2-digit',
                 minute: '2-digit',
-                hour12: false 
+                hour12: false
             });
         } catch (error) {
-            return 'N/A';
+            return 'Chưa có thông tin';
         }
     };
 
@@ -143,13 +143,13 @@ const MyHospital = () => {
     // ✅ Services table columns
     const serviceColumns = [
         {
-            title: 'Service Name',
+            title: 'Tên dịch vụ',
             dataIndex: 'name',
             key: 'name',
             render: (text) => <Text strong>{text}</Text>
         },
         {
-            title: 'Price',
+            title: 'Giá',
             dataIndex: 'price',
             key: 'price',
             render: (price) => (
@@ -159,7 +159,7 @@ const MyHospital = () => {
             )
         },
         {
-            title: 'Description',
+            title: 'Mô tả',
             dataIndex: 'description',
             key: 'description',
             ellipsis: {
@@ -189,7 +189,7 @@ const MyHospital = () => {
     if (!hospital) {
         return (
             <Card style={{ textAlign: 'center', padding: '50px' }}>
-                <Text type="secondary">No hospital information available</Text>
+                <Text type="secondary">Không có thông tin bệnh viện</Text>
             </Card>
         );
     }
@@ -218,10 +218,10 @@ const MyHospital = () => {
                                     {getHospitalType(hospital.type)}
                                 </Tag>
                                 <Tag color="green" icon={<SafetyOutlined />}>
-                                    Active
+                                    Đang hoạt động
                                 </Tag>
                                 {hospital.code && (
-                                    <Tag color="default">Code: {hospital.code}</Tag>
+                                    <Tag color="default">Mã: {hospital.code}</Tag>
                                 )}
                             </Space>
                             <div style={{ marginTop: 8 }}>
@@ -239,7 +239,7 @@ const MyHospital = () => {
                         icon={<EditOutlined />}
                         onClick={() => setEditModalVisible(true)}
                     >
-                        Edit Hospital
+                        Chỉnh sửa Bệnh viện
                     </Button>
                 </div>
             </Card>
@@ -249,7 +249,7 @@ const MyHospital = () => {
                 <Col xs={24} sm={6}>
                     <Card>
                         <Statistic
-                            title="Total Services"
+                            title="Tổng dịch vụ"
                             value={hospital.services?.length || 0}
                             prefix={<MedicineBoxOutlined />}
                             valueStyle={{ color: '#1890ff' }}
@@ -259,7 +259,7 @@ const MyHospital = () => {
                 <Col xs={24} sm={6}>
                     <Card>
                         <Statistic
-                            title="Hospital ID"
+                            title="ID Bệnh viện"
                             value={hospital.id}
                             prefix={<BankOutlined />}
                             valueStyle={{ color: '#3f8600' }}
@@ -269,7 +269,7 @@ const MyHospital = () => {
                 <Col xs={24} sm={6}>
                     <Card>
                         <Statistic
-                            title="Hospital Type"
+                            title="Loại bệnh viện"
                             value={hospital.type}
                             prefix={<SafetyOutlined />}
                             valueStyle={{ color: '#722ed1' }}
@@ -279,12 +279,12 @@ const MyHospital = () => {
                 <Col xs={24} sm={6}>
                     <Card>
                         <Statistic
-                            title="Average Price"
-                            value={hospital.services?.length > 0 ? 
+                            title="Giá trung bình"
+                            value={hospital.services?.length > 0 ?
                                 (hospital.services.reduce((sum, service) => sum + service.price, 0) / hospital.services.length).toFixed(0) : 0
                             }
                             prefix={<DollarOutlined />}
-                            suffix="VND"
+                            suffix="VNĐ"
                             valueStyle={{ color: '#faad14' }}
                         />
                     </Card>
@@ -298,42 +298,42 @@ const MyHospital = () => {
                         title={
                             <Space>
                                 <HomeOutlined />
-                                Hospital Information
+                                Thông tin bệnh viện
                             </Space>
                         }
                         style={{ marginBottom: 16 }}
                     >
                         <Descriptions column={1} bordered>
-                            <Descriptions.Item label="Hospital Name">
+                            <Descriptions.Item label="Tên bệnh viện">
                                 {hospital.name}
                             </Descriptions.Item>
 
-                            <Descriptions.Item label="Hospital ID">
+                            <Descriptions.Item label="ID Bệnh viện">
                                 <Text code>{hospital.id}</Text>
                             </Descriptions.Item>
 
-                            <Descriptions.Item label="Hospital Code">
+                            <Descriptions.Item label="Mã bệnh viện">
                                 <Text code>{hospital.code}</Text>
                             </Descriptions.Item>
 
-                            <Descriptions.Item label="Type">
+                            <Descriptions.Item label="Loại hình">
                                 <Tag color={getTypeColor(hospital.type)}>
                                     {getHospitalType(hospital.type)}
                                 </Tag>
                             </Descriptions.Item>
 
-                            <Descriptions.Item label="Status">
-                                <Badge status="success" text="Active" />
+                            <Descriptions.Item label="Trạng thái">
+                                <Badge status="success" text="Hoạt động" />
                             </Descriptions.Item>
 
-                            <Descriptions.Item label="Address">
+                            <Descriptions.Item label="Địa chỉ">
                                 <Space>
                                     <EnvironmentOutlined />
                                     <Text copyable>{hospital.address}</Text>
                                 </Space>
                             </Descriptions.Item>
 
-                            <Descriptions.Item label="Operating Hours">
+                            <Descriptions.Item label="Giờ hoạt động">
                                 <Space>
                                     <ClockCircleOutlined />
                                     <Text>
@@ -343,7 +343,7 @@ const MyHospital = () => {
                             </Descriptions.Item>
 
                             {hospital.phoneNumber && (
-                                <Descriptions.Item label="Phone">
+                                <Descriptions.Item label="Số điện thoại">
                                     <Space>
                                         <PhoneOutlined />
                                         <Text copyable>{hospital.phoneNumber}</Text>
@@ -360,19 +360,19 @@ const MyHospital = () => {
                                 </Descriptions.Item>
                             )}
 
-                            <Descriptions.Item label="Location">
+                            <Descriptions.Item label="Vị trí">
                                 <Space>
                                     <EnvironmentOutlined />
                                     <Text>
                                         Lat: {hospital.latitude}, Long: {hospital.longitude}
                                     </Text>
                                     {hospital.googleMapUri && (
-                                        <Button 
-                                            type="link" 
+                                        <Button
+                                            type="link"
                                             size="small"
                                             onClick={() => window.open(hospital.googleMapUri, '_blank')}
                                         >
-                                            View on Google Maps
+                                            Xem trên Google Maps
                                         </Button>
                                     )}
                                 </Space>
@@ -385,7 +385,7 @@ const MyHospital = () => {
                         title={
                             <Space>
                                 <MedicineBoxOutlined />
-                                Hospital Services ({hospital.services?.length || 0})
+                                Dịch vụ bệnh viện ({hospital.services?.length || 0})
                             </Space>
                         }
                     >
@@ -398,7 +398,7 @@ const MyHospital = () => {
                                 showSizeChanger: true,
                                 showQuickJumper: true,
                                 showTotal: (total, range) =>
-                                    `${range[0]}-${range[1]} of ${total} services`,
+                                    `${range[0]}-${range[1]} trong ${total} dịch vụ`,
                             }}
                             scroll={{ x: 400 }}
                         />
@@ -411,22 +411,22 @@ const MyHospital = () => {
                         title={
                             <Space>
                                 <UserOutlined />
-                                Administrator
+                                Quản trị viên
                             </Space>
                         }
                         style={{ marginBottom: 16 }}
                     >
                         <div style={{ textAlign: 'center' }}>
-                            <Avatar 
-                                size={64} 
+                            <Avatar
+                                size={64}
                                 src={user?.avatarUrl}
-                                icon={<UserOutlined />} 
+                                icon={<UserOutlined />}
                             />
                             <div style={{ marginTop: 16 }}>
                                 <Title level={4} style={{ margin: 0 }}>
-                                    {user?.fullname || 'Hospital Admin'}
+                                    {user?.fullname || 'Quản trị viên bệnh viện'}
                                 </Title>
-                                <Text type="secondary">Hospital Administrator</Text>
+                                <Text type="secondary">Quản trị viên bệnh viện</Text>
                                 <div style={{ marginTop: 8 }}>
                                     <Text copyable>
                                         {user?.email || 'admin@hospital.com'}
@@ -444,11 +444,11 @@ const MyHospital = () => {
                     </Card>
 
                     {/* Quick Stats */}
-                    <Card 
+                    <Card
                         title={
                             <Space>
                                 <InfoCircleOutlined />
-                                Quick Stats
+                                Thống kê nhanh
                             </Space>
                         }
                     >
@@ -456,14 +456,14 @@ const MyHospital = () => {
                             <Row gutter={16}>
                                 <Col span={12}>
                                     <Statistic
-                                        title="Services"
+                                        title="Dịch vụ"
                                         value={hospital.services?.length || 0}
                                         valueStyle={{ fontSize: 20, color: '#1890ff' }}
                                     />
                                 </Col>
                                 <Col span={12}>
                                     <Statistic
-                                        title="Hospital ID"
+                                        title="ID Bệnh viện"
                                         value={hospital.id}
                                         valueStyle={{ fontSize: 20, color: '#52c41a' }}
                                     />
@@ -471,7 +471,7 @@ const MyHospital = () => {
                             </Row>
                             <div style={{ marginTop: 16, padding: '16px', background: '#f5f5f5', borderRadius: '6px' }}>
                                 <Text type="secondary" style={{ fontSize: '12px' }}>
-                                    Hospital established and operational
+                                    Bệnh viện đã được thành lập và đang hoạt động
                                 </Text>
                             </div>
                         </div>

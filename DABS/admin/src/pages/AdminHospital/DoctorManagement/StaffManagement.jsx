@@ -509,7 +509,7 @@ const StaffManagementPage = () => {
 
     const handleConfirmDelete = async () => {
         if (!staffToDelete) return;
-        
+
         console.log('🆗 Delete confirmed, calling handleDeleteStaff...');
         try {
             setDeleteConfirmVisible(false);
