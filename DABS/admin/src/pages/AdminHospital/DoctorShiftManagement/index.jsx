@@ -132,7 +132,7 @@ const renderEventContent = (eventInfo) => {
         WebkitBoxOrient: "vertical",
         display: "-webkit-box",
         WebkitLineClamp: 6,
-        maxHeight: 150
+        height: "100%"
       }}
     >
       {department && (
