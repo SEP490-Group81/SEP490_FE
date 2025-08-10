@@ -189,7 +189,7 @@ function LayoutCommon() {
                         mode="horizontal"
                         overflowedIndicator={<MenuOutlined />}
                     >
-                        <Menu.Item key="patient-records" onClick={() => navigate('/')}>
+                        <Menu.Item key="homepage" onClick={() => navigate('/')}>
                             Trang chủ
                         </Menu.Item>
                         {/* Support */}
@@ -236,7 +236,7 @@ function LayoutCommon() {
                         </SubMenu> */}
 
                         {/* Hồ sơ bệnh nhân (PatientRecords) */}
-                        <Menu.Item key="patient-records" onClick={() => navigate('/health-records')}>
+                        <Menu.Item key="patient-records" onClick={() => navigate('/profile')}>
                             Hồ sơ bệnh nhân
                         </Menu.Item>
 

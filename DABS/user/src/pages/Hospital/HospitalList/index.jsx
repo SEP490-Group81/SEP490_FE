@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Button, Card, Col, Empty, Input, Pagination, Rate, Row } from "antd";
+import { Button, Card, Col, Empty, Input, List, Pagination, Rate, Row, Spin, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
 import { CheckCircleFilled, EnvironmentOutlined, SearchOutlined } from "@ant-design/icons";
-import { getHospitalList } from "../../../services/hospitalService";
+import { getHospitalList, getHospitalWorkDate } from "../../../services/hospitalService";
 import imgErrorHospital from "../../../assets/images/errorImgHospital.jpg";
 
 function HospitalList() {
@@ -15,6 +15,14 @@ function HospitalList() {
   const endIdx = startIdx + pageSize;
   const pagedData = hospital.slice(startIdx, endIdx);
   const [selectedHospital, setSelectedHospital] = useState(null);
+  const [workDate, setWorkDate] = useState(null);
+  const [loadingWorkDate, setLoadingWorkDate] = useState(false);
+  // const { Text, Title } = Typography;
+  // const formatTime = (timeStr) => {
+  //   if (!timeStr) return "";
+  //   const [hours, minutes] = timeStr.split(':');
+  //   return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+  // };
 
   useEffect(() => {
     const fetchApi = async () => {
@@ -29,6 +37,32 @@ function HospitalList() {
     };
     fetchApi();
   }, []);
+
+  // useEffect(() => {
+  //   if (!selectedHospital) {
+  //     setWorkDate(null);
+  //     return;
+  //   }
+  //   const fetchWorkDate = async () => {
+  //     setLoadingWorkDate(true);
+  //     try {
+  //       const result = await getHospitalWorkDate(selectedHospital.id);
+  //       setWorkDate(result);
+  //     } catch (error) {
+  //       console.error("Lấy lịch làm việc thất bại", error);
+  //       setWorkDate(null);
+  //     }
+  //     setLoadingWorkDate(false);
+  //   };
+  //   fetchWorkDate();
+  // }, [selectedHospital]);
+
+  // // Sắp xếp lịch làm việc thứ tự Thứ 2 -> Chủ nhật
+  // const sortedWorkingDates = (workDate?.workingDates || []).slice().sort((a, b) => {
+  //   const dayA = a.dayOfWeek === 0 ? 7 : a.dayOfWeek;
+  //   const dayB = b.dayOfWeek === 0 ? 7 : b.dayOfWeek;
+  //   return dayA - dayB;
+  // });
 
   const onChange = (e) => {
     const value = e.target.value;
@@ -248,6 +282,46 @@ function HospitalList() {
               >
                 {selectedHospital.description || "Chưa có mô tả chi tiết"}
               </p>
+              {/* <h3
+                style={{
+                  fontWeight: 600,
+                  color: "#004876",
+                  marginBottom: 8,
+                  fontSize: 20,
+                }}
+              >
+                Lịch làm việc
+              </h3>
+
+              {loadingWorkDate ? (
+                <Spin tip="Đang tải lịch làm việc..." />
+              ) : workDate?.workingDates?.length > 0 ? (
+                <List
+                  size="small"
+                  style={{ maxHeight: 280, overflowY: "auto", marginBottom: 24 }}
+                  dataSource={sortedWorkingDates}
+                  renderItem={(item) => (
+                    <List.Item>
+                      <List.Item.Meta
+                        title={<Text strong>{item.dayOfWeekName}</Text>}
+                        description={
+                          item.isClosed ? (
+                            <Text type="danger">Đóng cửa</Text>
+                          ) : (
+                            <Text>
+                              {formatTime(item.startTime)} - {formatTime(item.endTime)}
+                            </Text>
+                          )
+                        }
+                      />
+                      {!item.isClosed && <CheckCircleFilled style={{ color: "#52c41a" }} />}
+                    </List.Item>
+                  )}
+                />
+              ) : (
+                <Text>Chưa có lịch làm việc</Text>
+              )} */}
+
               <h3
                 style={{
                   fontWeight: 600,
