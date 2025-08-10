@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import dayjs from 'dayjs';
 import {
     Card,
     Row,
@@ -15,7 +16,11 @@ import {
     Rate,
     Badge,
     Table,
-    Tooltip
+    Tooltip,
+    Modal,
+    Form,
+    TimePicker,
+    Switch
 } from 'antd';
 import {
     EditOutlined,
@@ -35,7 +40,12 @@ import {
     InfoCircleOutlined
 } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
-import { getHospitalById } from '../../../services/hospitalService';
+import {
+    getHospitalById,
+    getHospitalWorkingDates,
+    createHospitalWorkingDates,
+    updateHospitalWorkingDates
+} from '../../../services/hospitalService';
 import { setMessage } from '../../../redux/slices/messageSlice';
 import EditHospital from './EditHospitalDetail';
 import './HospitalDetail.scss';
@@ -44,8 +54,11 @@ const { Title, Text } = Typography;
 
 const MyHospital = () => {
     const [hospital, setHospital] = useState(null);
+    const [workingDates, setWorkingDates] = useState([]);
     const [loading, setLoading] = useState(false);
     const [editModalVisible, setEditModalVisible] = useState(false);
+    const [workingScheduleModalVisible, setWorkingScheduleModalVisible] = useState(false);
+    const [workingScheduleForm] = Form.useForm();
 
     const user = useSelector((state) => state.user?.user);
     const dispatch = useDispatch();
@@ -56,6 +69,7 @@ const MyHospital = () => {
     useEffect(() => {
         if (hospitalId) {
             fetchHospitalDetail();
+            fetchWorkingDates();
         }
     }, [hospitalId]);
 
@@ -87,6 +101,20 @@ const MyHospital = () => {
         }
     };
 
+    const fetchWorkingDates = async () => {
+        try {
+            console.log('📅 Fetching working dates for hospital ID:', hospitalId);
+            const response = await getHospitalWorkingDates(hospitalId);
+            console.log('✅ Working dates response:', response);
+
+            const workingDatesData = response.workingDates || response || [];
+            setWorkingDates(workingDatesData);
+        } catch (error) {
+            console.error('❌ Error fetching working dates:', error);
+            setWorkingDates([]);
+        }
+    };
+
     const handleEditSuccess = (updatedHospital) => {
         setHospital(updatedHospital);
         setEditModalVisible(false);
@@ -97,6 +125,88 @@ const MyHospital = () => {
         }));
         // Refresh data
         fetchHospitalDetail();
+    };
+
+    // Default working dates structure
+    const getDefaultWorkingDates = () => [
+        { dayOfWeek: 0, dayOfWeekName: "Chủ Nhật", startTime: "00:00:00", endTime: "00:00:00", isClosed: true },
+        { dayOfWeek: 1, dayOfWeekName: "Thứ Hai", startTime: "08:00:00", endTime: "17:00:00", isClosed: false },
+        { dayOfWeek: 2, dayOfWeekName: "Thứ Ba", startTime: "08:00:00", endTime: "17:00:00", isClosed: false },
+        { dayOfWeek: 3, dayOfWeekName: "Thứ Tư", startTime: "08:00:00", endTime: "17:00:00", isClosed: false },
+        { dayOfWeek: 4, dayOfWeekName: "Thứ Năm", startTime: "08:00:00", endTime: "17:00:00", isClosed: false },
+        { dayOfWeek: 5, dayOfWeekName: "Thứ Sáu", startTime: "08:00:00", endTime: "17:00:00", isClosed: false },
+        { dayOfWeek: 6, dayOfWeekName: "Thứ Bảy", startTime: "00:00:00", endTime: "00:00:00", isClosed: true }
+    ];
+
+    // Handle opening working schedule modal
+    const handleOpenWorkingScheduleModal = () => {
+        const dataToEdit = workingDates.length > 0 ? workingDates : getDefaultWorkingDates();
+
+        // Convert time strings to dayjs objects for TimePicker
+        const formData = {};
+        dataToEdit.forEach(day => {
+            formData[`day_${day.dayOfWeek}_isClosed`] = day.isClosed;
+            if (!day.isClosed && day.startTime !== "00:00:00") {
+                formData[`day_${day.dayOfWeek}_startTime`] = dayjs(day.startTime, 'HH:mm:ss');
+            }
+            if (!day.isClosed && day.endTime !== "00:00:00") {
+                formData[`day_${day.dayOfWeek}_endTime`] = dayjs(day.endTime, 'HH:mm:ss');
+            }
+        });
+
+        workingScheduleForm.setFieldsValue(formData);
+        setWorkingScheduleModalVisible(true);
+    };
+
+    // Handle working schedule form submission
+    const handleWorkingScheduleSubmit = async () => {
+        try {
+            const values = await workingScheduleForm.validateFields();
+
+            const workingDatesPayload = getDefaultWorkingDates().map(day => {
+                const isClosed = values[`day_${day.dayOfWeek}_isClosed`] || false;
+                const startTime = values[`day_${day.dayOfWeek}_startTime`];
+                const endTime = values[`day_${day.dayOfWeek}_endTime`];
+
+                return {
+                    dayOfWeek: day.dayOfWeek,
+                    dayOfWeekName: day.dayOfWeekName,
+                    startTime: isClosed ? "00:00:00" : (startTime ? startTime.format('HH:mm:ss') : "08:00:00"),
+                    endTime: isClosed ? "00:00:00" : (endTime ? endTime.format('HH:mm:ss') : "17:00:00"),
+                    isClosed
+                };
+            });
+
+            // Determine whether to create or update
+            const isUpdate = workingDates.length > 0;
+
+            if (isUpdate) {
+                await updateHospitalWorkingDates(hospitalId, { workingDates: workingDatesPayload });
+                dispatch(setMessage({
+                    type: 'success',
+                    content: 'Lịch làm việc đã được cập nhật thành công',
+                    duration: 4
+                }));
+            } else {
+                await createHospitalWorkingDates(hospitalId, { workingDates: workingDatesPayload });
+                dispatch(setMessage({
+                    type: 'success',
+                    content: 'Lịch làm việc đã được tạo thành công',
+                    duration: 4
+                }));
+            }
+
+            setWorkingScheduleModalVisible(false);
+            fetchWorkingDates(); // Refresh working dates data
+
+        } catch (error) {
+            console.error('❌ Error saving working schedule:', error);
+            dispatch(setMessage({
+                type: 'error',
+                content: 'Có lỗi xảy ra khi lưu lịch làm việc',
+                duration: 4
+            }));
+        }
     };
 
     const getHospitalType = (type) => {
@@ -130,6 +240,29 @@ const MyHospital = () => {
         } catch (error) {
             return 'Chưa có thông tin';
         }
+    };
+
+    // ✅ Format working schedule time
+    const formatScheduleTime = (timeString) => {
+        if (!timeString || timeString === "00:00:00") return "";
+        try {
+            const [hours, minutes] = timeString.split(':');
+            return `${hours}:${minutes}`;
+        } catch (error) {
+            return "";
+        }
+    };
+
+    // ✅ Get working day status
+    const getWorkingDayStatus = (workingDay) => {
+        if (workingDay.isClosed) {
+            return <Tag color="red">Đóng cửa</Tag>;
+        }
+        return (
+            <Tag color="green">
+                {formatScheduleTime(workingDay.startTime)} - {formatScheduleTime(workingDay.endTime)}
+            </Tag>
+        );
     };
 
     // ✅ Format currency
@@ -443,6 +576,56 @@ const MyHospital = () => {
                         </div>
                     </Card>
 
+                    {/* Working Schedule Section */}
+                    <Card
+                        title={
+                            <Space>
+                                <ClockCircleOutlined />
+                                Lịch làm việc
+                            </Space>
+                        }
+                        extra={
+                            <Button
+                                type="primary"
+                                size="small"
+                                icon={<EditOutlined />}
+                                onClick={handleOpenWorkingScheduleModal}
+                            >
+                                {workingDates.length > 0 ? 'Sửa lịch' : 'Tạo lịch'}
+                            </Button>
+                        }
+                        style={{ marginBottom: 16 }}
+                    >
+                        {workingDates.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                {workingDates.map((workingDay) => (
+                                    <div
+                                        key={workingDay.dayOfWeek}
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: '8px 12px',
+                                            backgroundColor: '#f5f5f5',
+                                            borderRadius: '6px'
+                                        }}
+                                    >
+                                        <Text strong style={{ minWidth: '80px' }}>
+                                            {workingDay.dayOfWeekName}
+                                        </Text>
+                                        <div>
+                                            {getWorkingDayStatus(workingDay)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '20px' }}>
+                                <Text type="secondary">Chưa có thông tin lịch làm việc</Text>
+                            </div>
+                        )}
+                    </Card>
+
                     {/* Quick Stats */}
                     <Card
                         title={
@@ -486,6 +669,80 @@ const MyHospital = () => {
                 onSuccess={handleEditSuccess}
                 hospital={hospital}
             />
+
+            {/* Working Schedule Modal */}
+            <Modal
+                title={
+                    <Space>
+                        <ClockCircleOutlined />
+                        {workingDates.length > 0 ? 'Sửa lịch làm việc' : 'Tạo lịch làm việc mới'}
+                    </Space>
+                }
+                open={workingScheduleModalVisible}
+                onCancel={() => setWorkingScheduleModalVisible(false)}
+                onOk={handleWorkingScheduleSubmit}
+                width={600}
+                okText="Lưu"
+                cancelText="Hủy"
+            >
+                <Form
+                    form={workingScheduleForm}
+                    layout="vertical"
+                >
+                    {getDefaultWorkingDates().map((day) => (
+                        <Card
+                            key={day.dayOfWeek}
+                            size="small"
+                            style={{ marginBottom: 16 }}
+                            title={<Text strong>{day.dayOfWeekName}</Text>}
+                        >
+                            <Row gutter={16} align="middle">
+                                <Col span={6}>
+                                    <Form.Item
+                                        name={`day_${day.dayOfWeek}_isClosed`}
+                                        label="Đóng cửa"
+                                        valuePropName="checked"
+                                    >
+                                        <Switch />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={9}>
+                                    <Form.Item
+                                        name={`day_${day.dayOfWeek}_startTime`}
+                                        label="Giờ mở cửa"
+                                        dependencies={[`day_${day.dayOfWeek}_isClosed`]}
+                                    >
+                                        <TimePicker
+                                            format="HH:mm"
+                                            placeholder="Chọn giờ mở"
+                                            style={{ width: '100%' }}
+                                            disabled={
+                                                workingScheduleForm.getFieldValue(`day_${day.dayOfWeek}_isClosed`)
+                                            }
+                                        />
+                                    </Form.Item>
+                                </Col>
+                                <Col span={9}>
+                                    <Form.Item
+                                        name={`day_${day.dayOfWeek}_endTime`}
+                                        label="Giờ đóng cửa"
+                                        dependencies={[`day_${day.dayOfWeek}_isClosed`]}
+                                    >
+                                        <TimePicker
+                                            format="HH:mm"
+                                            placeholder="Chọn giờ đóng"
+                                            style={{ width: '100%' }}
+                                            disabled={
+                                                workingScheduleForm.getFieldValue(`day_${day.dayOfWeek}_isClosed`)
+                                            }
+                                        />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                        </Card>
+                    ))}
+                </Form>
+            </Modal>
         </div>
     );
 };
