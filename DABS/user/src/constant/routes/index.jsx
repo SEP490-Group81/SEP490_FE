@@ -194,6 +194,7 @@ export const routes = [
       },
     ]
   },
+  
   {
     path: "/appointment",
     element: (
@@ -208,8 +209,6 @@ export const routes = [
       },
       {
         path: "booking",
-
-        index: true,
         element: <UserBookingFlow />,
 
       },

@@ -153,7 +153,7 @@ const ManageRoom = () => {
         departmentId: department,
         hospitalId: hospitalId,
         roomName: name,
-        roomCode: editing?.roomCode|| roomCode,
+        roomCode: roomCode,
         description: description || "",
       };
 

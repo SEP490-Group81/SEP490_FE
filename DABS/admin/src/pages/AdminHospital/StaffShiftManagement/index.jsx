@@ -178,8 +178,8 @@ const StaffShiftManagement = () => {
       dayInfo.endTime === "00:00:00"
     ) {
       return {
-        morning: { startTime: null, endTime: null },
-        afternoon: { startTime: null, endTime: null },
+        morning: { startTime: "00:00:00", endTime: "00:00:00" },
+        afternoon: { startTime: "00:00:00", endTime: "00:00:00" },
       };
     }
 
@@ -500,6 +500,7 @@ const StaffShiftManagement = () => {
           WebkitBoxOrient: "vertical",
           display: "-webkit-box",
           WebkitLineClamp: 6,
+          height: "100%"
         }}
       >
         {(department) && (

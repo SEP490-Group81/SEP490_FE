@@ -162,10 +162,12 @@ function AppointmentReviewPage() {
             console.log("pay load in booking confirm : " + JSON.stringify(payload));
             const bookingResponse = await createBookAppointment(payload);
             console.log("Booking response:", bookingResponse);
-            window.location.href = (`${bookingResponse.result.checkoutUrl}/`);
+
             // navigate(`https://pay.payos.vn/web/${latestPayment.payOsId}/`); 
             dispatch(setMessage({ type: 'success', content: 'Đặt khám thành công! ' }));
+
             if (stepData.paymentType === 'online') {
+                window.location.href = (`${bookingResponse.result.checkoutUrl}/`);
                 console.log("💳 Online payment selected, getting payment link...");
 
                 // ✅ Wait a moment then fetch latest payment
@@ -209,7 +211,7 @@ function AppointmentReviewPage() {
                     type: 'success',
                     content: 'Đặt khám thành công! Vui lòng thanh toán tại cơ sở y tế.'
                 }));
-                navigate('/appointments');
+               // navigate('/appointments');
             }
         } catch (error) {
             dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn lịch khác! Bạn đã đặt lịch này rồi hoặc lịch đã quá thời gian để đặt. ' }));
