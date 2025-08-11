@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Layout, Typography, Row, Col, Button, Input, Avatar, Badge, Card, Divider, message as antMessage } from 'antd';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Layout, Typography, Row, Col, Button, Input, Avatar, Badge, Card, Divider, message as antMessage, Space } from 'antd';
 import {
     SendOutlined,
     RobotOutlined,
@@ -15,11 +15,13 @@ import { useSelector } from 'react-redux';
 import './ChatPage.scss';
 
 // ✅ Import chatbot service
-import { 
-    createChatBotSession, 
+import {
+    createChatBotSession,
     sendMessage as sendChatMessage,
+    sendFirstMessage,
     extractTextFromResponse,
-    generateSessionId 
+    generateSessionId,
+    extractMixedContentFromResponse
 } from '../../services/chatbotService';
 
 const { Title, Paragraph } = Typography;
@@ -33,25 +35,70 @@ const ChatPage = () => {
             time: new Date()
         }
     ]);
-    const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId, setSessionId] = useState(null);
     const [isInitializing, setIsInitializing] = useState(false);
-    
+    const [inputValue, setInputValue] = useState(''); // ✅ Add state for UI updates
+
+    // ✅ Use refs for values that don't need to trigger re-renders
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
+    const inputValueRef = useRef(''); // ✅ Store input value in ref instead of state
+    const initializationRef = useRef(false); // ✅ Add missing ref
+    const userIdRef = useRef(null); // ✅ Add missing ref
 
-    // ✅ Get user and token from Redux store
-    const user = useSelector((state) => state.user?.user || state.auth?.user);
+    // ✅ Get user and token from Redux store with proper null checking
+    const user = useSelector((state) => state.user?.user);
     const accessToken = useSelector((state) => state.user?.accessToken || state.auth?.accessToken);
-    const userId = user?.id || `guest_${Date.now()}`;
 
-    // ✅ Initialize chat session when component mounts
+    // ✅ Ensure userId is always a string
+    const userId = user?.id ? String(user.id) : `guest_${Date.now()}`;
+
+    // ✅ Initialize chat session using chatbotService with useCallback
+    const initializeChatSession = useCallback(async () => {
+        if (initializationRef.current || isInitializing || !userId || !accessToken) {
+            return;
+        }
+
+        initializationRef.current = true;
+        setIsInitializing(true);
+
+        try {
+            console.log('🔄 Initializing chat session for user:', userId);
+
+            // Generate unique session ID
+            const newSessionId = generateSessionId();
+            console.log('🆔 Generated session ID:', newSessionId);
+
+            // Create session using chatbotService
+            const sessionResult = await createChatBotSession(newSessionId, userId, accessToken);
+
+            console.log('✅ Session created:', sessionResult);
+
+            // Ensure sessionId is always a string
+            const finalSessionId = String(sessionResult?.sessionId || newSessionId);
+            console.log('✅ Final session ID (string):', finalSessionId);
+            setSessionId(finalSessionId);
+            userIdRef.current = userId;
+
+            antMessage.success('Đã kết nối với trợ lý AI!');
+
+        } catch (error) {
+            console.error('❌ Error initializing chat session:', error);
+            antMessage.error('Không thể kết nối với trợ lý AI. Vui lòng thử lại.');
+            setSessionId(null);
+            initializationRef.current = false; // Allow retry
+        } finally {
+            setIsInitializing(false);
+        }
+    }, [userId, accessToken, isInitializing]);
+
+    // ✅ Initialize chat session when component mounts and user/token are available
     useEffect(() => {
-        if (userId && userId !== `guest_${Date.now()}` && accessToken) {
+        if (userId && userId !== `guest_${Date.now()}` && accessToken && !initializationRef.current) {
             initializeChatSession();
         }
-    }, [userId, accessToken]);
+    }, [userId, accessToken, initializeChatSession]);
 
     // Cuộn xuống tin nhắn mới nhất
     useEffect(() => {
@@ -67,37 +114,8 @@ const ChatPage = () => {
         }
     }, []);
 
-    // ✅ Initialize chat session using chatbotService
-    const initializeChatSession = async () => {
-        if (isInitializing) return;
-
-        setIsInitializing(true);
-
-        try {
-            console.log('🔄 Initializing chat session for user:', userId);
-
-            // Generate unique session ID
-            const newSessionId = generateSessionId();
-            
-            // Create session using chatbotService
-            const sessionResult = await createChatBotSession(newSessionId, userId, accessToken);
-            
-            console.log('✅ Session created:', sessionResult);
-            setSessionId(newSessionId);
-            
-            antMessage.success('Đã kết nối với trợ lý AI!');
-
-        } catch (error) {
-            console.error('❌ Error initializing chat session:', error);
-            antMessage.error('Không thể kết nối với trợ lý AI. Vui lòng thử lại.');
-            setSessionId(null);
-        } finally {
-            setIsInitializing(false);
-        }
-    };
-
-    // ✅ Function to start new chat session
-    const startNewSession = async () => {
+    // ✅ Function to start new chat session with useCallback
+    const startNewSession = useCallback(async () => {
         try {
             setIsLoading(true);
             console.log('🔄 Starting new session...');
@@ -107,13 +125,27 @@ const ChatPage = () => {
                 return;
             }
 
+            // Reset refs
+            initializationRef.current = false;
+            userIdRef.current = null;
+            inputValueRef.current = '';
+            setInputValue(''); // ✅ Clear state as well
+            if (inputRef.current) {
+                inputRef.current.value = '';
+            }
+
             // Generate new session ID
             const newSessionId = generateSessionId();
-            
+
             // Create new session
             const sessionResult = await createChatBotSession(newSessionId, userId, accessToken);
-            
-            setSessionId(newSessionId);
+
+            console.log('✅ New session result:', sessionResult);
+
+            // Ensure sessionId is always a string
+            const finalSessionId = String(sessionResult?.sessionId || newSessionId);
+            setSessionId(finalSessionId);
+            userIdRef.current = userId;
 
             // Reset messages with welcome message
             setMessages([{
@@ -132,7 +164,7 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
             }]);
 
             antMessage.success('Đã tạo phiên chat mới với trợ lý AI!');
-            console.log('✅ New session started:', newSessionId);
+            console.log('✅ New session started:', finalSessionId);
 
         } catch (error) {
             console.error('❌ Error creating new session:', error);
@@ -140,86 +172,207 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [accessToken, userId, user]);
 
-    const handleInputChange = (e) => {
-        setInput(e.target.value);
-    };
+    // ✅ Handle input change using both ref and state
+    const handleInputChange = useCallback((e) => {
+        const value = e.target.value;
+        inputValueRef.current = value;
+        setInputValue(value); // ✅ Update state for UI reactivity
+    }, []);
 
-    const handleKeyPress = (e) => {
-        if (e.key === 'Enter' && input.trim() && !isLoading) {
+    const handleKeyPress = useCallback((e) => {
+        if (e.key === 'Enter' && inputValue.trim() && !isLoading) {
             sendMessage();
         }
-    };
+    }, [inputValue, isLoading]);
 
-    // ✅ Enhanced sendMessage using chatbotService
-    const sendMessage = async () => {
-        if (!input.trim() || isLoading || !sessionId || !accessToken) {
+    // ✅ Send message function with useCallback optimization
+    const sendMessage = useCallback(async () => {
+        const inputValue = inputValueRef.current.trim();
+
+        if (!inputValue || isLoading || !sessionId || !accessToken) {
             if (!accessToken) {
                 antMessage.error('Vui lòng đăng nhập để sử dụng trợ lý AI');
             }
             return;
         }
 
-        const userMessage = input.trim();
-        setInput('');
+        // Clear input immediately
+        inputValueRef.current = '';
+        setInputValue(''); // ✅ Clear state as well
+        if (inputRef.current) {
+            inputRef.current.value = '';
+        }
+
         setIsLoading(true);
 
-        // Thêm tin nhắn của người dùng ngay lập tức
+        // ✅ Add user message immediately
         const userMessageObj = {
             type: 'user',
-            content: userMessage,
+            content: inputValue,
             time: new Date()
         };
 
         setMessages(prev => [...prev, userMessageObj]);
 
         try {
-            console.log('🔄 Sending message to ADK agent...');
+            console.log('🔄 Sending message to chatbot service...');
+            console.log('📤 Message:', inputValue);
+            console.log('🆔 Session ID:', sessionId);
 
-            // ✅ Send message to API
-            const response = await sendChatMessage(sessionId, userId, userMessage);
+            // ✅ Send message to API using chatbotService
+            const response = await sendChatMessage(sessionId, userId, inputValue, accessToken);
 
             console.log('✅ Raw response from API:', response);
 
-            // ✅ Extract text from response using helper function
-            const botResponseText = extractTextFromResponse(response);
-            
-            console.log('✅ Bot response text:', botResponseText);
+            // ✅ Process response and extract bot messages
+            let botMessages = [];
+            if (Array.isArray(response) && response.length > 0) {
+                response.forEach((messageData) => {
+                    if (messageData.type === 'choice' && messageData.choices && messageData.choices.length > 0) {
+                        botMessages.push({
+                            type: 'bot',
+                            content: messageData.text,
+                            choices: messageData.choices,
+                            time: new Date()
+                        });
+                    } else if (messageData.type === 'text' && messageData.content.trim()) {
+                        botMessages.push({
+                            type: 'bot',
+                            content: messageData.content,
+                            time: new Date()
+                        });
+                    }
+                });
+            } else {
+                // ✅ Fallback for choice responses
+                const plainText = response
+                    .map(event => event.content?.parts?.map(part => part.text).join(' '))
+                    .filter(Boolean)
+                    .join(' ');
 
-            // ✅ Add bot response to messages
-            const botMessageObj = {
-                type: 'bot',
-                content: botResponseText || 'Tôi đã nhận được tin nhắn của bạn nhưng không thể tạo phản hồi phù hợp.',
-                time: new Date()
-            };
+                if (plainText) {
+                    botMessages.push({
+                        type: 'bot',
+                        content: plainText,
+                        time: new Date()
+                    });
+                }
+            }
 
-            setMessages(prev => [...prev, botMessageObj]);
+            // ✅ Add bot messages to state
+            if (botMessages.length > 0) {
+                setMessages(prev => [...prev, ...botMessages]);
+            } else {
+                // Fallback message
+                setMessages(prev => [...prev, {
+                    type: 'bot',
+                    content: 'Tôi đã nhận được tin nhắn của bạn. Bạn có câu hỏi gì khác không?',
+                    time: new Date()
+                }]);
+            }
 
         } catch (error) {
             console.error('❌ Error sending message:', error);
-            
-            const errorMessageObj = {
+
+            setMessages(prev => [...prev, {
                 type: 'bot',
                 content: 'Xin lỗi, có lỗi xảy ra khi kết nối với trợ lý AI. Vui lòng thử lại sau.',
                 time: new Date()
-            };
+            }]);
 
-            setMessages(prev => [...prev, errorMessageObj]);
             antMessage.error('Lỗi kết nối API. Vui lòng thử lại.');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [isLoading, sessionId, accessToken, userId]);
 
-    // ✅ Handle suggested question click
-    const handleSuggestedQuestion = async (questionText) => {
+    // ✅ Handle choice button click with useCallback
+    const handleChoiceClick = useCallback(async (choice) => {
+        if (!choice || !sessionId || !accessToken || isLoading) {
+            if (!accessToken) {
+                antMessage.error('Vui lòng đăng nhập để sử dụng trợ lý AI');
+            }
+            return;
+        }
+
+        setIsLoading(true);
+
+        // ✅ Add user message for the choice
+        const userMessageObj = {
+            type: 'user',
+            content: choice.label,
+            time: new Date()
+        };
+
+        try {
+            // ✅ Send choice to API
+            const response = await sendChatMessage(sessionId, userId, choice.value || choice.label, accessToken);
+
+            // ✅ Process response messages
+            let botMessages = [];
+            if (Array.isArray(response) && response.length > 0) {
+                response.forEach((messageData) => {
+                    if (messageData.type === 'choice' && messageData.choices && messageData.choices.length > 0) {
+                        botMessages.push({
+                            type: 'bot',
+                            content: messageData.text,
+                            choices: messageData.choices,
+                            time: new Date()
+                        });
+                    } else if (messageData.type === 'text' && messageData.content?.trim()) {
+                        botMessages.push({
+                            type: 'bot',
+                            content: messageData.content,
+                            time: new Date()
+                        });
+                    }
+                });
+            }
+
+            // ✅ Batch update messages
+            setMessages(prev => [
+                ...prev,
+                userMessageObj,
+                ...(botMessages.length > 0 ? botMessages : [{
+                    type: 'bot',
+                    content: 'Cảm ơn bạn đã chọn. Bạn có cần hỗ trợ gì khác không?',
+                    time: new Date()
+                }])
+            ]);
+
+        } catch (error) {
+            console.error('❌ Error handling choice click:', error);
+
+            setMessages(prev => [
+                ...prev,
+                userMessageObj,
+                {
+                    type: 'bot',
+                    content: 'Xin lỗi, có lỗi xảy ra khi xử lý lựa chọn của bạn. Vui lòng thử lại.',
+                    time: new Date()
+                }
+            ]);
+
+            antMessage.error('Lỗi khi xử lý lựa chọn.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [sessionId, accessToken, userId, isLoading]);
+
+    // ✅ Handle suggested question click with useCallback
+    const handleSuggestedQuestion = useCallback(async (questionText) => {
         if (!sessionId || !accessToken) {
             antMessage.error('Vui lòng đăng nhập để sử dụng trợ lý AI');
             return;
         }
 
-        setInput('');
+        inputValueRef.current = '';
+        setInputValue(''); // ✅ Clear state as well
+        if (inputRef.current) {
+            inputRef.current.value = '';
+        }
         setIsLoading(true);
 
         // Thêm tin nhắn của người dùng
@@ -233,33 +386,54 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
 
         try {
             // Send to API
-            const response = await sendChatMessage(sessionId, userId, questionText);
-            const botResponseText = extractTextFromResponse(response);
-            
-            // Add bot response
-            const botMessageObj = {
-                type: 'bot',
-                content: botResponseText || 'Tôi đã nhận được câu hỏi của bạn nhưng không thể tạo phản hồi phù hợp.',
-                time: new Date()
-            };
+            const response = await sendChatMessage(sessionId, userId, questionText, accessToken);
 
-            setMessages(prev => [...prev, botMessageObj]);
+            // ✅ Process response similar to sendMessage
+            let botMessages = [];
+            if (Array.isArray(response) && response.length > 0) {
+                response.forEach((messageData) => {
+                    if (messageData.type === 'choice' && messageData.choices && messageData.choices.length > 0) {
+                        botMessages.push({
+                            type: 'bot',
+                            content: messageData.text,
+                            choices: messageData.choices,
+                            time: new Date()
+                        });
+                    } else if (messageData.type === 'text' && messageData.content?.trim()) {
+                        botMessages.push({
+                            type: 'bot',
+                            content: messageData.content,
+                            time: new Date()
+                        });
+                    }
+                });
+            }
+
+            // Add bot messages
+            if (botMessages.length > 0) {
+                setMessages(prev => [...prev, ...botMessages]);
+            } else {
+                setMessages(prev => [...prev, {
+                    type: 'bot',
+                    content: 'Tôi đã nhận được câu hỏi của bạn nhưng không thể tạo phản hồi phù hợp.',
+                    time: new Date()
+                }]);
+            }
 
         } catch (error) {
             console.error('❌ Error sending suggested question:', error);
-            
-            const errorMessageObj = {
-                type: 'bot',
-                content: 'Xin lỗi, có lỗi xảy ra khi xử lý câu hỏi. Vui lòng thử lại sau.',
-                time: new Date()
-            };
 
-            setMessages(prev => [...prev, errorMessageObj]);
+            setMessages(prev => [...prev, {
+                type: 'bot',
+                content: 'Xin lỗi, có lỗi xảy ra khi xử lý câu hỏi của bạn. Vui lòng thử lại.',
+                time: new Date()
+            }]);
+
             antMessage.error('Lỗi kết nối API. Vui lòng thử lại.');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [sessionId, accessToken, userId]);
 
     // Format timestamp
     const formatTime = (date) => {
@@ -331,6 +505,35 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
                                         <div className="message-bubble">
                                             {message.content}
                                         </div>
+
+                                        {/* ✅ Render choice buttons if available */}
+                                        {message.choices && message.choices.length > 0 && (
+                                            <div className="choice-buttons" style={{ marginTop: 12 }}>
+                                                <Space direction="vertical" style={{ width: '100%' }} size="small">
+                                                    {message.choices.map((choice, choiceIndex) => (
+                                                        <Button
+                                                            key={`choice-${index}-${choiceIndex}`}
+                                                            type="default"
+                                                            onClick={() => handleChoiceClick(choice)}
+                                                            style={{
+                                                                width: '100%',
+                                                                textAlign: 'left',
+                                                                height: 'auto',
+                                                                padding: '8px 12px',
+                                                                whiteSpace: 'normal',
+                                                                wordWrap: 'break-word',
+                                                                border: '1px solid #d9d9d9',
+                                                                borderRadius: '6px'
+                                                            }}
+                                                            disabled={isLoading}
+                                                        >
+                                                            {choice.label}
+                                                        </Button>
+                                                    ))}
+                                                </Space>
+                                            </div>
+                                        )}
+
                                         <div className="message-time">
                                             {formatTime(message.time)}
                                         </div>
@@ -368,13 +571,13 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
                         <div className="chat-input">
                             <Input
                                 placeholder={
-                                    isLoading ? "Đang xử lý..." : 
-                                    isInitializing ? "Đang kết nối..." : 
-                                    !accessToken ? "Vui lòng đăng nhập để sử dụng AI..." :
-                                    !sessionId ? "Chưa kết nối với AI..." :
-                                    "Nhập câu hỏi về y tế, đặt khám..."
+                                    isLoading ? "Đang xử lý..." :
+                                        isInitializing ? "Đang kết nối..." :
+                                            !accessToken ? "Vui lòng đăng nhập để sử dụng AI..." :
+                                                !sessionId ? "Chưa kết nối với AI..." :
+                                                    "Nhập câu hỏi về y tế, đặt khám..."
                                 }
-                                value={input}
+                                value={inputValue}
                                 onChange={handleInputChange}
                                 onKeyPress={handleKeyPress}
                                 size="large"
@@ -385,7 +588,7 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
                                         type="primary"
                                         icon={isLoading ? <LoadingOutlined /> : <SendOutlined />}
                                         onClick={sendMessage}
-                                        disabled={!input.trim() || isLoading || isInitializing || !sessionId || !accessToken}
+                                        disabled={!inputValue.trim() || isLoading || isInitializing || !sessionId || !accessToken}
                                         className="send-button"
                                         loading={isLoading}
                                     >
@@ -430,6 +633,21 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
                                     {question.text}
                                 </Button>
                             ))}
+                        </div>
+
+                        <Divider />
+
+                        <div className="session-controls">
+                            <Button
+                                type="primary"
+                                icon={<ReloadOutlined />}
+                                onClick={startNewSession}
+                                disabled={isLoading || isInitializing}
+                                loading={isLoading}
+                                block
+                            >
+                                Tạo phiên chat mới
+                            </Button>
                         </div>
 
                         <Divider />

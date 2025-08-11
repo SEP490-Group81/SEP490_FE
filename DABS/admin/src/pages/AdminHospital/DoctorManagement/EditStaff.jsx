@@ -379,21 +379,33 @@ const EditStaff = ({ visible, onCancel, onSuccess, staff, departments: propDepar
           }
         } catch (error) {
           console.error('❌ Lỗi khi định dạng practicingFrom:', error);
-          practicingFromFormatted = null;
+          practicingFromFormatted = dayjs().toISOString(); // ✅ Fallback to current date
         }
+      } else {
+        // ✅ Default to current date if not provided
+        practicingFromFormatted = dayjs().toISOString();
       }
 
       let response;
 
       if (isDoctor) {
-        // ✅ Handle doctor update
+        // ✅ Handle doctor update với NEW payload structure
         const hospitalId = currentHospital?.id || user?.hospitals?.[0]?.id;
         if (!hospitalId) {
           throw new Error('Không tìm thấy ID bệnh viện. Vui lòng làm mới trang và thử lại.');
         }
 
+        // ✅ Get correct IDs from staff object
+        const doctorId = staff.originalData?.id || staff.doctorId || staff.id;
+        const userId = staff.originalData?.user?.id || staff.userId || staff.user?.id;
+
+        console.log('🆔 Doctor ID:', doctorId);
+        console.log('🆔 User ID:', userId);
+        console.log('🏥 Hospital ID:', hospitalId);
+
+        // ✅ NEW PAYLOAD STRUCTURE theo API requirement
         const updateData = {
-          id: staff.originalData?.id || staff.id,
+          id: parseInt(doctorId), // ✅ Doctor ID ở top level
 
           hospitalAffiliations: [{
             hospitalId: parseInt(hospitalId),
@@ -404,13 +416,13 @@ const EditStaff = ({ visible, onCancel, onSuccess, staff, departments: propDepar
           }],
 
           user: {
-            id: staff.originalData?.user?.id || staff.userId || staff.id,
+            id: parseInt(userId),
             fullname: values.fullname?.trim() || "",
             phoneNumber: values.phoneNumber?.trim() || "",
             email: values.email?.trim() || "",
             avatarUrl: values.avatarUrl?.trim() || "",
-            dob: dobFormatted,
-            gender: values.gender === 'male',
+            dob: dobFormatted, // ✅ Format YYYY-MM-DD
+            gender: values.gender === 'male', // ✅ Boolean
             job: values.job || 'Bác sĩ',
             cccd: values.cccd?.trim() || "",
             province: values.province?.trim() || "",
@@ -418,26 +430,24 @@ const EditStaff = ({ visible, onCancel, onSuccess, staff, departments: propDepar
             streetAddress: values.streetAddress?.trim() || ""
           },
 
-          doctor: {
-            id: staff.originalData?.id || staff.id,
-            description: values.description?.trim() || "",
-            practicingFrom: practicingFromFormatted,
-          },
+          // ✅ NO nested doctor object - fields ở top level
+          description: values.description?.trim() || "", // ✅ Top level
+          practicingFrom: practicingFromFormatted || dayjs().toISOString(), // ✅ Top level với fallback
 
-          description: values.description?.trim() || "",
-          practicingFrom: practicingFromFormatted,
           specializationIds: Array.isArray(values.specializationIds)
-            ? values.specializationIds
-            : [values.specializationIds]
+            ? values.specializationIds.map(id => parseInt(id)) // ✅ Convert to integers
+            : [parseInt(values.specializationIds)]
         };
 
-        console.log('📤 Payload cập nhật bác sĩ:', JSON.stringify(updateData, null, 2));
-        response = await updateDoctor(staff.id, updateData);
+        console.log('📤 NEW Payload cập nhật bác sĩ:', JSON.stringify(updateData, null, 2));
+        response = await updateDoctor(updateData);
 
       } else if (isNurse) {
         // ✅ Handle nurse update
+        const nurseId = staff.id || staff.userId;
+
         const updateData = {
-          id: staff.id || staff.userId,
+          id: parseInt(nurseId), // ✅ Ensure integer
           fullname: values.fullname?.trim() || "",
           phoneNumber: values.phoneNumber?.trim() || "",
           email: values.email?.trim() || "",
@@ -450,26 +460,49 @@ const EditStaff = ({ visible, onCancel, onSuccess, staff, departments: propDepar
           ward: values.ward?.trim() || "",
           streetAddress: values.streetAddress?.trim() || "",
           description: values.description?.trim() || "",
-          practicingFrom: practicingFromFormatted,
+          practicingFrom: practicingFromFormatted || null, // ✅ Consistent with doctor
         };
 
         console.log('📤 Payload cập nhật điều dưỡng:', JSON.stringify(updateData, null, 2));
-        response = await updateUser(staff.id, updateData);
+        response = await updateUser(nurseId, updateData);
       } else {
         throw new Error('Không xác định được loại nhân viên. Không thể xác định phương thức cập nhật.');
       }
 
       console.log('📥 Phản hồi cập nhật:', response);
+      console.log('📥 Response type:', typeof response);
+      console.log('📥 Response keys:', response ? Object.keys(response) : 'No keys');
 
-      // ✅ Handle success
-      const isSuccess = (
-        response === true ||
-        response?.success === true ||
-        response?.success !== false ||
-        (response?.status >= 200 && response?.status < 300) ||
-        response?.message?.toLowerCase().includes('success') ||
-        (!response?.error && response !== false && response !== null)
-      );
+      // ✅ Enhanced success detection
+      let isSuccess = false;
+
+      if (response) {
+        // Check if response has the expected structure from your payload
+        if (response.id && (response.user || response.hospitalAffiliations || response.description !== undefined)) {
+          isSuccess = true;
+          console.log('✅ Success detected: Response contains expected payload structure');
+        }
+        // Check explicit success indicators
+        else if (
+          response === true ||
+          response.success === true ||
+          (response.status >= 200 && response.status < 300) ||
+          (typeof response.message === 'string' && response.message.toLowerCase().includes('success'))
+        ) {
+          isSuccess = true;
+          console.log('✅ Success detected: Explicit success indicators');
+        }
+        // Check if response doesn't have error indicators
+        else if (
+          !response.error &&
+          response !== false &&
+          response !== null &&
+          response.success !== false
+        ) {
+          isSuccess = true;
+          console.log('✅ Success detected: No error indicators found');
+        }
+      }
 
       if (isSuccess) {
         console.log(`✅ Cập nhật ${staffTypeText} thành công`);
@@ -480,7 +513,14 @@ const EditStaff = ({ visible, onCancel, onSuccess, staff, departments: propDepar
           duration: 4
         }));
 
-        onSuccess();
+        // ✅ Close modal and trigger refresh
+        handleCancel(); // Close modal first
+
+        // ✅ Call onSuccess with updated data if available
+        if (typeof onSuccess === 'function') {
+          onSuccess(response); // Pass response data for refresh
+        }
+
       } else {
         const errorMessage = response?.message || response?.error || `Cập nhật ${staffTypeText} thất bại`;
         throw new Error(errorMessage);
@@ -525,13 +565,20 @@ const EditStaff = ({ visible, onCancel, onSuccess, staff, departments: propDepar
   };
 
   const handleCancel = () => {
+    console.log('🔄 Closing modal and cleaning up...');
+
     form.resetFields();
     setSelectedProvince(null);
     setWards([]);
     setCurrentHospital(null);
     setHospitalDepartments([]);
     setHospitalSpecializations([]);
-    onCancel();
+    setLoading(false); // ✅ Reset loading state
+
+    // ✅ Call onCancel to close modal
+    if (typeof onCancel === 'function') {
+      onCancel();
+    }
   };
 
   if (!staff) return null;
