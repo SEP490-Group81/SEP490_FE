@@ -50,6 +50,7 @@ export const cancelRequestStatus = async ({ requestId, status }) => {
       requestId,
       status,
     };
+    console.log("cancel request is : " + JSON.stringify(payload));
     const response = await putAuth('/requests/change-status', payload);
 
     console.log("Đổi trạng thái yêu cầu thành công:", response);

@@ -162,7 +162,7 @@ function MenuSider() {
         },
          {
             key: "patient-appointment-list",
-            label: <Link to="/nurse/patient-appointment-list">Lịch hẹn của bệnh nhân</Link>,
+            label: <Link to="/nurse/patient-appointment-list">Lịch hẹn bệnh nhân</Link>,
             icon: <CalendarOutlined />,
         },
         {

@@ -38,6 +38,8 @@ import {
 import { getStepByServiceId } from "../../../services/medicalServiceService";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
 import "./style.scss";
+import { DatePicker } from 'antd';
+const { RangePicker } = DatePicker;
 const { Option } = Select;
 const { Title, Text } = Typography;
 
@@ -72,6 +74,9 @@ const AdjustAppointmentSchedule = () => {
 
   const messageState = useSelector((state) => state.message);
   const [messageApi, contextHolder] = message.useMessage();
+
+  const [filterDateFrom, setFilterDateFrom] = useState(currentRange.start);
+  const [filterDateTo, setFilterDateTo] = useState(currentRange.end);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -79,7 +84,9 @@ const AdjustAppointmentSchedule = () => {
       await loadAvailableSchedules(filterDoctorId, filterSpecId);
     };
     fetchSchedules();
-  }, [filterDoctorId, filterSpecId, hospitalId, currentRange]);
+  }, [filterDoctorId, filterSpecId, hospitalId, filterDateFrom, filterDateTo]);
+
+
   useEffect(() => {
     if (messageState) {
       messageApi.open({
@@ -321,9 +328,10 @@ const AdjustAppointmentSchedule = () => {
         hospitalId,
         doctorIds: doctorId ? [doctorId] : [],
         specializationId: specId || null,
-        dateFrom: currentRange.start.format("YYYY-MM-DD"),
-        dateTo: currentRange.end.format("YYYY-MM-DD"),
+        dateFrom: filterDateFrom.format("YYYY-MM-DD"),
+        dateTo: filterDateTo.format("YYYY-MM-DD"),
       };
+      console.log("payload adjust : " + JSON.stringify(payload));
       const result = await getHospitalSpecializationSchedule(payload);
       const schedules = (result.schedules || []).filter(item => item.isAvailable);
       setAvailableSchedules(schedules);
@@ -505,13 +513,13 @@ const AdjustAppointmentSchedule = () => {
                   {dayjs(selectedEvent.end).format("HH:mm")}
                 </p>
                 <p><b>Bệnh nhân:</b> {selectedEvent.extendedProps.patientName}</p>
-                <p><b>Bác sĩ hiện tại:</b> {selectedEvent.extendedProps.doctorName || "Không rõ"}</p>
                 <p><b>Chuyên khoa hiện tại:</b> {selectedEvent.extendedProps.specializationName || "Không rõ"}</p>
                 <p><b>Phòng:</b> {selectedEvent.extendedProps.room || "Không rõ"}</p>
                 <p><b>Trạng thái:</b> {getStatusText(selectedEvent.extendedProps.status)}</p>
                 <p><b>Ghi chú:</b> {selectedEvent.extendedProps.note || "Không có"}</p>
 
                 <Row gutter={16} style={{ marginTop: 16 }}>
+
                   <Col span={12}>
                     <label>Bác sĩ (lọc ca khả dụng):</label>
                     <Select
@@ -530,6 +538,19 @@ const AdjustAppointmentSchedule = () => {
                         </Option>
                       ))}
                     </Select>
+                  </Col>
+                  <Col span={12}>
+                    <label>Khoảng ngày:</label>
+                    <RangePicker
+                      value={[filterDateFrom, filterDateTo]}
+                      format="DD/MM/YYYY"
+                      onChange={(dates) => {
+                        setFilterDateFrom(dates?.[0] || null);
+                        setFilterDateTo(dates?.[1] || null);
+                      }}
+                      allowEmpty={[false, false]}
+                      style={{ width: "100%" }}
+                    />
                   </Col>
                   <Col span={12}>
                     <label>Chuyên khoa (lọc ca khả dụng):</label>

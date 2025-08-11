@@ -97,6 +97,7 @@ const UpdateRequestLeave = ({ visible, onCancel, onSuccess, initialValues }) => 
     try {
       const payload = {
         requestId: initialValues.id,
+        hospitalId: user.hospitals[0]?.id,
         type: mapReasonToRequestType(values.reason),
         startDate: values.startDate.format(),
         endDate: values.endDate.format(),
