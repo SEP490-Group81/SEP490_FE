@@ -211,7 +211,10 @@ function AppointmentReviewPage() {
                     type: 'success',
                     content: 'Đặt khám thành công! Vui lòng thanh toán tại cơ sở y tế.'
                 }));
-               // navigate('/appointments');
+                setTimeout(() => {
+                    navigate('/');  
+                }, 2000);
+                // navigate('/appointments');
             }
         } catch (error) {
             dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn lịch khác! Bạn đã đặt lịch này rồi hoặc lịch đã quá thời gian để đặt. ' }));

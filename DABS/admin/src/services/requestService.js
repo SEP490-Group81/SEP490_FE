@@ -42,3 +42,20 @@ export const updateRequest = async (requestData) => {
     throw error;
   }
 };
+
+export const cancelRequestStatus = async ({ requestId, status }) => {
+
+  try {
+    const payload = {
+      requestId,
+      status,
+    };
+    const response = await putAuth('/requests/change-status', payload);
+
+    console.log("Đổi trạng thái yêu cầu thành công:", response);
+    return response;
+  } catch (error) {
+    console.error("Lỗi khi đổi trạng thái yêu cầu:", error);
+    throw error;
+  }
+};
