@@ -37,7 +37,8 @@ import {
     deleteDoctor,
     updateDoctorStatus,
     getAllDoctors,
-    getDoctorByUserId
+    getDoctorByUserId,
+    getDoctorByHospitalId
 } from '../../../services/doctorService';
 
 import AddStaff from './AddStaff';
@@ -61,9 +62,7 @@ const StaffManagementPage = () => {
     const [staff, setStaff] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-    const [departmentFilter, setDepartmentFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
-    const [specializationFilter, setSpecializationFilter] = useState('all');
     const [addingStaffType, setAddingStaffType] = useState('doctor');
     const [pagination, setPagination] = useState({
         current: 1,
@@ -76,8 +75,7 @@ const StaffManagementPage = () => {
         activeDoctors: 0,
         activeNurses: 0,
         inactiveDoctors: 0,
-        inactiveNurses: 0,
-        departments: 0
+        inactiveNurses: 0
     });
 
     const [addModalVisible, setAddModalVisible] = useState(false);
@@ -104,34 +102,7 @@ const StaffManagementPage = () => {
         }
     }, [user]);
 
-    const departments = [
-        { id: 1, name: 'Cardiology' },
-        { id: 2, name: 'Neurology' },
-        { id: 3, name: 'Emergency' },
-        { id: 4, name: 'Pediatrics' },
-        { id: 5, name: 'Orthopedics' },
-        { id: 6, name: 'Surgery' },
-        { id: 7, name: 'Internal Medicine' },
-        { id: 8, name: 'Radiology' },
-        { id: 9, name: 'Laboratory' }
-    ];
 
-    const specializations = [
-        'Cardiology',
-        'Neurology',
-        'Emergency Medicine',
-        'Pediatrics',
-        'Orthopedics',
-        'General Surgery',
-        'Internal Medicine',
-        'Radiology',
-        'Pathology',
-        'Anesthesiology',
-        'Critical Care',
-        'Intensive Care',
-        'Operating Room',
-        'Recovery'
-    ];
 
 
 
@@ -149,7 +120,7 @@ const StaffManagementPage = () => {
 
             // ✅ Fetch doctors from API
             console.log('🔄 Fetching doctors...');
-            const doctorResponse = await getAllDoctors();
+            const doctorResponse = await getDoctorByHospitalId(hospitalId);
             console.log('📥 Doctor API Response:', doctorResponse);
 
             let doctors = [];
@@ -179,7 +150,7 @@ const StaffManagementPage = () => {
                         practicingFrom: doctor.practicingFrom || new Date().toISOString(),
                         specialization: 'General Medicine',
                         departmentId: 1,
-                        departmentName: getDepartmentName(1),
+                        departmentName: 'General Department',
                         licenseNumber: `Doc-${doctor.id || index}`,
                         experience: '5 years',
                         education: 'Medical Degree',
@@ -237,7 +208,7 @@ const StaffManagementPage = () => {
                         description: nurse.description || 'No description',
                         specialization: nurse.specialization || 'General Nursing',
                         departmentId: nurse.departmentId || 1,
-                        departmentName: getDepartmentName(nurse.departmentId || 1),
+                        departmentName: 'General Department',
                         licenseNumber: `Nurse${nurse.id || index}`,
                         experience: nurse.experience || '3 years',
                         education: nurse.education || 'Nursing Degree',
@@ -284,19 +255,9 @@ const StaffManagementPage = () => {
                 );
             }
 
-            if (departmentFilter !== 'all') {
-                filteredDoctors = filteredDoctors.filter(doctor => doctor.departmentId === parseInt(departmentFilter));
-                filteredNurses = filteredNurses.filter(nurse => nurse.departmentId === parseInt(departmentFilter));
-            }
-
             if (statusFilter !== 'all') {
                 filteredDoctors = filteredDoctors.filter(doctor => doctor.status === statusFilter);
                 filteredNurses = filteredNurses.filter(nurse => nurse.status === statusFilter);
-            }
-
-            if (specializationFilter !== 'all') {
-                filteredDoctors = filteredDoctors.filter(doctor => doctor.specialization === specializationFilter);
-                filteredNurses = filteredNurses.filter(nurse => nurse.specialization === specializationFilter);
             }
 
             console.log('✅ Filtered doctors:', filteredDoctors);
@@ -336,8 +297,7 @@ const StaffManagementPage = () => {
                 activeDoctors,
                 activeNurses,
                 inactiveDoctors,
-                inactiveNurses,
-                departments: departments.length
+                inactiveNurses
             });
 
             console.log('📊 Updated stats:', {
@@ -364,8 +324,7 @@ const StaffManagementPage = () => {
                 activeDoctors: 0,
                 activeNurses: 0,
                 inactiveDoctors: 0,
-                inactiveNurses: 0,
-                departments: 0
+                inactiveNurses: 0
             });
         } finally {
             setLoading(false);
@@ -377,12 +336,9 @@ const StaffManagementPage = () => {
         if (hospitalId) {
             fetchStaff();
         }
-    }, [hospitalId, activeTab, pagination.current, pagination.pageSize, searchText, departmentFilter, statusFilter, specializationFilter]);
+    }, [hospitalId, activeTab, pagination.current, pagination.pageSize, searchText, statusFilter]);
 
-    const getDepartmentName = (departmentId) => {
-        const dept = departments.find(d => d.id === departmentId);
-        return dept ? dept.name : 'Unknown Department';
-    };
+
 
 
     const handleViewDetails = async (staffMember) => {
@@ -760,16 +716,8 @@ const StaffManagementPage = () => {
     };
 
     const handleFilterChange = (filterType, value) => {
-        switch (filterType) {
-            case 'department':
-                setDepartmentFilter(value);
-                break;
-            case 'status':
-                setStatusFilter(value);
-                break;
-            case 'specialization':
-                setSpecializationFilter(value);
-                break;
+        if (filterType === 'status') {
+            setStatusFilter(value);
         }
         setPagination(prev => ({ ...prev, current: 1 }));
     };
@@ -824,16 +772,6 @@ const StaffManagementPage = () => {
                         />
                     </Card>
                 </Col>
-                <Col xs={12} md={6}>
-                    <Card>
-                        <Statistic
-                            title="Departments"
-                            value={stats.departments}
-                            prefix={<MedicineBoxOutlined />}
-                            valueStyle={{ color: '#722ed1' }}
-                        />
-                    </Card>
-                </Col>
             </Row>
 
             <Card>
@@ -852,30 +790,6 @@ const StaffManagementPage = () => {
                             onSearch={handleSearch}
                             onChange={(e) => !e.target.value && setSearchText('')}
                         />
-
-                        <Select
-                            placeholder="Department"
-                            style={{ width: 150 }}
-                            value={departmentFilter}
-                            onChange={(value) => handleFilterChange('department', value)}
-                        >
-                            <Option value="all">All Departments</Option>
-                            {departments.map(dept => (
-                                <Option key={dept.id} value={dept.id}>{dept.name}</Option>
-                            ))}
-                        </Select>
-
-                        <Select
-                            placeholder="Specialization"
-                            style={{ width: 150 }}
-                            value={specializationFilter}
-                            onChange={(value) => handleFilterChange('specialization', value)}
-                        >
-                            <Option value="all">All Specializations</Option>
-                            {specializations.map(spec => (
-                                <Option key={spec} value={spec}>{spec}</Option>
-                            ))}
-                        </Select>
 
                         <Select
                             placeholder="Status"
@@ -919,8 +833,6 @@ const StaffManagementPage = () => {
                                 fetchStaff();
                             }}
                             staffType={addingStaffType}
-                            departments={departments}
-                            specializations={specializations}
                         />
                     ) : (
                         <AddNurse
@@ -995,8 +907,6 @@ const StaffManagementPage = () => {
                         fetchStaff();
                     }}
                     staff={selectedStaff}
-                    departments={departments}
-                    specializations={specializations}
                 />
             )}
 
