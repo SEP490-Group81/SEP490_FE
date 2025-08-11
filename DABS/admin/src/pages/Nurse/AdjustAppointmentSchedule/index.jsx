@@ -253,6 +253,7 @@ const AdjustAppointmentSchedule = () => {
           dateTo: currentRange.end.format("YYYY-MM-DD"),
         };
         console.log("Fetching appointments with payload:", payload);
+        console.log("selected patient id : " + selectedPatientId);
         const list = await getAppointmentsByUserId(
           selectedPatientId,
           currentRange.start.toISOString(),
@@ -467,7 +468,11 @@ const AdjustAppointmentSchedule = () => {
             initialView="timeGridWeek"
             locale={viLocale}
             editable={false}
-            events={appointments}
+            events={appointments.filter(
+              (a) =>
+                a.extendedProps.status !== APPOINTMENT_STATUS.CANCELLED &&
+                a.extendedProps.status !== APPOINTMENT_STATUS.COMPLETED
+            )}
             eventContent={renderEventContent}
             eventClick={({ event }) => openModal(event)}
             height={600}
