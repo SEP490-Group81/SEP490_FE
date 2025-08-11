@@ -654,7 +654,15 @@ const EditStaff = ({ visible, onCancel, onSuccess, staff, departments: propDepar
                       { min: 2, message: 'Tên phải có ít nhất 2 ký tự' }
                     ]}
                   >
-                    <Input placeholder="Họ và tên" />
+                    <Input
+                      placeholder="Họ và tên"
+                      disabled={true} // ✅ Disable name field
+                      style={{
+                        backgroundColor: '#f5f5f5',
+                        color: '#666',
+                        cursor: 'not-allowed'
+                      }}
+                    />
                   </Form.Item>
                 </Col>
 
@@ -667,7 +675,15 @@ const EditStaff = ({ visible, onCancel, onSuccess, staff, departments: propDepar
                       { type: 'email', message: 'Vui lòng nhập email hợp lệ' }
                     ]}
                   >
-                    <Input placeholder="email@benhvien.com" />
+                    <Input
+                      placeholder="email@benhvien.com"
+                      disabled={true} // ✅ Disable email field
+                      style={{
+                        backgroundColor: '#f5f5f5',
+                        color: '#666',
+                        cursor: 'not-allowed'
+                      }}
+                    />
                   </Form.Item>
                 </Col>
               </Row>
