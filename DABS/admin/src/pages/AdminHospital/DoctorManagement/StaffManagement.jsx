@@ -94,48 +94,44 @@ const StaffManagementPage = () => {
     useEffect(() => {
         if (user && user.hospitals && user.hospitals.length > 0) {
             const currentHospitalId = user.hospitals[0].id;
-            console.log('🏥 Hospital ID extracted from user:', currentHospitalId);
-            console.log('🏥 Hospital name:', user.hospitals[0].name);
+            console.log('🏥 ID Bệnh viện được trích xuất từ user:', currentHospitalId);
+            console.log('🏥 Tên bệnh viện:', user.hospitals[0].name);
             setHospitalId(currentHospitalId);
         } else {
-            console.warn('⚠️ No hospital found in user data:', user);
+            console.warn('⚠️ Không tìm thấy bệnh viện trong dữ liệu user:', user);
         }
     }, [user]);
-
-
-
-
 
     // ✅ Simplified fetchStaff without any fallback/callback logic
     const fetchStaff = async () => {
         if (!hospitalId) {
-            console.warn('⚠️ No hospital ID available, cannot fetch staff');
+            console.warn('⚠️ Không có ID bệnh viện, không thể tải dữ liệu nhân viên');
             return;
         }
 
         setLoading(true);
         try {
-            console.log('🔄 Fetching staff data...');
-            console.log('🏥 Using hospital ID:', hospitalId);
+            console.log('🔄 Đang tải dữ liệu nhân viên...');
+            console.log('🏥 Sử dụng ID bệnh viện:', hospitalId);
 
             // ✅ Fetch doctors from API
-            console.log('🔄 Fetching doctors...');
+            console.log('🔄 Đang tải danh sách bác sĩ...');
             const doctorResponse = await getDoctorByHospitalId(hospitalId);
-            console.log('📥 Doctor API Response:', doctorResponse);
+            console.log('📥 Phản hồi API Bác sĩ:', doctorResponse);
 
             let doctors = [];
             if (Array.isArray(doctorResponse)) {
-                console.log('📋 Processing doctors, count:', doctorResponse.length);
+                console.log('📋 Đang xử lý danh sách bác sĩ, số lượng:', doctorResponse.length);
                 doctors = doctorResponse.map((doctor, index) => {
                     const user = doctor.user || {};
                     return {
                         id: doctor.id || user.id || `doctor-${index}`,
                         type: 'doctor',
-                        name: user.fullname || user.userName || doctor.description || 'Unknown Doctor',
-                        fullname: user.fullname || user.userName || doctor.description || 'Unknown Doctor',
-                        email: user.email || `doctor${index + 1}@hospital.com`,
-                        phone: user.phoneNumber || 'N/A',
-                        phoneNumber: user.phoneNumber || 'N/A',
+                        name: user.fullname || user.userName || doctor.description || 'Bác sĩ chưa xác định',
+                        fullname: user.fullname || user.userName || doctor.description || 'Bác sĩ chưa xác định',
+                        email: user.email || `bacsi${index + 1}@benhvien.com`,
+                        phone: user.phoneNumber || 'Không có',
+                        phoneNumber: user.phoneNumber || 'Không có',
                         userName: user.userName || '',
                         avatarUrl: user.avatarUrl || '',
                         avatar: user.avatarUrl || '',
@@ -145,21 +141,21 @@ const StaffManagementPage = () => {
                         province: user.province,
                         ward: user.ward,
                         streetAddress: user.streetAddress || '',
-                        job: user.job || 'Doctor',
-                        description: doctor.description || 'No description',
+                        job: user.job || 'Bác sĩ',
+                        description: doctor.description || 'Không có mô tả',
                         practicingFrom: doctor.practicingFrom || new Date().toISOString(),
-                        specialization: 'General Medicine',
+                        specialization: 'Y học tổng quát',
                         departmentId: 1,
-                        departmentName: 'General Department',
+                        departmentName: 'Khoa tổng quát',
                         licenseNumber: `Doc-${doctor.id || index}`,
-                        experience: '5 years',
-                        education: 'Medical Degree',
+                        experience: '5 năm',
+                        education: 'Bằng Y khoa',
                         status: 'active',
                         consultationFee: 200000,
                         totalPatients: Math.floor(Math.random() * 1000),
                         rating: (4 + Math.random()).toFixed(1),
                         createdAt: doctor.practicingFrom || new Date().toISOString(),
-                        schedule: 'Mon-Fri: 8:00-17:00',
+                        schedule: 'Thứ 2-6: 8:00-17:00',
                         originalData: {
                             doctor: doctor,
                             user: user,
@@ -169,32 +165,32 @@ const StaffManagementPage = () => {
                     };
                 });
             } else {
-                console.warn('⚠️ Unexpected doctor API response format:', doctorResponse);
+                console.warn('⚠️ Định dạng phản hồi API bác sĩ không mong đợi:', doctorResponse);
                 doctors = []; // ✅ Empty array instead of fallback
             }
 
-            console.log('✅ Processed doctors:', doctors);
+            console.log('✅ Đã xử lý danh sách bác sĩ:', doctors);
 
             // ✅ Fetch nurses from API - no fallback
-            console.log('🔄 Fetching nurses for hospital ID:', hospitalId);
+            console.log('🔄 Đang tải danh sách điều dưỡng cho ID bệnh viện:', hospitalId);
             const nurseResponse = await getStaffNurseByHospitalId(hospitalId);
-            console.log('📥 Nurse API Response:', nurseResponse);
+            console.log('📥 Phản hồi API Điều dưỡng:', nurseResponse);
 
             let nurses = [];
             if (Array.isArray(nurseResponse)) {
-                console.log('📋 Processing nurses, count:', nurseResponse.length);
+                console.log('📋 Đang xử lý danh sách điều dưỡng, số lượng:', nurseResponse.length);
                 nurses = nurseResponse.map((nurse, index) => {
                     const nurseUser = nurse || {};
-                    console.log(`👩‍⚕️ Processing nurse ${index + 1}:`, nurseUser);
+                    console.log(`👩‍⚕️ Đang xử lý điều dưỡng ${index + 1}:`, nurseUser);
 
                     return {
                         id: nurse.id || nurseUser.id || `nurse-${index}`,
                         type: 'nurse',
-                        name: nurseUser.fullname || 'Unknown Nurse',
-                        fullname: nurseUser.fullname || 'Unknown Nurse',
-                        email: nurseUser.email || 'No email',
-                        phone: nurseUser.phoneNumber || 'No phone',
-                        phoneNumber: nurseUser.phoneNumber || 'No phone',
+                        name: nurseUser.fullname || 'Điều dưỡng chưa xác định',
+                        fullname: nurseUser.fullname || 'Điều dưỡng chưa xác định',
+                        email: nurseUser.email || 'Không có email',
+                        phone: nurseUser.phoneNumber || 'Không có điện thoại',
+                        phoneNumber: nurseUser.phoneNumber || 'Không có điện thoại',
                         userName: nurseUser.userName || '',
                         avatarUrl: nurseUser.avatarUrl || '',
                         avatar: nurseUser.avatarUrl || '',
@@ -204,21 +200,21 @@ const StaffManagementPage = () => {
                         province: nurseUser.province,
                         ward: nurseUser.ward,
                         streetAddress: nurseUser.streetAddress || '',
-                        job: nurseUser.job || 'Nurse',
-                        description: nurse.description || 'No description',
-                        specialization: nurse.specialization || 'General Nursing',
+                        job: nurseUser.job || 'Điều dưỡng',
+                        description: nurse.description || 'Không có mô tả',
+                        specialization: nurse.specialization || 'Điều dưỡng tổng quát',
                         departmentId: nurse.departmentId || 1,
-                        departmentName: 'General Department',
-                        licenseNumber: `Nurse${nurse.id || index}`,
-                        experience: nurse.experience || '3 years',
-                        education: nurse.education || 'Nursing Degree',
+                        departmentName: 'Khoa tổng quát',
+                        licenseNumber: `Y tá${nurse.id || index}`,
+                        experience: nurse.experience || '3 năm',
+                        education: nurse.education || 'Bằng Điều dưỡng',
                         status: nurse.status || 'active',
                         consultationFee: 0,
                         totalPatients: nurse.totalPatients || Math.floor(Math.random() * 500),
                         rating: nurse.rating || (4 + Math.random()).toFixed(1),
                         createdAt: nurse.createdAt || new Date().toISOString(),
-                        schedule: nurse.schedule || 'Mon-Fri: 8:00-17:00',
-                        shift: nurse.shift || 'Day Shift (7AM-7PM)',
+                        schedule: nurse.schedule || 'Thứ 2-6: 8:00-17:00',
+                        shift: nurse.shift || 'Ca ngày (7AM-7PM)',
                         certifications: nurse.certifications || 'BLS, CPR',
                         originalData: {
                             nurse: nurse,
@@ -229,11 +225,11 @@ const StaffManagementPage = () => {
                     };
                 });
             } else {
-                console.warn('⚠️ Unexpected nurse API response format:', nurseResponse);
+                console.warn('⚠️ Định dạng phản hồi API điều dưỡng không mong đợi:', nurseResponse);
                 nurses = []; // ✅ Empty array instead of fallback
             }
 
-            console.log('✅ Processed nurses:', nurses);
+            console.log('✅ Đã xử lý danh sách điều dưỡng:', nurses);
 
             // ✅ Apply filters
             let filteredDoctors = [...doctors];
@@ -260,8 +256,8 @@ const StaffManagementPage = () => {
                 filteredNurses = filteredNurses.filter(nurse => nurse.status === statusFilter);
             }
 
-            console.log('✅ Filtered doctors:', filteredDoctors);
-            console.log('✅ Filtered nurses:', filteredNurses);
+            console.log('✅ Bác sĩ đã lọc:', filteredDoctors);
+            console.log('✅ Điều dưỡng đã lọc:', filteredNurses);
 
             // ✅ Combine staff based on active tab
             let allStaff = [];
@@ -277,7 +273,7 @@ const StaffManagementPage = () => {
                     break;
             }
 
-            console.log('✅ Final staff list:', allStaff);
+            console.log('✅ Danh sách nhân viên cuối cùng:', allStaff);
 
             setStaff(allStaff);
             setPagination(prev => ({
@@ -300,7 +296,7 @@ const StaffManagementPage = () => {
                 inactiveNurses
             });
 
-            console.log('📊 Updated stats:', {
+            console.log('📊 Thống kê đã cập nhật:', {
                 totalDoctors: doctors.length,
                 totalNurses: nurses.length,
                 activeDoctors,
@@ -310,10 +306,10 @@ const StaffManagementPage = () => {
             });
 
         } catch (error) {
-            console.error('❌ Error fetching staff:', error);
+            console.error('❌ Lỗi khi tải dữ liệu nhân viên:', error);
             dispatch(setMessage({
                 type: 'error',
-                content: 'Failed to fetch staff data. Please try again.',
+                content: 'Không thể tải dữ liệu nhân viên. Vui lòng thử lại.',
                 duration: 4
             }));
             // ✅ Set empty arrays instead of fallback data
@@ -338,29 +334,26 @@ const StaffManagementPage = () => {
         }
     }, [hospitalId, activeTab, pagination.current, pagination.pageSize, searchText, statusFilter]);
 
-
-
-
     const handleViewDetails = async (staffMember) => {
-        console.log('👁️ Viewing staff:', staffMember);
-        console.log('🔍 Staff type:', staffMember.type);
+        console.log('👁️ Đang xem chi tiết nhân viên:', staffMember);
+        console.log('🔍 Loại nhân viên:', staffMember.type);
 
         try {
             let staffData;
 
             if (staffMember.type === 'doctor') {
-                console.log('👨‍⚕️ Fetching doctor details via getDoctorById...');
+                console.log('👨‍⚕️ Đang tải chi tiết bác sĩ qua getDoctorById...');
                 staffData = await getDoctorByUserId(staffMember.id);
             } else if (staffMember.type === 'nurse') {
-                console.log('👩‍⚕️ Fetching nurse details via getUserById...');
+                console.log('👩‍⚕️ Đang tải chi tiết điều dưỡng qua getUserById...');
                 staffData = await getUserById(staffMember.id);
             } else {
                 // Fallback for unknown type
-                console.log('👤 Unknown type, using getUserById...');
+                console.log('👤 Loại không xác định, sử dụng getUserById...');
                 staffData = await getUserById(staffMember.id);
             }
 
-            console.log('✅ Fetched staff details:', staffData);
+            console.log('✅ Đã tải chi tiết nhân viên:', staffData);
 
             // Set the detailed data for viewing
             setSelectedViewStaff({
@@ -371,10 +364,10 @@ const StaffManagementPage = () => {
             setViewModalVisible(true);
 
         } catch (error) {
-            console.error('❌ Error fetching staff details:', error);
+            console.error('❌ Lỗi khi tải chi tiết nhân viên:', error);
             dispatch(setMessage({
                 type: 'error',
-                content: `Failed to load ${staffMember.type} details`,
+                content: `Không thể tải chi tiết ${staffMember.type === 'doctor' ? 'bác sĩ' : 'điều dưỡng'}`,
                 duration: 4
             }));
 
@@ -385,8 +378,8 @@ const StaffManagementPage = () => {
     };
 
     const handleEditStaff = (staffMember) => {
-        console.log('✏️ Editing staff:', staffMember);
-        console.log('🔍 Staff type:', staffMember.type);
+        console.log('✏️ Đang chỉnh sửa nhân viên:', staffMember);
+        console.log('🔍 Loại nhân viên:', staffMember.type);
 
         // Add type info for the edit modal to know which service to use
         setSelectedStaff({
@@ -397,28 +390,28 @@ const StaffManagementPage = () => {
     };
 
     const handleDeleteStaff = async (staffMember) => {
-        console.log('🗑️ Deleting staff:', staffMember);
-        console.log('🔍 Staff type:', staffMember.type);
+        console.log('🗑️ Đang xóa nhân viên:', staffMember);
+        console.log('🔍 Loại nhân viên:', staffMember.type);
 
         try {
             let deleteResponse;
             let apiUsed;
 
             if (staffMember.type === 'doctor') {
-                console.log('👨‍⚕️ Deleting doctor via deleteDoctor...');
+                console.log('👨‍⚕️ Đang xóa bác sĩ qua deleteDoctor...');
                 deleteResponse = await deleteDoctor(staffMember.id);
                 apiUsed = 'deleteDoctor';
             } else if (staffMember.type === 'nurse') {
-                console.log('👩‍⚕️ Deleting nurse via deleteUser...');
+                console.log('👩‍⚕️ Đang xóa điều dưỡng qua deleteUser...');
                 deleteResponse = await deleteUser(staffMember.id);
                 apiUsed = 'deleteUser';
             } else {
-                console.log('👤 Unknown type, using deleteUser...');
+                console.log('👤 Loại không xác định, sử dụng deleteUser...');
                 deleteResponse = await deleteUser(staffMember.id);
                 apiUsed = 'deleteUser';
             }
 
-            console.log(`✅ ${apiUsed} response:`, deleteResponse);
+            console.log(`✅ Phản hồi ${apiUsed}:`, deleteResponse);
 
             // Check if deletion was successful
             const isSuccess = deleteResponse === true ||
@@ -429,19 +422,19 @@ const StaffManagementPage = () => {
             if (isSuccess) {
                 dispatch(setMessage({
                     type: 'success',
-                    content: `${staffMember.type === 'doctor' ? 'Bác sĩ' : 'Y tá'} đã được xóa thành công!`,
+                    content: `${staffMember.type === 'doctor' ? 'Bác sĩ' : 'Điều dưỡng'} đã được xóa thành công!`,
                     duration: 4
                 }));
                 await fetchStaff(); // Refresh the staff list
                 return Promise.resolve();
             } else {
-                throw new Error(deleteResponse?.message || `Failed to delete ${staffMember.type}`);
+                throw new Error(deleteResponse?.message || `Không thể xóa ${staffMember.type === 'doctor' ? 'bác sĩ' : 'điều dưỡng'}`);
             }
 
         } catch (error) {
-            console.error(`❌ Error deleting ${staffMember.type}:`, error);
+            console.error(`❌ Lỗi khi xóa ${staffMember.type === 'doctor' ? 'bác sĩ' : 'điều dưỡng'}:`, error);
 
-            let errorMessage = `Không thể xóa ${staffMember.type}`;
+            let errorMessage = `Không thể xóa ${staffMember.type === 'doctor' ? 'bác sĩ' : 'điều dưỡng'}`;
             if (error.response?.data?.message) {
                 errorMessage = error.response.data.message;
             } else if (error.message) {
@@ -458,7 +451,7 @@ const StaffManagementPage = () => {
     };
 
     const showDeleteConfirm = (staffMember) => {
-        console.log('🚨 showDeleteConfirm called with:', staffMember);
+        console.log('🚨 showDeleteConfirm được gọi với:', staffMember);
         setStaffToDelete(staffMember);
         setDeleteConfirmVisible(true);
     };
@@ -466,62 +459,57 @@ const StaffManagementPage = () => {
     const handleConfirmDelete = async () => {
         if (!staffToDelete) return;
 
-        console.log('🆗 Delete confirmed, calling handleDeleteStaff...');
+        console.log('🆗 Xác nhận xóa, đang gọi handleDeleteStaff...');
         try {
             setDeleteConfirmVisible(false);
             await handleDeleteStaff(staffToDelete);
-            console.log('✅ Delete completed successfully');
+            console.log('✅ Xóa hoàn tất thành công');
         } catch (error) {
-            console.error('❌ Delete failed:', error);
+            console.error('❌ Xóa thất bại:', error);
         } finally {
             setStaffToDelete(null);
         }
     };
 
     const handleCancelDelete = () => {
-        console.log('❌ Delete cancelled');
+        console.log('❌ Hủy xóa');
         setDeleteConfirmVisible(false);
         setStaffToDelete(null);
     };
-
-    // const handleView = (staffMember) => {
-    //     handleViewDetails(staffMember);
-    // };
-
-    // const handleEdit = (staffMember) => {
-    //     handleEditStaff(staffMember);
-    // };
 
     const handleDelete = (staffMember) => {
         showDeleteConfirm(staffMember);
     };
 
     const handleDeleteSuccess = async () => {
-        console.log('✅ Delete operation completed successfully');
+        console.log('✅ Thao tác xóa hoàn tất thành công');
         setDeleteModalVisible(false);
         setSelectedStaff(null);
 
         try {
             await fetchStaff();
-            console.log('🔄 Staff data refreshed after deletion');
+            console.log('🔄 Dữ liệu nhân viên đã được làm mới sau khi xóa');
         } catch (error) {
-            console.error('❌ Error refreshing data after deletion:', error);
+            console.error('❌ Lỗi khi làm mới dữ liệu sau khi xóa:', error);
         }
     };
 
     const handleDeleteCancel = () => {
-        console.log('❌ Delete operation cancelled');
+        console.log('❌ Hủy thao tác xóa');
         setDeleteModalVisible(false);
         setSelectedStaff(null);
     };
 
     const handleStatusToggle = (staffMember) => {
         const newStatus = staffMember.status === 'active' ? 'inactive' : 'active';
+        const statusText = newStatus === 'active' ? 'Kích hoạt' : 'Vô hiệu hóa';
+        const staffTypeText = staffMember.type === 'doctor' ? 'Bác sĩ' : 'Điều dưỡng';
 
         Modal.confirm({
-            title: `${newStatus === 'active' ? 'Activate' : 'Deactivate'} ${staffMember.type === 'doctor' ? 'Doctor' : 'Nurse'}`,
-            content: `Are you sure you want to ${newStatus === 'active' ? 'activate' : 'deactivate'} ${staffMember.name}?`,
-            okText: 'Yes',
+            title: `${statusText} ${staffTypeText}`,
+            content: `Bạn có chắc chắn muốn ${newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hóa'} ${staffMember.name}?`,
+            okText: 'Có',
+            cancelText: 'Hủy',
             onOk: async () => {
                 try {
                     if (staffMember.type === 'doctor') {
@@ -529,7 +517,7 @@ const StaffManagementPage = () => {
                         if (response.success) {
                             dispatch(setMessage({
                                 type: 'success',
-                                content: `${staffMember.name} has been ${newStatus === 'active' ? 'activated' : 'deactivated'}.`,
+                                content: `${staffMember.name} đã được ${newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hóa'}.`,
                                 duration: 4
                             }));
                             fetchStaff();
@@ -541,7 +529,7 @@ const StaffManagementPage = () => {
                 } catch (error) {
                     dispatch(setMessage({
                         type: 'error',
-                        content: `Failed to update ${staffMember.type} status. Please try again.`,
+                        content: `Không thể cập nhật trạng thái ${staffTypeText.toLowerCase()}. Vui lòng thử lại.`,
                         duration: 4
                     }));
                 }
@@ -551,7 +539,7 @@ const StaffManagementPage = () => {
 
     const columns = [
         {
-            title: 'Staff Member',
+            title: 'Nhân viên',
             key: 'staff',
             width: 280,
             render: (_, staffMember) => (
@@ -577,7 +565,7 @@ const StaffManagementPage = () => {
                                 color={staffMember.type === 'doctor' ? 'blue' : 'green'}
                                 icon={staffMember.type === 'doctor' ? <MedicineBoxOutlined /> : <HeartOutlined />}
                             >
-                                {staffMember.type === 'doctor' ? 'Doctor' : 'Nurse'}
+                                {staffMember.type === 'doctor' ? 'Bác sĩ' : 'Điều dưỡng'}
                             </Tag>
                             {staffMember.licenseNumber}
                         </div>
@@ -586,7 +574,7 @@ const StaffManagementPage = () => {
             ),
         },
         {
-            title: 'Contact',
+            title: 'Liên hệ',
             key: 'contact',
             width: 200,
             render: (_, staffMember) => (
@@ -597,7 +585,7 @@ const StaffManagementPage = () => {
             ),
         },
         {
-            title: 'Department',
+            title: 'Khoa',
             dataIndex: 'departmentName',
             key: 'department',
             width: 150,
@@ -611,7 +599,7 @@ const StaffManagementPage = () => {
             ),
         },
         {
-            title: 'Specialization',
+            title: 'Chuyên khoa',
             dataIndex: 'specialization',
             key: 'specialization',
             width: 150,
@@ -620,7 +608,7 @@ const StaffManagementPage = () => {
             ),
         },
         {
-            title: 'Experience & Rating',
+            title: 'Kinh nghiệm & Đánh giá',
             key: 'experience',
             width: 160,
             render: (_, staffMember) => (
@@ -633,7 +621,7 @@ const StaffManagementPage = () => {
             ),
         },
         {
-            title: 'Status',
+            title: 'Trạng thái',
             key: 'status',
             width: 100,
             render: (_, staffMember) => (
@@ -643,27 +631,27 @@ const StaffManagementPage = () => {
                     style={{ cursor: 'pointer' }}
                     onClick={() => handleStatusToggle(staffMember)}
                 >
-                    {staffMember.status?.toUpperCase()}
+                    {staffMember.status === 'active' ? 'HOẠT ĐỘNG' : 'VÔ HIỆU'}
                 </Tag>
             ),
         },
         {
-            title: 'Actions',
+            title: 'Hành động',
             key: 'actions',
             width: 150,
             render: (_, staffMember) => {
                 // ✅ Determine action tooltips based on type
                 const viewTooltip = staffMember.type === 'doctor'
-                    ? 'View Doctor (getDoctorById)'
-                    : 'View Nurse (getUserById)';
+                    ? 'Xem Bác sĩ (getDoctorById)'
+                    : 'Xem Điều dưỡng (getUserById)';
 
                 const editTooltip = staffMember.type === 'doctor'
-                    ? 'Edit Doctor (updateDoctor)'
-                    : 'Edit Nurse (updateUser)';
+                    ? 'Sửa Bác sĩ (updateDoctor)'
+                    : 'Sửa Điều dưỡng (updateUser)';
 
                 const deleteTooltip = staffMember.type === 'doctor'
-                    ? 'Delete Doctor (deleteDoctor)'
-                    : 'Delete Nurse (deleteUser)';
+                    ? 'Xóa Bác sĩ (deleteDoctor)'
+                    : 'Xóa Điều dưỡng (deleteUser)';
 
                 return (
                     <Space size="small">
@@ -695,7 +683,7 @@ const StaffManagementPage = () => {
                                 danger
                                 icon={<DeleteOutlined />}
                                 onClick={() => {
-                                    console.log('🔥 Delete button clicked for:', staffMember);
+                                    console.log('🔥 Nút xóa được nhấn cho:', staffMember);
                                     showDeleteConfirm(staffMember);
                                 }}
                             />
@@ -723,21 +711,20 @@ const StaffManagementPage = () => {
     };
 
     const handleAddStaff = (type) => {
-        console.log('🔧 Adding staff of type:', type);
+        console.log('🔧 Thêm nhân viên loại:', type);
         setAddingStaffType(type); // ✅ Set type for adding
         setAddModalVisible(true);
     };
-
 
     return (
         <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
             <div style={{ marginBottom: 24 }}>
                 <Title level={2} style={{ margin: 0, color: '#1890ff' }}>
                     <TeamOutlined style={{ marginRight: 12 }} />
-                    Staff Management
+                    Quản lý Nhân viên
                 </Title>
                 <p style={{ color: '#8c8c8c', marginTop: 8 }}>
-                    Manage hospital doctors and nurses, their information, and assignments
+                    Quản lý bác sĩ và điều dưỡng của bệnh viện, thông tin và phân công công việc
                 </p>
             </div>
 
@@ -745,7 +732,7 @@ const StaffManagementPage = () => {
                 <Col xs={12} md={6}>
                     <Card>
                         <Statistic
-                            title="Total Doctors"
+                            title="Tổng số Bác sĩ"
                             value={stats.totalDoctors}
                             prefix={<MedicineBoxOutlined />}
                             valueStyle={{ color: '#1890ff' }}
@@ -755,7 +742,7 @@ const StaffManagementPage = () => {
                 <Col xs={12} md={6}>
                     <Card>
                         <Statistic
-                            title="Total Nurses"
+                            title="Tổng số Điều dưỡng"
                             value={stats.totalNurses}
                             prefix={<HeartOutlined />}
                             valueStyle={{ color: '#52c41a' }}
@@ -765,7 +752,7 @@ const StaffManagementPage = () => {
                 <Col xs={12} md={6}>
                     <Card>
                         <Statistic
-                            title="Active Staff"
+                            title="Nhân viên Hoạt động"
                             value={stats.activeDoctors + stats.activeNurses}
                             prefix={<CheckCircleOutlined />}
                             valueStyle={{ color: '#52c41a' }}
@@ -784,7 +771,7 @@ const StaffManagementPage = () => {
                 }}>
                     <Space size="middle" wrap>
                         <Search
-                            placeholder="Search staff..."
+                            placeholder="Tìm kiếm nhân viên..."
                             allowClear
                             style={{ width: 300 }}
                             onSearch={handleSearch}
@@ -792,14 +779,14 @@ const StaffManagementPage = () => {
                         />
 
                         <Select
-                            placeholder="Status"
+                            placeholder="Trạng thái"
                             style={{ width: 120 }}
                             value={statusFilter}
                             onChange={(value) => handleFilterChange('status', value)}
                         >
-                            <Option value="all">All Status</Option>
-                            <Option value="active">Active</Option>
-                            <Option value="inactive">Inactive</Option>
+                            <Option value="all">Tất cả trạng thái</Option>
+                            <Option value="active">Hoạt động</Option>
+                            <Option value="inactive">Vô hiệu</Option>
                         </Select>
                     </Space>
 
@@ -817,7 +804,7 @@ const StaffManagementPage = () => {
                             onClick={() => handleAddStaff('nurse')}
                             style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
                         >
-                            Thêm Y tá
+                            Thêm Điều dưỡng
                         </Button>
                     </Space>
                 </div>
@@ -855,7 +842,7 @@ const StaffManagementPage = () => {
                         tab={
                             <span>
                                 <TeamOutlined />
-                                All Staff ({stats.totalDoctors + stats.totalNurses})
+                                Tất cả Nhân viên ({stats.totalDoctors + stats.totalNurses})
                             </span>
                         }
                         key="all"
@@ -864,7 +851,7 @@ const StaffManagementPage = () => {
                         tab={
                             <span>
                                 <MedicineBoxOutlined />
-                                Doctors ({stats.totalDoctors})
+                                Bác sĩ ({stats.totalDoctors})
                             </span>
                         }
                         key="doctors"
@@ -873,7 +860,7 @@ const StaffManagementPage = () => {
                         tab={
                             <span>
                                 <HeartOutlined />
-                                Nurses ({stats.totalNurses})
+                                Điều dưỡng ({stats.totalNurses})
                             </span>
                         }
                         key="nurses"
@@ -890,7 +877,7 @@ const StaffManagementPage = () => {
                         showSizeChanger: true,
                         showQuickJumper: true,
                         showTotal: (total, range) =>
-                            `${range[0]}-${range[1]} of ${total} staff members`,
+                            `${range[0]}-${range[1]} trong ${total} nhân viên`,
                     }}
                     onChange={handleTableChange}
                     scroll={{ x: 1300 }}
@@ -943,13 +930,13 @@ const StaffManagementPage = () => {
                 title={
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                         <DeleteOutlined style={{ color: '#ff4d4f', marginRight: 8 }} />
-                        Xóa {staffToDelete?.type === 'doctor' ? 'Bác sĩ' : 'Y tá'}
+                        Xóa {staffToDelete?.type === 'doctor' ? 'Bác sĩ' : 'Điều dưỡng'}
                     </div>
                 }
                 open={deleteConfirmVisible}
                 onOk={handleConfirmDelete}
                 onCancel={handleCancelDelete}
-                okText={`Có, xóa ${staffToDelete?.type === 'doctor' ? 'Bác sĩ' : 'Y tá'}`}
+                okText={`Có, xóa ${staffToDelete?.type === 'doctor' ? 'Bác sĩ' : 'Điều dưỡng'}`}
                 cancelText="Hủy"
                 okButtonProps={{
                     danger: true,
@@ -968,7 +955,7 @@ const StaffManagementPage = () => {
                             color: '#666',
                             marginTop: 16
                         }}>
-                            <div><strong>Loại:</strong> {staffToDelete.type === 'doctor' ? 'Bác sĩ' : 'Y tá'}</div>
+                            <div><strong>Loại:</strong> {staffToDelete.type === 'doctor' ? 'Bác sĩ' : 'Điều dưỡng'}</div>
                             <div><strong>Email:</strong> {staffToDelete.email}</div>
                             <div><strong>API:</strong> {staffToDelete.type === 'doctor' ? 'deleteDoctor' : 'deleteUser'}</div>
                             <div><strong>Service:</strong> {staffToDelete.type === 'doctor' ? 'doctorService' : 'userService'}</div>

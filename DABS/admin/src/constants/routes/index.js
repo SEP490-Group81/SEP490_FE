@@ -47,9 +47,7 @@ export const routes = [
     children: [
       { index: true, element: <Login /> }, // đã vẽ
       { path: "login", element: <Login /> }, // đã vẽ
-      { path: "/payment/success", element: <PaymentSuccess /> },
-      { path: "/payment/cancelled", element: <PaymentCancelled /> },
-      { path: "/payment/cancel", element: <PaymentCancelled /> },
+     
     ],
   },
   {

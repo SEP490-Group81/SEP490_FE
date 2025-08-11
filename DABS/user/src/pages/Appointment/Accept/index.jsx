@@ -126,97 +126,114 @@ function AppointmentReviewPage() {
     };
 
     const handleConfirmBooking = async () => {
-        const requiredFields = [
-            user.fullname,
-            user.dob,
-            user.phoneNumber,
-            user.gender !== null && user.gender !== undefined,
-            user.cccd,
-            user.province,
-            user.ward,
-            user.streetAddress
-        ];
+    const requiredFields = [
+        user.fullname,
+        user.dob,
+        user.phoneNumber,
+        user.gender !== null && user.gender !== undefined,
+        user.cccd,
+        user.province,
+        user.ward,
+        user.streetAddress
+    ];
 
-        const isProfileComplete = requiredFields.every(field => !!field);
+    const isProfileComplete = requiredFields.every(field => !!field);
 
-        if (!isProfileComplete) {
-            dispatch(setMessage({
-                type: 'error',
-                content: 'Vui lòng hoàn thiện hồ sơ trước khi đặt khám.'
-            }));
-            return;
-        }
-        try {
-            const payload = {
-                hospitalId: Number(stepData.hospitalId),
-                serviceId: Number(stepData.serviceId),
-                specializationId: Number(stepData.specialty?.id || 0),
-                doctorId: Number(stepData.doctor?.id || 0),
-                returnUrl: `http://localhost:3000/payment/success?orderId=${bookingResponse.result.orderCode}`,
-                cancelUrl: `http://localhost:3000/payment/cancelled?orderId=${bookingResponse.result.orderCode}`,
-                appointmentDate: stepData?.date,
-                bookingTime: stepData.shift === "morning" ? 1 : 2,
-                paymentMethod: stepData.paymentType === "cash" ? 1 : 2,
-                note: "",
-            };
-            console.log("pay load in booking confirm : " + JSON.stringify(payload));
-            const bookingResponse = await createBookAppointment(payload);
-            console.log("Booking response:", bookingResponse);
+    if (!isProfileComplete) {
+        dispatch(setMessage({
+            type: 'error',
+            content: 'Vui lòng hoàn thiện hồ sơ trước khi đặt khám.'
+        }));
+        return;
+    }
 
-            // navigate(`https://pay.payos.vn/web/${latestPayment.payOsId}/`); 
-            dispatch(setMessage({ type: 'success', content: 'Đặt khám thành công! ' }));
+    try {
+        // ✅ Tạo payload không phụ thuộc vào response
+        const payload = {
+            hospitalId: Number(stepData.hospitalId),
+            serviceId: Number(stepData.serviceId),
+            specializationId: Number(stepData.specialty?.id || 0),
+            doctorId: Number(stepData.doctor?.id || 0),
+            returnUrl: `http://localhost:3000/payment/success`,
+            cancelUrl: `http://localhost:3000/payment/cancelled`, 
+            appointmentDate: stepData?.date,
+            bookingTime: stepData.shift === "morning" ? 1 : 2,
+            paymentMethod: stepData.paymentType === "cash" ? 1 : 2,
+            note: "",
+        };
 
-            if (stepData.paymentType === 'online') {
-                window.location.href = (`${bookingResponse.result.checkoutUrl}/`);
-                console.log("💳 Online payment selected, getting payment link...");
+        console.log("📤 Payload to send:", JSON.stringify(payload));
+        
+        // ✅ Gọi API booking
+        const bookingResponse = await createBookAppointment(payload);
+        console.log("✅ Booking response:", bookingResponse);
 
-                // ✅ Wait a moment then fetch latest payment
-                setTimeout(async () => {
-                    try {
-                        const hospitalId = Number(stepData.hospitalId);
-                        const userId = user.id;
+        // ✅ Kiểm tra response structure
+        
 
-                        const response = await getAllPayment(hospitalId, userId);
+        const { result } = bookingResponse;
+        console.log("📋 Booking result:", result);
 
-                        if (response?.result && Array.isArray(response.result)) {
-                            const sortedPayments = response.result.sort((a, b) =>
-                                new Date(b.createdOn) - new Date(a.createdOn)
-                            );
+        // ✅ Hiển thị thông báo thành công
+        dispatch(setMessage({ 
+            type: 'success', 
+            content: 'Đặt khám thành công!' 
+        }));
 
-                            const newestPayment = sortedPayments[0];
-
-                            if (latestPayment?.payOsId) {
-                                console.log(" Redirecting to PayOS:", latestPayment.payOsId);
-                                // window.location.href = `https://pay.payos.vn/web/${latestPayment.payOsId}/`;
-                            } else {
-                                console.error(" No payOsId found in newest payment");
-                                dispatch(setMessage({
-                                    type: 'error',
-                                    content: 'Không thể tạo liên kết thanh toán. Vui lòng thử lại.'
-                                }));
-                            }
-                        }
-                    } catch (error) {
-                        console.error(' Error getting payment link:', error);
-                        dispatch(setMessage({
-                            type: 'error',
-                            content: 'Có lỗi khi tạo liên kết thanh toán.'
-                        }));
-                    }
-                }, 1000); // Wait 2 seconds for payment to be processed
-
+        // ✅ Xử lý theo phương thức thanh toán - CHỈ dựa vào bookingResponse
+        if (stepData.paymentType === 'online') {
+            console.log("💳 Online payment selected");
+            
+            // Chỉ sử dụng dữ liệu từ bookingResponse
+            if (result.checkoutUrl) {
+                console.log("🔗 Redirecting to checkout URL:", result.checkoutUrl);
+                window.location.href = result.checkoutUrl;
+            } else if (result.paymentUrl) {
+                console.log("🔗 Redirecting to payment URL:", result.paymentUrl);
+                window.location.href = result.paymentUrl;
+            } else if (result.payOsId) {
+                console.log("🔗 Redirecting to PayOS:", result.payOsId);
+                window.location.href = `https://pay.payos.vn/web/${result.payOsId}/`;
             } else {
-
+                console.error("❌ No payment URL found in response");
+                console.log("🔍 Available fields:", Object.keys(result));
                 dispatch(setMessage({
-                    type: 'success',
-                    content: 'Đặt khám thành công! Vui lòng thanh toán tại cơ sở y tế.'
+                    type: 'error',
+                    content: 'Không thể tạo liên kết thanh toán. Vui lòng thử lại.'
                 }));
-               // navigate('/appointments');
             }
-        } catch (error) {
-            dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn lịch khác! Bạn đã đặt lịch này rồi hoặc lịch đã quá thời gian để đặt. ' }));
+        } else {
+            // Thanh toán tiền mặt
+            console.log("💰 Cash payment selected");
+            dispatch(setMessage({
+                type: 'success',
+                content: 'Đặt khám thành công! Vui lòng thanh toán tại cơ sở y tế.'
+            }));
+            
+            // Redirect về trang booking history
+            setTimeout(() => {
+                navigate('/booking-history');
+            }, 2000);
         }
-    };
+
+    } catch (error) {
+        console.error("❌ Booking error:", error);
+        
+        // Xử lý các loại lỗi khác nhau
+        let errorMessage = 'Có lỗi xảy ra khi đặt lịch khám.';
+        
+        if (error.response?.data?.message) {
+            errorMessage = error.response.data.message;
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        dispatch(setMessage({ 
+            type: 'error', 
+            content: errorMessage
+        }));
+    }
+};
     return (
         <>
             {contextHolder}

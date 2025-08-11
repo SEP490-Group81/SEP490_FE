@@ -4,12 +4,12 @@ import { EditOutlined, DeleteOutlined, EyeOutlined, UserOutlined } from '@ant-de
 import EditUser from './EditUser';
 import DeleteUser from './DeleteUser';
 import ViewUser from './ViewUser';
+
 const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
     const [editingUser, setEditingUser] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
-
     const [showViewModal, setShowViewModal] = useState(false);
     const [viewingUser, setViewingUser] = useState(null);
 
@@ -53,16 +53,24 @@ const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
         }
     };
 
+    // ✅ Chuyển đổi role sang tiếng Việt
+    const getRoleDisplayName = (roleType) => {
+        switch (roleType) {
+            case 2: return 'Bác sĩ';
+            case 4: return 'Quản trị viên BV';
+            case 5: return 'Quản trị hệ thống';
+            case 6: return 'Bệnh nhân';
+            case 7: return 'Y tá';
+            default: return 'Người dùng';
+        }
+    };
 
     // Extract role from username if not provided directly
     const getUserRole = (user) => {
         if (!user.role) return 'user';
 
         const roleType = user.role.roleType;
-        const roleName = user.role.name;
-
-
-
+        
         // Option 1: Map by roleType
         switch (roleType) {
             case 2: return 'doctor';
@@ -72,14 +80,11 @@ const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
             case 7: return 'nurse';
             default: return 'user';
         }
-
-        // Option 2: Return name directly
-        // return roleName;
     };
 
     const columns = [
         {
-            title: 'User',
+            title: 'Người dùng',
             key: 'user',
             render: (_, record) => (
                 <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -89,80 +94,93 @@ const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
                         src={record.avatarUrl}
                     />
                     <div>
-                        <div style={{ fontWeight: 500 }}>{record.fullname}</div>
-                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>{record.email}</div>
+                        <div style={{ fontWeight: 500 }}>{record.fullname || 'Không rõ'}</div>
+                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>{record.email || 'Chưa có email'}</div>
                     </div>
                 </div>
             ),
         },
         {
-            title: 'Username',
+            title: 'Tên đăng nhập',
             dataIndex: 'userName',
             key: 'userName',
+            render: (text) => text || 'Chưa có',
         },
         {
-            title: 'Phone',
+            title: 'Số điện thoại',
             dataIndex: 'phoneNumber',
             key: 'phoneNumber',
+            render: (text) => text || 'Chưa có',
         },
         {
-            title: 'Role',
+            title: 'Vai trò',
             key: 'role',
             render: (_, record) => {
                 const role = getUserRole(record);
+                const roleType = record.role?.roleType;
+                const displayName = getRoleDisplayName(roleType);
+                
                 return (
                     <Tag color={getRoleColor(role)} className="user-role-tag">
-                        {role?.toUpperCase() || 'USER'}
+                        {displayName}
                     </Tag>
                 );
             },
         },
         {
-            title: 'Status',
+            title: 'Trạng thái',
             key: 'status',
             render: (_, record) => (
                 <Tag color={getStatusColor(record.active)} className="user-status-tag">
-                    {record.active ? 'ACTIVE' : 'INACTIVE'}
+                    {record.active ? 'HOẠT ĐỘNG' : 'NGƯNG HOẠT ĐỘNG'}
                 </Tag>
             ),
         },
         {
-            title: 'Verification',
+            title: 'Xác thực',
             key: 'verification',
             render: (_, record) => (
-                <>
-                    <Tag color={record.isVerifiedEmail ? 'green' : 'orange'} style={{ marginRight: 4 }}>
-                        {record.isVerifiedEmail ? 'Email verified' : 'Email unverified'}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <Tag 
+                        color={record.isVerifiedEmail ? 'green' : 'orange'} 
+                        style={{ margin: 0, fontSize: '11px' }}
+                    >
+                        {record.isVerifiedEmail ? '✓ Email đã xác thực' : '⏳ Email chưa xác thực'}
                     </Tag>
                     {record.phoneNumber && (
-                        <Tag color={record.isVerifiedPhone ? 'green' : 'orange'}>
-                            {record.isVerifiedPhone ? 'Phone verified' : 'Phone unverified'}
+                        <Tag 
+                            color={record.isVerifiedPhone ? 'green' : 'orange'}
+                            style={{ margin: 0, fontSize: '11px' }}
+                        >
+                            {record.isVerifiedPhone ? '✓ SĐT đã xác thực' : '⏳ SĐT chưa xác thực'}
                         </Tag>
                     )}
-                </>
+                </div>
             ),
         },
         {
-            title: 'Actions',
+            title: 'Thao tác',
             key: 'actions',
             width: 150,
             render: (_, record) => (
                 <Space size="small">
-                    <Tooltip title="View Details">
+                    <Tooltip title="Xem chi tiết">
                         <Button
                             type="text"
                             icon={<EyeOutlined />}
                             onClick={() => handleView(record)}
+                            style={{ color: '#1890ff' }}
                         />
                     </Tooltip>
-                    <Tooltip title="Edit">
+                    <Tooltip title="Chỉnh sửa">
                         <Button
                             type="text"
                             icon={<EditOutlined />}
                             onClick={() => handleEdit(record)}
+                            style={{ color: '#52c41a' }}
                         />
                     </Tooltip>
-                    <Tooltip title="Delete">
+                    <Tooltip title="Xóa">
                         <Button
                             type="text"
                             danger
@@ -181,13 +199,34 @@ const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
                 columns={columns}
                 dataSource={users}
                 rowKey="id"
-                pagination={pagination}
-                loading={loading}
+                pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total, range) => 
+                        `${range[0]}-${range[1]} của ${total} người dùng`,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    size: 'default'
+                }}
+                loading={loading ? { tip: 'Đang tải dữ liệu...' } : false}
                 onChange={onChange}
                 bordered={false}
                 size="middle"
+                locale={{
+                    emptyText: (
+                        <div style={{ padding: '20px', textAlign: 'center' }}>
+                            <UserOutlined style={{ fontSize: '24px', color: '#d9d9d9', marginBottom: '8px' }} />
+                            <div style={{ color: '#999' }}>Không có dữ liệu người dùng</div>
+                        </div>
+                    ),
+                    triggerDesc: 'Nhấn để sắp xếp giảm dần',
+                    triggerAsc: 'Nhấn để sắp xếp tăng dần',
+                    cancelSort: 'Nhấn để hủy sắp xếp',
+                }}
+                scroll={{ x: 1000 }}
             />
 
+            {/* ✅ Edit Modal */}
             {showEditModal && (
                 <EditUser
                     visible={showEditModal}
@@ -197,6 +236,7 @@ const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
                 />
             )}
 
+            {/* ✅ Delete Modal */}
             {showDeleteModal && (
                 <DeleteUser
                     visible={showDeleteModal}
@@ -206,6 +246,7 @@ const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
                 />
             )}
 
+            {/* ✅ View Modal */}
             {showViewModal && (
                 <ViewUser
                     visible={showViewModal}

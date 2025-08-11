@@ -24,9 +24,10 @@ import {
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearMessage, setMessage } from '../../../redux/slices/messageSlice';
-import { createUser } from '../../../services/userService'; // ✅ Use createUser service
+import { createUser } from '../../../services/userService'; // ✅ Sử dụng service createUser
 import { getDepartmentsByHospitalId } from '../../../services/departmentService';
 import { getProvinces } from '../../../services/provinceService';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { Step } = Steps;
@@ -48,10 +49,10 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
     const messageState = useSelector((state) => state.message);
     const [messageApi, contextHolder] = message.useMessage();
 
-    // ✅ Get hospital ID from user state
+    // ✅ Lấy hospital ID từ user state
     const hospitalId = user?.hospitals?.[0]?.id;
 
-    // Watch for message state changes
+    // Theo dõi thay đổi message state
     useEffect(() => {
         if (messageState && messageState.content) {
             if (messageState.type === 'success') {
@@ -72,14 +73,14 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
         }
     }, [messageState, messageApi, dispatch]);
 
-    // Fetch data when modal opens
+    // Lấy dữ liệu khi modal mở
     useEffect(() => {
         if (visible && hospitalId) {
             fetchInitialData();
         }
     }, [visible, hospitalId]);
 
-    // Update wards when province changes
+    // Cập nhật phường/xã khi tỉnh thay đổi
     useEffect(() => {
         if (selectedProvince && provinces.length > 0) {
             const provinceObj = provinces.find((p) => p.province === selectedProvince);
@@ -95,31 +96,31 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
             setLoadingDepartments(true);
             setLoadingProvinces(true);
 
-            console.log('🔄 Fetching initial data for hospital ID:', hospitalId);
+            console.log('🔄 Đang tải dữ liệu ban đầu cho bệnh viện ID:', hospitalId);
 
-            // Fetch departments and provinces in parallel
+            // Tải departments và provinces song song
             const [departmentsData, provincesData] = await Promise.all([
                 getDepartmentsByHospitalId(hospitalId),
                 getProvinces()
             ]);
 
-            console.log('🏢 Departments loaded:', departmentsData);
-            console.log('🌏 Provinces loaded:', provincesData);
+            console.log('🏢 Đã tải khoa:', departmentsData);
+            console.log('🌏 Đã tải tỉnh thành:', provincesData);
 
             setDepartments(departmentsData || []);
             setProvinces(provincesData.data || []);
 
-            // ✅ Set default values for nurse
+            // ✅ Đặt giá trị mặc định cho điều dưỡng
             form.setFieldsValue({
-                job: 'Nurse', // ✅ Default job title for nurse
-                // ✅ roleType is hardcoded to 7 (nurse role)
+                job: 'Điều dưỡng', // ✅ Chức danh mặc định
+                // ✅ roleType được hard-code là 7 (vai trò điều dưỡng)
             });
 
         } catch (error) {
-            console.error('❌ Error fetching initial data:', error);
+            console.error('❌ Lỗi khi tải dữ liệu ban đầu:', error);
             dispatch(setMessage({
                 type: 'error',
-                content: 'Failed to load initial data. Please try again.'
+                content: 'Không thể tải dữ liệu ban đầu. Vui lòng thử lại.'
             }));
         } finally {
             setLoadingDepartments(false);
@@ -139,14 +140,14 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
         setLoading(true);
 
         try {
-            console.log('🔄 Starting nurse creation...');
+            console.log('🔄 Bắt đầu tạo tài khoản điều dưỡng...');
 
             const currentStepValues = form.getFieldsValue();
             const allValues = { ...formData, ...currentStepValues };
 
-            console.log('📝 Form values:', allValues);
+            console.log('📝 Giá trị form:', allValues);
 
-            // ✅ Validate required fields
+            // ✅ Kiểm tra trường bắt buộc
             const requiredFields = [
                 'fullname', 'phoneNumber', 'email', 'password', 
                 'dob', 'gender', 'job', 'cccd', 
@@ -156,7 +157,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
             const missingFields = requiredFields.filter(field => !allValues[field]);
 
             if (missingFields.length > 0) {
-                const errorMsg = `Missing required fields: ${missingFields.join(', ')}`;
+                const errorMsg = `Thiếu trường bắt buộc: ${missingFields.join(', ')}`;
                 messageApi.error({
                     content: errorMsg,
                     duration: 6,
@@ -164,42 +165,42 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                 throw new Error(errorMsg);
             }
 
-            // ✅ Prepare nurse payload using createUser format
+            // ✅ Chuẩn bị payload điều dưỡng sử dụng format createUser
             const nursePayload = {
-                hospitalId: parseInt(hospitalId), // ✅ From user state
-                departmentId: parseInt(allValues.departmentId), // ✅ From form selection
-                roleType: 7, // ✅ Hardcoded for nurse role
+                hospitalId: parseInt(hospitalId), // ✅ Từ user state
+                departmentId: parseInt(allValues.departmentId), // ✅ Từ lựa chọn form
+                roleType: 7, // ✅ Hard-code cho vai trò điều dưỡng
                 fullname: allValues.fullname?.trim() || "",
                 phoneNumber: allValues.phoneNumber?.trim() || "",
                 email: allValues.email?.trim() || "",
                 password: allValues.password?.trim() || "",
                 avatarUrl: allValues.avatarUrl?.trim() || "",
                 dob: allValues.dob ? (typeof allValues.dob === 'string' ? allValues.dob : allValues.dob.format('YYYY-MM-DD')) : null,
-                gender: allValues.gender === 'male', // ✅ Convert to boolean
-                job: allValues.job?.trim() || "Nurse",
+                gender: allValues.gender === 'male', // ✅ Chuyển thành boolean
+                job: allValues.job?.trim() || "Điều dưỡng",
                 cccd: allValues.cccd?.trim() || "",
                 province: allValues.province?.trim() || "",
                 ward: allValues.ward?.trim() || "",
                 streetAddress: allValues.streetAddress?.trim() || ""
             };
 
-            console.log('🏥 Final nurse payload:', JSON.stringify(nursePayload, null, 2));
+            console.log('🏥 Payload điều dưỡng cuối cùng:', JSON.stringify(nursePayload, null, 2));
 
-            // ✅ Show loading message
+            // ✅ Hiển thị thông báo đang tải
             messageApi.loading({
-                content: 'Creating nurse account...',
+                content: 'Đang tạo tài khoản điều dưỡng...',
                 duration: 0,
                 key: 'creating'
             });
 
-            // ✅ Call createUser API
+            // ✅ Gọi API createUser
             const response = await createUser(nursePayload);
-            console.log('📥 createUser response:', response);
+            console.log('📥 Phản hồi createUser:', response);
 
-            // ✅ Dismiss loading message
+            // ✅ Đóng thông báo đang tải
             messageApi.destroy('creating');
 
-            // ✅ Check success
+            // ✅ Kiểm tra thành công
             const isSuccess = (
                 response === true ||
                 response?.success === true ||
@@ -211,16 +212,16 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
             );
 
             if (isSuccess) {
-                console.log('✅ Nurse created successfully');
+                console.log('✅ Tạo điều dưỡng thành công');
 
                 messageApi.success({
-                    content: '🎉 Nurse created successfully!',
+                    content: '🎉 Tạo điều dưỡng thành công!',
                     duration: 4,
                 });
 
                 dispatch(setMessage({
                     type: 'success',
-                    content: '🎉 Nurse account has been created successfully!',
+                    content: '🎉 Tài khoản điều dưỡng đã được tạo thành công!',
                     duration: 4
                 }));
 
@@ -236,8 +237,8 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                 }, 1500);
 
             } else {
-                const errorMessage = response?.message || response?.error || 'Failed to create nurse';
-                console.error('❌ Create failed:', errorMessage);
+                const errorMessage = response?.message || response?.error || 'Không thể tạo điều dưỡng';
+                console.error('❌ Tạo thất bại:', errorMessage);
 
                 messageApi.error({
                     content: `❌ ${errorMessage}`,
@@ -248,9 +249,9 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
             }
 
         } catch (error) {
-            console.error('❌ Error creating nurse:', error);
+            console.error('❌ Lỗi khi tạo điều dưỡng:', error);
 
-            let errorMessage = 'Failed to create nurse. Please try again.';
+            let errorMessage = 'Không thể tạo điều dưỡng. Vui lòng thử lại.';
 
             if (error.response?.data) {
                 if (typeof error.response.data === 'string') {
@@ -304,7 +305,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
             if (errorFields.length > 0) {
                 const missingFields = errorFields.map(field => field.name[0]).join(', ');
                 messageApi.error({
-                    content: `Please complete: ${missingFields}`,
+                    content: `Vui lòng hoàn thành: ${missingFields}`,
                     duration: 6,
                 });
             }
@@ -319,18 +320,18 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
 
     const steps = [
         {
-            title: 'Basic Info',
-            description: 'Personal information',
+            title: 'Thông tin cơ bản',
+            description: 'Thông tin cá nhân',
             icon: <UserOutlined />
         },
         {
-            title: 'Professional',
-            description: 'Work details',
+            title: 'Thông tin nghề nghiệp',
+            description: 'Chi tiết công việc',
             icon: <MedicineBoxOutlined />
         },
         {
-            title: 'Review',
-            description: 'Confirm details',
+            title: 'Xem lại',
+            description: 'Xác nhận thông tin',
             icon: <CheckCircleOutlined />
         }
     ];
@@ -353,12 +354,12 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     alignItems: 'center'
                 }}>
                     <UserOutlined style={{ marginRight: 8 }} />
-                    Basic Information
+                    Thông tin cơ bản
                 </h3>
 
                 <Alert
-                    message={`Hospital: ${user?.hospitals?.[0]?.name || 'Loading...'}`}
-                    description={`Creating nurse account for hospital ID: ${hospitalId}.`}
+                    message={`Bệnh viện: ${user?.hospitals?.[0]?.name || 'Đang tải...'}`}
+                    description={`Đang tạo tài khoản điều dưỡng cho bệnh viện ID: ${hospitalId}.`}
                     type="info"
                     showIcon
                     style={{ marginBottom: 16 }}
@@ -368,23 +369,23 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="fullname"
-                            label="Full Name"
+                            label="Họ và tên"
                             rules={[
-                                { required: true, message: 'Please enter full name' },
-                                { min: 2, message: 'Name must be at least 2 characters' }
+                                { required: true, message: 'Vui lòng nhập họ tên' },
+                                { min: 2, message: 'Tên phải có ít nhất 2 ký tự' }
                             ]}
                         >
-                            <Input placeholder="Nurse Jane Smith" />
+                            <Input placeholder="Nguyễn Thị Lan" />
                         </Form.Item>
                     </Col>
 
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="phoneNumber"
-                            label="Phone Number"
+                            label="Số điện thoại"
                             rules={[
-                                { required: true, message: 'Please enter phone number' },
-                                { pattern: /^[0-9]{10,11}$/, message: 'Phone number must be 10-11 digits' }
+                                { required: true, message: 'Vui lòng nhập số điện thoại' },
+                                { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại phải có 10-11 chữ số' }
                             ]}
                         >
                             <Input placeholder="0123456789" />
@@ -398,24 +399,24 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                             name="email"
                             label="Email"
                             rules={[
-                                { required: true, message: 'Please enter email' },
-                                { type: 'email', message: 'Please enter valid email' }
+                                { required: true, message: 'Vui lòng nhập email' },
+                                { type: 'email', message: 'Vui lòng nhập email hợp lệ' }
                             ]}
                         >
-                            <Input placeholder="nurse@hospital.com" />
+                            <Input placeholder="dieuduong@benhvien.com" />
                         </Form.Item>
                     </Col>
 
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="password"
-                            label="Password"
+                            label="Mật khẩu"
                             rules={[
-                                { required: true, message: 'Please enter password' },
-                                { min: 6, message: 'Password must be at least 6 characters' }
+                                { required: true, message: 'Vui lòng nhập mật khẩu' },
+                                { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' }
                             ]}
                         >
-                            <Input.Password placeholder="Enter password" />
+                            <Input.Password placeholder="Nhập mật khẩu" />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -424,28 +425,28 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="confirmPassword"
-                            label="Confirm Password"
+                            label="Xác nhận mật khẩu"
                             dependencies={['password']}
                             rules={[
-                                { required: true, message: 'Please confirm password' },
+                                { required: true, message: 'Vui lòng xác nhận mật khẩu' },
                                 ({ getFieldValue }) => ({
                                     validator(_, value) {
                                         if (!value || getFieldValue('password') === value) {
                                             return Promise.resolve();
                                         }
-                                        return Promise.reject(new Error('Passwords do not match!'));
+                                        return Promise.reject(new Error('Mật khẩu không khớp!'));
                                     },
                                 }),
                             ]}
                         >
-                            <Input.Password placeholder="Confirm password" />
+                            <Input.Password placeholder="Xác nhận mật khẩu" />
                         </Form.Item>
                     </Col>
 
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="avatarUrl"
-                            label="Profile Image URL"
+                            label="URL ảnh đại diện"
                         >
                             <Input placeholder="https://example.com/photo.jpg" />
                         </Form.Item>
@@ -456,12 +457,12 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={8}>
                         <Form.Item
                             name="gender"
-                            label="Gender"
-                            rules={[{ required: true, message: 'Please select gender' }]}
+                            label="Giới tính"
+                            rules={[{ required: true, message: 'Vui lòng chọn giới tính' }]}
                         >
-                            <Select placeholder="Select gender">
-                                <Option value="male">👨 Male</Option>
-                                <Option value="female">👩 Female</Option>
+                            <Select placeholder="Chọn giới tính">
+                                <Option value="male">👨 Nam</Option>
+                                <Option value="female">👩 Nữ</Option>
                             </Select>
                         </Form.Item>
                     </Col>
@@ -469,13 +470,14 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={8}>
                         <Form.Item
                             name="dob"
-                            label="Date of Birth"
-                            rules={[{ required: true, message: 'Please select date of birth' }]}
+                            label="Ngày sinh"
+                            rules={[{ required: true, message: 'Vui lòng chọn ngày sinh' }]}
                         >
                             <DatePicker
                                 style={{ width: '100%' }}
-                                placeholder="Select date"
-                                format="YYYY-MM-DD"
+                                placeholder="Chọn ngày"
+                                format="DD/MM/YYYY"
+                                disabledDate={(current) => current && current > dayjs().subtract(18, 'year')}
                             />
                         </Form.Item>
                     </Col>
@@ -483,13 +485,13 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={8}>
                         <Form.Item
                             name="cccd"
-                            label="CCCD/ID Card Number"
+                            label="Số CCCD/CMND"
                             rules={[
-                                { required: true, message: 'Please enter ID number' },
-                                { pattern: /^[0-9]{9,12}$/, message: 'ID must be 9-12 digits' }
+                                { required: true, message: 'Vui lòng nhập số CCCD' },
+                                { pattern: /^[0-9]{9,12}$/, message: 'CCCD phải có 9-12 chữ số' }
                             ]}
                         >
-                            <Input placeholder="Enter ID number" />
+                            <Input placeholder="Nhập số CCCD" />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -498,11 +500,11 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={8}>
                         <Form.Item
                             name="province"
-                            label="Province/City"
-                            rules={[{ required: true, message: 'Please select province' }]}
+                            label="Tỉnh/Thành phố"
+                            rules={[{ required: true, message: 'Vui lòng chọn tỉnh/thành phố' }]}
                         >
                             <Select
-                                placeholder="Select province"
+                                placeholder="Chọn tỉnh/thành phố"
                                 showSearch
                                 loading={loadingProvinces}
                                 filterOption={(input, option) =>
@@ -520,11 +522,11 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={8}>
                         <Form.Item
                             name="ward"
-                            label="Ward/District"
-                            rules={[{ required: true, message: 'Please select ward' }]}
+                            label="Quận/Huyện"
+                            rules={[{ required: true, message: 'Vui lòng chọn quận/huyện' }]}
                         >
                             <Select
-                                placeholder={selectedProvince ? "Select ward" : "Select province first"}
+                                placeholder={selectedProvince ? "Chọn quận/huyện" : "Chọn tỉnh/thành phố trước"}
                                 showSearch
                                 disabled={!selectedProvince}
                                 options={wards.map((w) => ({
@@ -542,10 +544,10 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={8}>
                         <Form.Item
                             name="streetAddress"
-                            label="Street Address"
-                            rules={[{ required: true, message: 'Please enter street address' }]}
+                            label="Địa chỉ cụ thể"
+                            rules={[{ required: true, message: 'Vui lòng nhập địa chỉ cụ thể' }]}
                         >
-                            <Input placeholder="123 Main Street" />
+                            <Input placeholder="123 Đường ABC" />
                         </Form.Item>
                     </Col>
                 </Row>
@@ -571,12 +573,12 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     alignItems: 'center'
                 }}>
                     <MedicineBoxOutlined style={{ marginRight: 8 }} />
-                    Professional Information
+                    Thông tin nghề nghiệp
                 </h3>
 
                 <Alert
-                    message="Nurse Role Assignment"
-                    description={` Hospital ID: ${hospitalId}. Available departments: ${departments.length}`}
+                    message="Phân công vai trò điều dưỡng"
+                    description={`Bệnh viện ID: ${hospitalId}. Khoa có sẵn: ${departments.length}`}
                     type="success"
                     showIcon
                     style={{ marginBottom: 16 }}
@@ -586,15 +588,15 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="job"
-                            label="Job Title"
-                            initialValue="Nurse"
-                            rules={[{ required: true, message: 'Please enter job title' }]}
+                            label="Chức danh"
+                            initialValue="Điều dưỡng"
+                            rules={[{ required: true, message: 'Vui lòng nhập chức danh' }]}
                         >
-                            <Select placeholder="Select job title" disabled>
-                                <Option value="Nurse">👩‍⚕️ Nurse</Option>
-                                <Option value="Senior Nurse">👩‍⚕️ Senior Nurse</Option>
-                                <Option value="Head Nurse">👩‍⚕️ Head Nurse</Option>
-                                <Option value="Charge Nurse">👩‍⚕️ Charge Nurse</Option>
+                            <Select placeholder="Chọn chức danh">
+                                <Option value="Điều dưỡng">👩‍⚕️ Điều dưỡng</Option>
+                                <Option value="Điều dưỡng trưởng">👩‍⚕️ Điều dưỡng trưởng</Option>
+                                <Option value="Điều dưỡng chuyên khoa">👩‍⚕️ Điều dưỡng chuyên khoa</Option>
+                                <Option value="Điều dưỡng ca">👩‍⚕️ Điều dưỡng ca</Option>
                             </Select>
                         </Form.Item>
                     </Col>
@@ -602,13 +604,16 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="departmentId"
-                            label="Department"
-                            rules={[{ required: true, message: 'Please select department' }]}
+                            label="Khoa"
+                            rules={[{ required: true, message: 'Vui lòng chọn khoa' }]}
                         >
                             <Select 
-                                placeholder="Select department" 
+                                placeholder="Chọn khoa" 
                                 showSearch
                                 loading={loadingDepartments}
+                                filterOption={(input, option) =>
+                                    (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                                }
                             >
                                 {departments.map(dept => (
                                     <Option key={dept.id} value={dept.id}>
@@ -624,12 +629,12 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="shift"
-                            label="Shift Schedule"
+                            label="Ca làm việc"
                         >
-                            <Select placeholder="Select shift">
-                                <Option value="Day Shift (7AM-7PM)">🌅 Day Shift (7AM-7PM)</Option>
-                                <Option value="Night Shift (7PM-7AM)">🌙 Night Shift (7PM-7AM)</Option>
-                                <Option value="Rotating">🔄 Rotating</Option>
+                            <Select placeholder="Chọn ca làm việc">
+                                <Option value="Ca ngày (7AM-7PM)">🌅 Ca ngày (7AM-7PM)</Option>
+                                <Option value="Ca đêm (7PM-7AM)">🌙 Ca đêm (7PM-7AM)</Option>
+                                <Option value="Luân phiên">🔄 Luân phiên</Option>
                             </Select>
                         </Form.Item>
                     </Col>
@@ -637,24 +642,24 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="experience"
-                            label="Years of Experience"
+                            label="Năm kinh nghiệm"
                         >
-                            <Select placeholder="Select experience">
-                                <Option value="0-1 years">🌱 0-1 years</Option>
-                                <Option value="2-5 years">🌿 2-5 years</Option>
-                                <Option value="5-10 years">🌳 5-10 years</Option>
-                                <Option value="10+ years">🌲 10+ years</Option>
+                            <Select placeholder="Chọn số năm kinh nghiệm">
+                                <Option value="0-1 năm">🌱 0-1 năm</Option>
+                                <Option value="2-5 năm">🌿 2-5 năm</Option>
+                                <Option value="5-10 năm">🌳 5-10 năm</Option>
+                                <Option value="Trên 10 năm">🌲 Trên 10 năm</Option>
                             </Select>
                         </Form.Item>
                     </Col>
                 </Row>
 
                 <div style={{ marginTop: 16, padding: 12, background: '#f0f0f0', borderRadius: 6, fontSize: '12px' }}>
-                    <strong>Debug Info:</strong><br />
-                    Hospital ID: {hospitalId}<br />
-                    Role Type: 7 (Nurse) - hardcoded<br />
-                    Available Departments: {departments.length}<br />
-                    Service: createUser (not createDoctor)
+                    <strong>Thông tin debug:</strong><br />
+                    ID Bệnh viện: {hospitalId}<br />
+                    Loại vai trò: 7 (Điều dưỡng) - hard-coded<br />
+                    Khoa có sẵn: {departments.length}<br />
+                    Service: createUser (không phải createDoctor)
                 </div>
             </div>
         );
@@ -683,12 +688,12 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     alignItems: 'center'
                 }}>
                     <CheckCircleOutlined style={{ marginRight: 8 }} />
-                    Review Nurse Information
+                    Xem lại thông tin điều dưỡng
                 </h3>
 
                 <Alert
-                    message="Please review all information before creating the nurse account"
-                    description="Make sure all details are correct as some information cannot be changed later."
+                    message="Vui lòng xem lại tất cả thông tin trước khi tạo tài khoản điều dưỡng"
+                    description="Đảm bảo tất cả thông tin đều chính xác vì một số thông tin không thể thay đổi sau này."
                     type="warning"
                     showIcon
                     style={{ marginBottom: 20 }}
@@ -697,29 +702,29 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                 <div style={{ background: 'white', padding: '16px', borderRadius: '6px' }}>
                     <Row gutter={32}>
                         <Col span={12}>
-                            <h4 style={{ color: '#52c41a', marginBottom: 12 }}>👤 Personal Information</h4>
-                            <p><strong>Name:</strong> {allData.fullname || 'Not provided'}</p>
-                            <p><strong>Phone:</strong> {allData.phoneNumber || 'Not provided'}</p>
-                            <p><strong>Email:</strong> {allData.email || 'Not provided'}</p>
-                            <p><strong>Gender:</strong> {allData.gender === 'male' ? '👨 Male' : '👩 Female'}</p>
-                            <p><strong>DOB:</strong> {allData.dob ? (typeof allData.dob === 'string' ? allData.dob : allData.dob.format('YYYY-MM-DD')) : 'Not provided'}</p>
-                            <p><strong>CCCD:</strong> {allData.cccd || 'Not provided'}</p>
-                            <p><strong>Address:</strong> {[allData.streetAddress, allData.ward, allData.province].filter(Boolean).join(', ') || 'Not provided'}</p>
+                            <h4 style={{ color: '#52c41a', marginBottom: 12 }}>👤 Thông tin cá nhân</h4>
+                            <p><strong>Họ tên:</strong> {allData.fullname || 'Chưa cung cấp'}</p>
+                            <p><strong>Điện thoại:</strong> {allData.phoneNumber || 'Chưa cung cấp'}</p>
+                            <p><strong>Email:</strong> {allData.email || 'Chưa cung cấp'}</p>
+                            <p><strong>Giới tính:</strong> {allData.gender === 'male' ? '👨 Nam' : '👩 Nữ'}</p>
+                            <p><strong>Ngày sinh:</strong> {allData.dob ? (typeof allData.dob === 'string' ? allData.dob : allData.dob.format('DD/MM/YYYY')) : 'Chưa cung cấp'}</p>
+                            <p><strong>CCCD:</strong> {allData.cccd || 'Chưa cung cấp'}</p>
+                            <p><strong>Địa chỉ:</strong> {[allData.streetAddress, allData.ward, allData.province].filter(Boolean).join(', ') || 'Chưa cung cấp'}</p>
                         </Col>
                         <Col span={12}>
-                            <h4 style={{ color: '#52c41a', marginBottom: 12 }}>🏥 Professional Information</h4>
-                            <p><strong>Hospital:</strong> {user?.hospitals?.[0]?.name || 'Loading...'} (ID: {hospitalId})</p>
-                            <p><strong>Role Type:</strong> 7 (Nurse) - Hardcoded</p>
-                            <p><strong>Job Title:</strong> {allData.job || 'Nurse'}</p>
-                            <p><strong>Department:</strong> {selectedDepartment?.name || 'Not selected'} (ID: {allData.departmentId})</p>
-                            <p><strong>Shift:</strong> {allData.shift || 'Not specified'}</p>
-                            <p><strong>Experience:</strong> {allData.experience || 'Not specified'}</p>
+                            <h4 style={{ color: '#52c41a', marginBottom: 12 }}>🏥 Thông tin nghề nghiệp</h4>
+                            <p><strong>Bệnh viện:</strong> {user?.hospitals?.[0]?.name || 'Đang tải...'} (ID: {hospitalId})</p>
+                            <p><strong>Loại vai trò:</strong> 7 (Điều dưỡng) - Hard-coded</p>
+                            <p><strong>Chức danh:</strong> {allData.job || 'Điều dưỡng'}</p>
+                            <p><strong>Khoa:</strong> {selectedDepartment?.name || 'Chưa chọn'} (ID: {allData.departmentId})</p>
+                            <p><strong>Ca làm việc:</strong> {allData.shift || 'Chưa xác định'}</p>
+                            <p><strong>Kinh nghiệm:</strong> {allData.experience || 'Chưa xác định'}</p>
 
                             <div style={{ marginTop: 16, padding: 8, background: '#e6fffb', borderRadius: 4, fontSize: '12px' }}>
-                                <strong>API Payload Preview:</strong><br />
+                                <strong>Xem trước API Payload:</strong><br />
                                 hospitalId: {hospitalId}<br />
                                 departmentId: {allData.departmentId}<br />
-                                roleType: 7 (hardcoded)<br />
+                                roleType: 7 (hard-coded)<br />
                                 Service: createUser
                             </div>
                         </Col>
@@ -754,7 +759,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                             fontSize: '20px'
                         }} />
                         <span style={{ fontSize: '18px', fontWeight: 600 }}>
-                            Add New Nurse
+                            Thêm điều dưỡng mới
                         </span>
                     </div>
                 }
@@ -805,7 +810,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                                 <div>
                                     {currentStep > 0 && (
                                         <Button onClick={prevStep} size="large">
-                                            Previous
+                                            Quay lại
                                         </Button>
                                     )}
                                 </div>
@@ -819,7 +824,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                                         setWards([]);
                                         onCancel();
                                     }} size="large">
-                                        Cancel
+                                        Hủy
                                     </Button>
 
                                     {currentStep < steps.length - 1 ? (
@@ -832,7 +837,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                                                 borderColor: '#52c41a'
                                             }}
                                         >
-                                            Next
+                                            Tiếp theo
                                         </Button>
                                     ) : (
                                         <Button
@@ -846,7 +851,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                                                 borderColor: '#52c41a'
                                             }}
                                         >
-                                            Create Nurse
+                                            Tạo điều dưỡng
                                         </Button>
                                     )}
                                 </div>
