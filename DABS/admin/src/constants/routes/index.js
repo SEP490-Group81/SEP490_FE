@@ -39,6 +39,7 @@ import PaymentSuccess from "../../pages/Payment/PaymentSuccess";
 import PaymentCancelled from "../../pages/Payment/PaymentCancelled";
 import { DOCTOR, HOSPITALADMIN, HOSPITALSTAFF, NURSE, SYSTEMADMIN } from "../roles/role";
 import MyHospital from "../../pages/AdminHospital/HospitalDetail/HospitalDetail";
+import PatientAppointmentList from "../../pages/Nurse/PatientAppointmentList";
 
 export const routes = [
   {
@@ -127,6 +128,7 @@ export const routes = [
       { path: "payment-confirm/:id", element: <NursePaymentConfirmation /> },
       { path: "payment-list", element: <NurseUnpaidBookingList /> }, // đã vẽ
       { path: "request-leave", element: <DoctorRequestLeave /> },
+      { path: "patient-appointment-list", element: <PatientAppointmentList/>}
     ],
   },
   {

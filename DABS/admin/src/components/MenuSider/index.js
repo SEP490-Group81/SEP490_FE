@@ -2,16 +2,12 @@ import { Menu } from "antd";
 
 import {
     BankOutlined,
-    MedicineBoxOutlined,
     InboxOutlined,
-    HeatMapOutlined,
-    AndroidOutlined,
     LineChartOutlined,
     ExperimentOutlined,
     DashboardOutlined,
     ReadOutlined,
     UserSwitchOutlined,
-    UsergroupAddOutlined,
     ApartmentOutlined,
     ScheduleOutlined,
     TeamOutlined,
@@ -20,7 +16,6 @@ import {
     UserOutlined,
     ClockCircleOutlined,
     EditOutlined,
-    CheckCircleOutlined,
     UnorderedListOutlined,
     FormOutlined,
 } from "@ant-design/icons";
@@ -164,6 +159,11 @@ function MenuSider() {
             key: "adjust-appointment-schedule",
             label: <Link to="/nurse/adjust-appointment-schedule">Điều chỉnh lịch hẹn</Link>,
             icon: <EditOutlined />,
+        },
+         {
+            key: "patient-appointment-list",
+            label: <Link to="/nurse/patient-appointment-list">Lịch hẹn bệnh nhân</Link>,
+            icon: <CalendarOutlined />,
         },
         {
             key: "payment-list",

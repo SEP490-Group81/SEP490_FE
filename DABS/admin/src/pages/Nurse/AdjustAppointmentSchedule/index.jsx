@@ -37,7 +37,9 @@ import {
 } from "../../../services/appointmentService";
 import { getStepByServiceId } from "../../../services/medicalServiceService";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
-
+import "./style.scss";
+import { DatePicker } from 'antd';
+const { RangePicker } = DatePicker;
 const { Option } = Select;
 const { Title, Text } = Typography;
 
@@ -72,6 +74,9 @@ const AdjustAppointmentSchedule = () => {
 
   const messageState = useSelector((state) => state.message);
   const [messageApi, contextHolder] = message.useMessage();
+
+  const [filterDateFrom, setFilterDateFrom] = useState(currentRange.start);
+  const [filterDateTo, setFilterDateTo] = useState(currentRange.end);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -79,7 +84,9 @@ const AdjustAppointmentSchedule = () => {
       await loadAvailableSchedules(filterDoctorId, filterSpecId);
     };
     fetchSchedules();
-  }, [filterDoctorId, filterSpecId, hospitalId, currentRange]);
+  }, [filterDoctorId, filterSpecId, hospitalId, filterDateFrom, filterDateTo]);
+
+
   useEffect(() => {
     if (messageState) {
       messageApi.open({
@@ -125,22 +132,22 @@ const AdjustAppointmentSchedule = () => {
     const status = extendedProps.status;
 
     let icon = null;
-    let color = "#174378"; // Tông xanh navy mềm, đọc tốt trên nền pastel
-    let statusColor = "#0b2a44"; // Tông xanh đậm cho trạng thái, rõ mà dịu
+    let color = "#174378";
+    let statusColor = "#0b2a44";
 
     switch (status) {
       case APPOINTMENT_STATUS.PENDING:
-        icon = <PauseCircleOutlined style={{ color: "#fbc02d", marginRight: 6 }} />; // vàng tối nhẹ
-        color = "#795548";  // nâu đậm dịu, cân bằng với nền
+        icon = <PauseCircleOutlined style={{ color: "#fbc02d", marginRight: 6 }} />;
+        color = "#795548";
         statusColor = "#5d4037";
         break;
       case APPOINTMENT_STATUS.CONFIRMED:
-        icon = <CheckCircleOutlined style={{ color: "#388e3c", marginRight: 6 }} />; // xanh lá tươi
-        color = "#1b5e20";  // xanh thẫm, dịu nhẹ
+        icon = <CheckCircleOutlined style={{ color: "#388e3c", marginRight: 6 }} />;
+        color = "#1b5e20";
         statusColor = "#2e7d32";
         break;
       case APPOINTMENT_STATUS.COMPLETED:
-        icon = <CalendarOutlined style={{ color: "#1976d2", marginRight: 6 }} />; // xanh dương tươi
+        icon = <CalendarOutlined style={{ color: "#1976d2", marginRight: 6 }} />;
         color = "#0d47a1";  // xanh đậm chuẩn
         statusColor = "#0b3d91";
         break;
@@ -253,6 +260,7 @@ const AdjustAppointmentSchedule = () => {
           dateTo: currentRange.end.format("YYYY-MM-DD"),
         };
         console.log("Fetching appointments with payload:", payload);
+        console.log("selected patient id : " + selectedPatientId);
         const list = await getAppointmentsByUserId(
           selectedPatientId,
           currentRange.start.toISOString(),
@@ -263,12 +271,16 @@ const AdjustAppointmentSchedule = () => {
           const startDT = dayjs(`${workDateStr}T${item.doctorSchedule.startTime}`).toISOString();
           const endDT = dayjs(`${workDateStr}T${item.doctorSchedule.endTime}`).toISOString();
           const patient = patients.find((p) => p.id === item.patientId);
+          const classNames = [];
+          if (item.status === APPOINTMENT_STATUS.CANCELLED) classNames.push("fc-event-cancelled");
+          if (item.status === APPOINTMENT_STATUS.COMPLETED) classNames.push("fc-event-completed");
           return {
             id: `appointment-${item.id}`,
             title: `Hẹn khám`,
             backgroundColor: defaultEventColor.backgroundColor,
             start: startDT,
             end: endDT,
+            classNames,
             extendedProps: {
               type: "appointment",
               patientId: item.patientId,
@@ -316,9 +328,10 @@ const AdjustAppointmentSchedule = () => {
         hospitalId,
         doctorIds: doctorId ? [doctorId] : [],
         specializationId: specId || null,
-        dateFrom: currentRange.start.format("YYYY-MM-DD"),
-        dateTo: currentRange.end.format("YYYY-MM-DD"),
+        dateFrom: filterDateFrom.format("YYYY-MM-DD"),
+        dateTo: filterDateTo.format("YYYY-MM-DD"),
       };
+      console.log("payload adjust : " + JSON.stringify(payload));
       const result = await getHospitalSpecializationSchedule(payload);
       const schedules = (result.schedules || []).filter(item => item.isAvailable);
       setAvailableSchedules(schedules);
@@ -463,7 +476,11 @@ const AdjustAppointmentSchedule = () => {
             initialView="timeGridWeek"
             locale={viLocale}
             editable={false}
-            events={appointments}
+            events={appointments.filter(
+              (a) =>
+                a.extendedProps.status !== APPOINTMENT_STATUS.CANCELLED &&
+                a.extendedProps.status !== APPOINTMENT_STATUS.COMPLETED
+            )}
             eventContent={renderEventContent}
             eventClick={({ event }) => openModal(event)}
             height={600}
@@ -496,13 +513,13 @@ const AdjustAppointmentSchedule = () => {
                   {dayjs(selectedEvent.end).format("HH:mm")}
                 </p>
                 <p><b>Bệnh nhân:</b> {selectedEvent.extendedProps.patientName}</p>
-                <p><b>Bác sĩ hiện tại:</b> {selectedEvent.extendedProps.doctorName || "Không rõ"}</p>
                 <p><b>Chuyên khoa hiện tại:</b> {selectedEvent.extendedProps.specializationName || "Không rõ"}</p>
                 <p><b>Phòng:</b> {selectedEvent.extendedProps.room || "Không rõ"}</p>
                 <p><b>Trạng thái:</b> {getStatusText(selectedEvent.extendedProps.status)}</p>
                 <p><b>Ghi chú:</b> {selectedEvent.extendedProps.note || "Không có"}</p>
 
                 <Row gutter={16} style={{ marginTop: 16 }}>
+
                   <Col span={12}>
                     <label>Bác sĩ (lọc ca khả dụng):</label>
                     <Select
@@ -521,6 +538,19 @@ const AdjustAppointmentSchedule = () => {
                         </Option>
                       ))}
                     </Select>
+                  </Col>
+                  <Col span={12}>
+                    <label>Khoảng ngày:</label>
+                    <RangePicker
+                      value={[filterDateFrom, filterDateTo]}
+                      format="DD/MM/YYYY"
+                      onChange={(dates) => {
+                        setFilterDateFrom(dates?.[0] || null);
+                        setFilterDateTo(dates?.[1] || null);
+                      }}
+                      allowEmpty={[false, false]}
+                      style={{ width: "100%" }}
+                    />
                   </Col>
                   <Col span={12}>
                     <label>Chuyên khoa (lọc ca khả dụng):</label>
