@@ -485,14 +485,34 @@ const ChatPage = () => {
     ];
 
     return (
-        <Content className="chat-page-container">
-            <Row gutter={[24, 24]}>
-                <Col xs={24} md={16} lg={16} className="chat-main-col">
-                    <Card className="chat-card">
-                        <div className="chat-header">
+        <Content className="chat-page-container" style={{ padding: '16px 24px' }}>
+            <Row gutter={[24, 24]} style={{ height: 'calc(100vh - 140px)' }}>
+                {/* ✅ Chat window với chiều rộng ban đầu (16/24) */}
+                <Col xs={24} md={16} lg={16} xl={16} className="chat-main-col" style={{ height: '100%' }}>
+                    <Card 
+                        className="chat-card" 
+                        style={{ 
+                            height: '100%', 
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            padding: 0
+                        }}
+                        bodyStyle={{ 
+                            padding: 0, 
+                            height: '100%', 
+                            display: 'flex', 
+                            flexDirection: 'column' 
+                        }}
+                    >
+                        {/* ✅ Header với chiều cao fixed */}
+                        <div className="chat-header" style={{ 
+                            padding: '16px 20px', 
+                            borderBottom: '1px solid #f0f0f0',
+                            flexShrink: 0
+                        }}>
                             <Avatar icon={<RobotOutlined />} className="bot-avatar" size={42} />
                             <div className="header-info">
-                                <Title level={4} className="bot-name">DABS Assistant</Title>
+                                <Title level={4} className="bot-name" style={{ margin: 0 }}>DABS Assistant</Title>
                                 <div className="bot-status">
                                     <Badge status={sessionStatus.status} />
                                     <span>{sessionStatus.text}</span>
@@ -511,24 +531,41 @@ const ChatPage = () => {
                             </div>
                         </div>
 
-                        <Divider className="chat-divider" />
-
-                        <div className="chat-messages">
+                        {/* ✅ Messages container với scroll tối ưu */}
+                        <div 
+                            className="chat-messages" 
+                            style={{ 
+                                flex: 1,
+                                overflowY: 'auto',
+                                padding: '16px 20px',
+                                minHeight: 0, // Important for flexbox scrolling
+                                maxHeight: 'calc(100vh - 280px)', // Dynamically adjust based on viewport
+                                scrollBehavior: 'smooth'
+                            }}
+                        >
                             {messages.map((message, index) => (
                                 <div
                                     key={message.id || `message_${index}`}
                                     className={`message ${message.type === 'user' ? 'user-message' : 'bot-message'}`}
+                                    style={{ marginBottom: '16px' }}
                                 >
                                     {message.type === 'bot' && (
                                         <Avatar
                                             icon={<RobotOutlined />}
                                             className="message-avatar"
                                             size="default"
+                                            style={{ flexShrink: 0 }}
                                         />
                                     )}
 
-                                    <div className="message-content">
-                                        <div className="message-bubble">
+                                    <div className="message-content" style={{ maxWidth: '80%' }}>
+                                        <div className="message-bubble" style={{
+                                            padding: '12px 16px',
+                                            borderRadius: '12px',
+                                            backgroundColor: message.type === 'user' ? '#1890ff' : '#f6f6f6',
+                                            color: message.type === 'user' ? 'white' : '#333',
+                                            wordBreak: 'break-word'
+                                        }}>
                                             {/* ✅ Preserve line breaks and formatting */}
                                             <div style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
                                                 {message.content}
@@ -563,7 +600,12 @@ const ChatPage = () => {
                                             </div>
                                         )}
 
-                                        <div className="message-time">
+                                        <div className="message-time" style={{
+                                            fontSize: '11px',
+                                            color: '#999',
+                                            marginTop: '4px',
+                                            textAlign: message.type === 'user' ? 'right' : 'left'
+                                        }}>
                                             {formatTime(message.time)}
                                         </div>
                                     </div>
@@ -573,6 +615,7 @@ const ChatPage = () => {
                                             icon={<UserOutlined />}
                                             className="message-avatar"
                                             size="default"
+                                            style={{ flexShrink: 0 }}
                                         />
                                     )}
                                 </div>
@@ -580,14 +623,20 @@ const ChatPage = () => {
 
                             {/* ✅ Loading indicator */}
                             {(isLoading || isInitializing) && (
-                                <div className="message bot-message">
+                                <div className="message bot-message" style={{ marginBottom: '16px' }}>
                                     <Avatar
                                         icon={<RobotOutlined />}
                                         className="message-avatar"
                                         size="default"
+                                        style={{ flexShrink: 0 }}
                                     />
                                     <div className="message-content">
-                                        <div className="message-bubble loading">
+                                        <div className="message-bubble loading" style={{
+                                            padding: '12px 16px',
+                                            borderRadius: '12px',
+                                            backgroundColor: '#f6f6f6',
+                                            color: '#333'
+                                        }}>
                                             <LoadingOutlined /> {isInitializing ? 'Đang kết nối trợ lý AI...' : 'Đang xử lý...'}
                                         </div>
                                     </div>
@@ -597,7 +646,15 @@ const ChatPage = () => {
                             <div ref={messagesEndRef} />
                         </div>
 
-                        <div className="chat-input">
+                        {/* ✅ Input area với chiều cao fixed */}
+                        <div 
+                            className="chat-input" 
+                            style={{ 
+                                padding: '16px 20px', 
+                                borderTop: '1px solid #f0f0f0',
+                                flexShrink: 0
+                            }}
+                        >
                             <Input
                                 placeholder={
                                     isLoading ? "Đang xử lý..." :
@@ -629,8 +686,15 @@ const ChatPage = () => {
                     </Card>
                 </Col>
 
-                <Col xs={24} md={8} lg={8}>
-                    <Card className="info-card">
+                {/* ✅ Sidebar với chiều rộng ban đầu (8/24) */}
+                <Col xs={24} md={8} lg={8} xl={8} style={{ height: '100%' }}>
+                    <Card 
+                        className="info-card" 
+                        style={{ 
+                            height: '100%',
+                            overflowY: 'auto'
+                        }}
+                    >
                         <Title level={4}>Hỏi đáp y tế với AI</Title>
                         <Paragraph>
                             Trợ lý ảo DABS Assistant được hỗ trợ bởi AI có thể giúp bạn trả lời các câu hỏi về dịch vụ y tế,
@@ -658,6 +722,13 @@ const ChatPage = () => {
                                     onClick={() => handleSuggestedQuestion(question.text)}
                                     disabled={isLoading || isInitializing || !sessionId || !accessToken}
                                     loading={isLoading}
+                                    style={{ 
+                                        width: '100%', 
+                                        marginBottom: '8px',
+                                        textAlign: 'left',
+                                        height: 'auto',
+                                        padding: '8px 12px'
+                                    }}
                                 >
                                     {question.text}
                                 </Button>
