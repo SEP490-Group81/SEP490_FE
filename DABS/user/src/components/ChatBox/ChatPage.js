@@ -30,22 +30,24 @@ const { Content } = Layout;
 const ChatPage = () => {
     const [messages, setMessages] = useState([
         {
+            id: `welcome_${Date.now()}`,
             type: 'bot',
             content: 'Xin chào! Tôi là DABS Assistant - Trợ lý đặt khám thông minh được hỗ trợ bởi AI. Tôi có thể giúp bạn đặt lịch khám bệnh, tìm bác sĩ phù hợp và trả lời các câu hỏi về y tế. Bạn cần hỗ trợ gì hôm nay?',
             time: new Date()
         }
     ]);
+    const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [sessionId, setSessionId] = useState(null);
     const [isInitializing, setIsInitializing] = useState(false);
-    const [inputValue, setInputValue] = useState(''); // ✅ Add state for UI updates
+    const [inputValue, setInputValue] = useState('');
 
     // ✅ Use refs for values that don't need to trigger re-renders
     const messagesEndRef = useRef(null);
     const inputRef = useRef(null);
-    const inputValueRef = useRef(''); // ✅ Store input value in ref instead of state
-    const initializationRef = useRef(false); // ✅ Add missing ref
-    const userIdRef = useRef(null); // ✅ Add missing ref
+    const inputValueRef = useRef('');
+    const initializationRef = useRef(false);
+    const userIdRef = useRef(null);
 
     // ✅ Get user and token from Redux store with proper null checking
     const user = useSelector((state) => state.user?.user);
@@ -100,10 +102,15 @@ const ChatPage = () => {
         }
     }, [userId, accessToken, initializeChatSession]);
 
-    // Cuộn xuống tin nhắn mới nhất
+    // ✅ Enhanced scroll behavior with better timing
     useEffect(() => {
         if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            // ✅ Scroll with a slight delay to ensure DOM is updated
+            const scrollTimer = setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, 100);
+            
+            return () => clearTimeout(scrollTimer);
         }
     }, [messages]);
 
@@ -114,7 +121,121 @@ const ChatPage = () => {
         }
     }, []);
 
-    // ✅ Function to start new chat session with useCallback
+    // ✅ New function to process multiple responses with delay (similar to ChatBot)
+    const processMultipleResponses = async (response) => {
+        console.log('📦 Processing multiple responses:', response);
+
+        // ✅ Try both parsing methods
+        let parsedResponse = extractTextFromResponse(response);
+        
+        if (!parsedResponse || parsedResponse.length === 0) {
+            console.log('🔄 Trying mixed content parser...');
+            parsedResponse = extractMixedContentFromResponse(response);
+        }
+        
+        console.log('📋 Final parsed response:', parsedResponse);
+
+        if (parsedResponse && parsedResponse.length > 0) {
+            // ✅ Process each message with a small delay for better UX
+            for (let i = 0; i < parsedResponse.length; i++) {
+                const messageData = parsedResponse[i];
+                console.log(`📨 Processing message ${i + 1}/${parsedResponse.length}:`, messageData);
+                
+                // ✅ Add delay between messages for natural conversation flow
+                if (i > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 500)); // 500ms delay between messages
+                }
+
+                if (messageData.type === 'choice') {
+                    // ✅ Add choice message with buttons
+                    const choiceMessageObj = {
+                        id: `choice_${Date.now()}_${i}`,
+                        type: 'bot',
+                        content: messageData.text,
+                        choices: messageData.choices,
+                        time: new Date()
+                    };
+                    console.log('🎯 Adding choice message:', choiceMessageObj);
+                    
+                    setMessages(prev => [...prev, choiceMessageObj]);
+                    
+                } else if (messageData.type === 'text' && messageData.content.trim()) {
+                    // ✅ Add regular text message (skip empty ones)
+                    const textMessageObj = {
+                        id: `text_${Date.now()}_${i}`,
+                        type: 'bot',
+                        content: messageData.content,
+                        time: new Date()
+                    };
+                    console.log('📝 Adding text message:', textMessageObj);
+                    
+                    setMessages(prev => [...prev, textMessageObj]);
+                }
+
+                // ✅ Scroll to bottom after each message
+                setTimeout(() => {
+                    if (messagesEndRef.current) {
+                        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }, 100);
+            }
+        } else {
+            // ✅ Fallback - try to extract plain text and split into multiple messages if needed
+            console.log('⚠️ Parsing failed, trying plain text extraction...');
+            const plainText = response
+                .map(event => event.content?.parts?.map(part => part.text).join(' '))
+                .filter(Boolean)
+                .join(' ');
+                
+            if (plainText.trim()) {
+                // ✅ Split long text into multiple messages if it contains multiple paragraphs
+                const textParts = plainText.split('\n\n').filter(part => part.trim());
+                
+                if (textParts.length > 1) {
+                    console.log(`📄 Splitting response into ${textParts.length} parts`);
+                    
+                    for (let i = 0; i < textParts.length; i++) {
+                        if (i > 0) {
+                            await new Promise(resolve => setTimeout(resolve, 800)); // Longer delay for split messages
+                        }
+                        
+                        const partMessageObj = {
+                            id: `split_${Date.now()}_${i}`,
+                            type: 'bot',
+                            content: textParts[i].trim(),
+                            time: new Date()
+                        };
+                        
+                        setMessages(prev => [...prev, partMessageObj]);
+                        
+                        setTimeout(() => {
+                            if (messagesEndRef.current) {
+                                messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                            }
+                        }, 100);
+                    }
+                } else {
+                    const fallbackMessageObj = {
+                        id: `fallback_${Date.now()}`,
+                        type: 'bot',
+                        content: plainText,
+                        time: new Date()
+                    };
+                    setMessages(prev => [...prev, fallbackMessageObj]);
+                }
+            } else {
+                const errorMessageObj = {
+                    id: `error_${Date.now()}`,
+                    type: 'bot',
+                    content: 'Tôi đã nhận được tin nhắn của bạn nhưng không thể tạo phản hồi phù hợp.',
+                    time: new Date()
+                };
+                setMessages(prev => [...prev, errorMessageObj]);
+            }
+        }
+    };
+
+    // ✅ Function to start new chat session with multiple welcome messages
     const startNewSession = useCallback(async () => {
         try {
             setIsLoading(true);
@@ -129,7 +250,7 @@ const ChatPage = () => {
             initializationRef.current = false;
             userIdRef.current = null;
             inputValueRef.current = '';
-            setInputValue(''); // ✅ Clear state as well
+            setInputValue('');
             if (inputRef.current) {
                 inputRef.current.value = '';
             }
@@ -147,21 +268,34 @@ const ChatPage = () => {
             setSessionId(finalSessionId);
             userIdRef.current = userId;
 
-            // Reset messages with welcome message
-            setMessages([{
-                type: 'bot',
-                content: `Xin chào ${user?.fullName || user?.name || 'bạn'}! Tôi là DABS Assistant - Trợ lý đặt khám thông minh được hỗ trợ bởi AI.
-
-🏥 Tôi có thể giúp bạn:
+            // ✅ Reset messages with multiple welcome messages for better onboarding
+            const welcomeMessages = [
+                {
+                    id: `welcome_1_${Date.now()}`,
+                    type: 'bot',
+                    content: `Xin chào ${user?.fullName || user?.name || 'bạn'}! Tôi là DABS Assistant - Trợ lý đặt khám thông minh được hỗ trợ bởi AI.`,
+                    time: new Date()
+                },
+                {
+                    id: `welcome_2_${Date.now()}`,
+                    type: 'bot',
+                    content: `🏥 Tôi có thể giúp bạn:
 • Đặt lịch khám bệnh theo chuyên khoa
 • Tìm bác sĩ phù hợp với triệu chứng
 • Tư vấn quy trình khám chữa bệnh
 • Hướng dẫn chuẩn bị trước khi khám
-• Giải đáp thắc mắc về y tế
+• Giải đáp thắc mắc về y tế`,
+                    time: new Date()
+                },
+                {
+                    id: `welcome_3_${Date.now()}`,
+                    type: 'bot',
+                    content: 'Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay! Bạn có thể bắt đầu bằng cách mô tả triệu chứng hoặc yêu cầu cụ thể.',
+                    time: new Date()
+                }
+            ];
 
-Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
-                time: new Date()
-            }]);
+            setMessages(welcomeMessages);
 
             antMessage.success('Đã tạo phiên chat mới với trợ lý AI!');
             console.log('✅ New session started:', finalSessionId);
@@ -178,7 +312,8 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
     const handleInputChange = useCallback((e) => {
         const value = e.target.value;
         inputValueRef.current = value;
-        setInputValue(value); // ✅ Update state for UI reactivity
+        setInputValue(value);
+        setInput(value); // ✅ Also update input state for sendMessage
     }, []);
 
     const handleKeyPress = useCallback((e) => {
@@ -187,181 +322,97 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
         }
     }, [inputValue, isLoading]);
 
-    // ✅ Send message function with useCallback optimization
-    const sendMessage = useCallback(async () => {
-        const inputValue = inputValueRef.current.trim();
-
-        if (!inputValue || isLoading || !sessionId || !accessToken) {
+    // ✅ Enhanced sendMessage function to handle multiple responses
+    const sendMessage = async () => {
+        if (!input.trim() || isLoading || !sessionId || !accessToken) {
             if (!accessToken) {
                 antMessage.error('Vui lòng đăng nhập để sử dụng trợ lý AI');
             }
             return;
         }
 
-        // Clear input immediately
+        const userMessage = input.trim();
+        setInput('');
+        setInputValue(''); // ✅ Clear both states
         inputValueRef.current = '';
-        setInputValue(''); // ✅ Clear state as well
         if (inputRef.current) {
             inputRef.current.value = '';
         }
-
         setIsLoading(true);
 
         // ✅ Add user message immediately
         const userMessageObj = {
+            id: `user_${Date.now()}`,
             type: 'user',
-            content: inputValue,
+            content: userMessage,
             time: new Date()
         };
 
         setMessages(prev => [...prev, userMessageObj]);
 
         try {
-            console.log('🔄 Sending message to chatbot service...');
-            console.log('📤 Message:', inputValue);
-            console.log('🆔 Session ID:', sessionId);
+            console.log('🔄 Sending message to ADK agent...');
 
-            // ✅ Send message to API using chatbotService
-            const response = await sendChatMessage(sessionId, userId, inputValue, accessToken);
-
+            const response = await sendChatMessage(sessionId, userId, userMessage);
             console.log('✅ Raw response from API:', response);
 
-            // ✅ Process response and extract bot messages
-            let botMessages = [];
-            if (Array.isArray(response) && response.length > 0) {
-                response.forEach((messageData) => {
-                    if (messageData.type === 'choice' && messageData.choices && messageData.choices.length > 0) {
-                        botMessages.push({
-                            type: 'bot',
-                            content: messageData.text,
-                            choices: messageData.choices,
-                            time: new Date()
-                        });
-                    } else if (messageData.type === 'text' && messageData.content.trim()) {
-                        botMessages.push({
-                            type: 'bot',
-                            content: messageData.content,
-                            time: new Date()
-                        });
-                    }
-                });
-            } else {
-                // ✅ Fallback for choice responses
-                const plainText = response
-                    .map(event => event.content?.parts?.map(part => part.text).join(' '))
-                    .filter(Boolean)
-                    .join(' ');
-
-                if (plainText) {
-                    botMessages.push({
-                        type: 'bot',
-                        content: plainText,
-                        time: new Date()
-                    });
-                }
-            }
-
-            // ✅ Add bot messages to state
-            if (botMessages.length > 0) {
-                setMessages(prev => [...prev, ...botMessages]);
-            } else {
-                // Fallback message
-                setMessages(prev => [...prev, {
-                    type: 'bot',
-                    content: 'Tôi đã nhận được tin nhắn của bạn. Bạn có câu hỏi gì khác không?',
-                    time: new Date()
-                }]);
-            }
+            // ✅ Process multiple messages from response
+            await processMultipleResponses(response);
 
         } catch (error) {
             console.error('❌ Error sending message:', error);
 
-            setMessages(prev => [...prev, {
+            const errorMessageObj = {
+                id: `error_${Date.now()}`,
                 type: 'bot',
                 content: 'Xin lỗi, có lỗi xảy ra khi kết nối với trợ lý AI. Vui lòng thử lại sau.',
                 time: new Date()
-            }]);
+            };
 
+            setMessages(prev => [...prev, errorMessageObj]);
             antMessage.error('Lỗi kết nối API. Vui lòng thử lại.');
         } finally {
             setIsLoading(false);
         }
-    }, [isLoading, sessionId, accessToken, userId]);
+    };
 
-    // ✅ Handle choice button click with useCallback
+    // ✅ Enhanced handleChoiceClick to handle multiple responses
     const handleChoiceClick = useCallback(async (choice) => {
-        if (!choice || !sessionId || !accessToken || isLoading) {
-            if (!accessToken) {
-                antMessage.error('Vui lòng đăng nhập để sử dụng trợ lý AI');
-            }
-            return;
-        }
+        console.log('🎯 Choice clicked:', choice);
 
-        setIsLoading(true);
-
-        // ✅ Add user message for the choice
-        const userMessageObj = {
+        const userChoiceObj = {
+            id: `user_choice_${Date.now()}`,
             type: 'user',
             content: choice.label,
             time: new Date()
         };
+        setMessages(prev => [...prev, userChoiceObj]);
 
+        setIsLoading(true);
         try {
-            // ✅ Send choice to API
-            const response = await sendChatMessage(sessionId, userId, choice.value || choice.label, accessToken);
-
-            // ✅ Process response messages
-            let botMessages = [];
-            if (Array.isArray(response) && response.length > 0) {
-                response.forEach((messageData) => {
-                    if (messageData.type === 'choice' && messageData.choices && messageData.choices.length > 0) {
-                        botMessages.push({
-                            type: 'bot',
-                            content: messageData.text,
-                            choices: messageData.choices,
-                            time: new Date()
-                        });
-                    } else if (messageData.type === 'text' && messageData.content?.trim()) {
-                        botMessages.push({
-                            type: 'bot',
-                            content: messageData.content,
-                            time: new Date()
-                        });
-                    }
-                });
-            }
-
-            // ✅ Batch update messages
-            setMessages(prev => [
-                ...prev,
-                userMessageObj,
-                ...(botMessages.length > 0 ? botMessages : [{
-                    type: 'bot',
-                    content: 'Cảm ơn bạn đã chọn. Bạn có cần hỗ trợ gì khác không?',
-                    time: new Date()
-                }])
-            ]);
-
+            console.log('🔄 Sending choice value to API:', choice.value);
+            
+            const response = await sendChatMessage(sessionId, userId, choice.value);
+            console.log('✅ Choice response from API:', response);
+            
+            // ✅ Use the same multiple response processing
+            await processMultipleResponses(response);
+            
         } catch (error) {
-            console.error('❌ Error handling choice click:', error);
-
-            setMessages(prev => [
-                ...prev,
-                userMessageObj,
-                {
-                    type: 'bot',
-                    content: 'Xin lỗi, có lỗi xảy ra khi xử lý lựa chọn của bạn. Vui lòng thử lại.',
-                    time: new Date()
-                }
-            ]);
-
-            antMessage.error('Lỗi khi xử lý lựa chọn.');
+            console.error('❌ Error sending choice:', error);
+            const errorMessageObj = {
+                id: `choice_error_${Date.now()}`,
+                type: 'bot',
+                content: 'Xin lỗi, có lỗi xảy ra khi xử lý lựa chọn của bạn.',
+                time: new Date()
+            };
+            setMessages(prev => [...prev, errorMessageObj]);
         } finally {
             setIsLoading(false);
         }
     }, [sessionId, accessToken, userId, isLoading]);
 
-    // ✅ Handle suggested question click with useCallback
+    // ✅ Enhanced handleSuggestedQuestion to handle multiple responses
     const handleSuggestedQuestion = useCallback(async (questionText) => {
         if (!sessionId || !accessToken) {
             antMessage.error('Vui lòng đăng nhập để sử dụng trợ lý AI');
@@ -369,7 +420,8 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
         }
 
         inputValueRef.current = '';
-        setInputValue(''); // ✅ Clear state as well
+        setInputValue('');
+        setInput(''); // ✅ Clear all input states
         if (inputRef.current) {
             inputRef.current.value = '';
         }
@@ -377,6 +429,7 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
 
         // Thêm tin nhắn của người dùng
         const userMessageObj = {
+            id: `user_suggest_${Date.now()}`,
             type: 'user',
             content: questionText,
             time: new Date()
@@ -387,43 +440,16 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
         try {
             // Send to API
             const response = await sendChatMessage(sessionId, userId, questionText, accessToken);
-
-            // ✅ Process response similar to sendMessage
-            let botMessages = [];
-            if (Array.isArray(response) && response.length > 0) {
-                response.forEach((messageData) => {
-                    if (messageData.type === 'choice' && messageData.choices && messageData.choices.length > 0) {
-                        botMessages.push({
-                            type: 'bot',
-                            content: messageData.text,
-                            choices: messageData.choices,
-                            time: new Date()
-                        });
-                    } else if (messageData.type === 'text' && messageData.content?.trim()) {
-                        botMessages.push({
-                            type: 'bot',
-                            content: messageData.content,
-                            time: new Date()
-                        });
-                    }
-                });
-            }
-
-            // Add bot messages
-            if (botMessages.length > 0) {
-                setMessages(prev => [...prev, ...botMessages]);
-            } else {
-                setMessages(prev => [...prev, {
-                    type: 'bot',
-                    content: 'Tôi đã nhận được câu hỏi của bạn nhưng không thể tạo phản hồi phù hợp.',
-                    time: new Date()
-                }]);
-            }
+            console.log('✅ Suggested question response:', response);
+            
+            // ✅ Use the same multiple response processing
+            await processMultipleResponses(response);
 
         } catch (error) {
             console.error('❌ Error sending suggested question:', error);
 
             setMessages(prev => [...prev, {
+                id: `suggest_error_${Date.now()}`,
                 type: 'bot',
                 content: 'Xin lỗi, có lỗi xảy ra khi xử lý câu hỏi của bạn. Vui lòng thử lại.',
                 time: new Date()
@@ -490,7 +516,7 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
                         <div className="chat-messages">
                             {messages.map((message, index) => (
                                 <div
-                                    key={index}
+                                    key={message.id || `message_${index}`}
                                     className={`message ${message.type === 'user' ? 'user-message' : 'bot-message'}`}
                                 >
                                     {message.type === 'bot' && (
@@ -503,7 +529,10 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
 
                                     <div className="message-content">
                                         <div className="message-bubble">
-                                            {message.content}
+                                            {/* ✅ Preserve line breaks and formatting */}
+                                            <div style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}>
+                                                {message.content}
+                                            </div>
                                         </div>
 
                                         {/* ✅ Render choice buttons if available */}
@@ -512,7 +541,7 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
                                                 <Space direction="vertical" style={{ width: '100%' }} size="small">
                                                     {message.choices.map((choice, choiceIndex) => (
                                                         <Button
-                                                            key={`choice-${index}-${choiceIndex}`}
+                                                            key={`${message.id || index}_choice_${choiceIndex}`}
                                                             type="default"
                                                             onClick={() => handleChoiceClick(choice)}
                                                             style={{

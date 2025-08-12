@@ -383,16 +383,7 @@ const handleChoiceClick = async (choice) => {
             // Reset messages with welcome message
             setMessages([{
                 type: 'bot',
-                content: `Xin chào! Tôi là DABS Assistant - Trợ lý đặt khám thông minh được hỗ trợ bởi AI.
-
-🏥 Tôi có thể giúp bạn:
-• Đặt lịch khám bệnh theo chuyên khoa
-• Tìm bác sĩ phù hợp với triệu chứng
-• Tư vấn quy trình khám chữa bệnh
-• Hướng dẫn chuẩn bị trước khi khám
-• Giải đáp thắc mắc về y tế
-
-Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
+                content: `Xin chào! Tôi là DABS Assistant `,
                 time: new Date()
             }]);
 
