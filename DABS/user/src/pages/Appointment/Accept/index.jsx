@@ -230,7 +230,7 @@ function AppointmentReviewPage() {
         
         dispatch(setMessage({ 
             type: 'error', 
-            content: errorMessage
+            content: "Bạn đã đặt lịch này rồi hoặc ca làm việc của bác sĩ không khả dụng!"
         }));
     }
 };

@@ -148,7 +148,7 @@ const AdjustAppointmentSchedule = () => {
         break;
       case APPOINTMENT_STATUS.COMPLETED:
         icon = <CalendarOutlined style={{ color: "#1976d2", marginRight: 6 }} />;
-        color = "#0d47a1";  // xanh đậm chuẩn
+        color = "#0d47a1";  
         statusColor = "#0b3d91";
         break;
       case APPOINTMENT_STATUS.CANCELLED:
@@ -201,6 +201,7 @@ const AdjustAppointmentSchedule = () => {
       return;
     }
     const serviceId = selectedEvent.extendedProps.serviceId;
+    console.log("service id is : " + serviceId);
     if (!serviceId) {
       setServiceSteps([]);
       return;
@@ -208,6 +209,7 @@ const AdjustAppointmentSchedule = () => {
     (async () => {
       try {
         const steps = await getStepByServiceId(serviceId);
+        console.log("stepss is ", JSON.stringify(steps));
         setServiceSteps(steps || []);
       } catch {
         setServiceSteps([]);
@@ -266,6 +268,7 @@ const AdjustAppointmentSchedule = () => {
           currentRange.start.toISOString(),
           currentRange.end.toISOString()
         );
+        console.log("list appoint is : " + JSON.stringify(list));
         const events = list.map((item) => {
           const workDateStr = item.doctorSchedule.workDate.split("T")[0];
           const startDT = dayjs(`${workDateStr}T${item.doctorSchedule.startTime}`).toISOString();
@@ -294,7 +297,7 @@ const AdjustAppointmentSchedule = () => {
               serviceId: item.service?.id,
               status: item.status,
               room: item.doctorSchedule.room?.name,
-              serviceName: item.service?.name,
+              serviceName: item.serviceName,
               appointmentId: item.id,
             },
           };
@@ -512,6 +515,7 @@ const AdjustAppointmentSchedule = () => {
                   <b>Thời gian:</b> {dayjs(selectedEvent.start).format("DD/MM/YYYY HH:mm")} -{" "}
                   {dayjs(selectedEvent.end).format("HH:mm")}
                 </p>
+                <p><b>Dịch vụ:</b> {selectedEvent.extendedProps.serviceName}</p>
                 <p><b>Bệnh nhân:</b> {selectedEvent.extendedProps.patientName}</p>
                 <p><b>Chuyên khoa hiện tại:</b> {selectedEvent.extendedProps.specializationName || "Không rõ"}</p>
                 <p><b>Phòng:</b> {selectedEvent.extendedProps.room || "Không rõ"}</p>
