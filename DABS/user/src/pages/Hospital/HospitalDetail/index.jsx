@@ -30,7 +30,7 @@ function HospitalDetail() {
 
     useEffect(() => {
         (async () => {
-            const result = await getHospitalWorkDate(105);
+            const result = await getHospitalWorkDate(hospitalId);
             setWorkDate(result);
         })();
     }, [hospitalId]);

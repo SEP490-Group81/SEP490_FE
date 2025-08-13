@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import viVN from 'antd/locale/vi_VN';
 import { LeftOutlined, EnvironmentOutlined, CalendarOutlined, SolutionOutlined, CheckCircleFilled, RightOutlined } from '@ant-design/icons';
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import "./styles.scss";
 import { getHospitalSpecializationSchedule } from "../../../services/scheduleService";
 
@@ -33,12 +34,15 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
     const [schedules, setSchedules] = useState([]);
     const [hasMorning, setHasMorning] = useState(false);
     const [hasAfternoon, setHasAfternoon] = useState(false);
+    const [searchParams] = useSearchParams();
+    const hospitalId = searchParams.get("hospitalId");
     useEffect(() => {
         const fetchSchedule = async () => {
             try {
+                console.log("defualt value is " + JSON.stringify(defaultValue));
                 const hospitalIdInt = defaultValue?.hospitalId ? parseInt(defaultValue.hospitalId, 10) : undefined;
                 const data = await getHospitalSpecializationSchedule({
-                    hospitalId: hospitalIdInt,
+                    hospitalId: hospitalId,
                     doctorIds: defaultValue?.doctor?.id ? [defaultValue.doctor.id] : [],
                     specializationId: defaultValue?.specialty?.id,
                     dateFrom: fromDate,

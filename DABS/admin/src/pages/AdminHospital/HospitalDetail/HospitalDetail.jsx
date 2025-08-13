@@ -83,7 +83,7 @@ const MyHospital = () => {
             // ✅ Extract data from API response structure
             const hospitalData = response.result || response;
             setHospital(hospitalData);
-
+            console.log("serivce in hospital : " + JSON.stringify(hospital));
             dispatch(setMessage({
                 type: 'success',
                 content: 'Hospital information loaded successfully',
