@@ -592,15 +592,8 @@ const AddUser = ({ visible, onCancel, onSuccess }) => {
             };
 
             console.log('📤 Payload gửi đến API:', userData);
-            console.log('🏥 Selected Hospital ID:', values.hospitalId);
-            console.log('🏭 Selected Department ID:', values.departmentId);
-            console.log('🌏 Selected Province:', selectedProvinceObj?.name || selectedProvinceObj?.province);
-            console.log('🏘️ Selected District:', selectedDistrictObj?.name || selectedDistrictObj?.district);
-            console.log('🏠 Selected Ward:', selectedWardObj?.name || selectedWardObj?.ward);
-            console.log('👤 Role Type được chọn:', selectedRole?.roleType);
 
             const response = await createUser(userData);
-
             console.log('📥 Phản hồi từ API:', response);
 
             // ✅ Enhanced success validation
@@ -620,10 +613,15 @@ const AddUser = ({ visible, onCancel, onSuccess }) => {
                 setDistricts([]);
                 setWards([]);
 
-                // ✅ Call parent success callback
+                // ✅ Call parent success callback với flag để reload user list
                 if (onSuccess && typeof onSuccess === 'function') {
-                    onSuccess(response);
+                    onSuccess(response, { shouldReload: true }); // Pass reload flag
                 }
+
+                // ✅ Auto close modal sau 1.5 giây để user thấy success message
+                setTimeout(() => {
+                    handleCancel();
+                }, 1500);
             } else {
                 throw new Error('Phản hồi không hợp lệ từ server');
             }
