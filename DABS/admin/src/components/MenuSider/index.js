@@ -61,7 +61,7 @@ function MenuSider() {
             key: 'hospital-detail',
             icon: <BankOutlined />,
             label: <Link to="/admin-hospital/hospital-detail">Bệnh viện của tôi</Link>,
-            
+
         },
         {
             key: "department-room",
@@ -90,7 +90,7 @@ function MenuSider() {
         // },
         {
             key: "department-management",
-            label: <Link to="/admin-hospital/departments">Department Management</Link>,
+            label: <Link to="/admin-hospital/departments">Quản lý phòng ban</Link>,
             icon: <BankOutlined />
         },
 
@@ -160,7 +160,7 @@ function MenuSider() {
             label: <Link to="/nurse/adjust-appointment-schedule">Điều chỉnh lịch hẹn</Link>,
             icon: <EditOutlined />,
         },
-         {
+        {
             key: "patient-appointment-list",
             label: <Link to="/nurse/patient-appointment-list">Lịch hẹn bệnh nhân</Link>,
             icon: <CalendarOutlined />,
