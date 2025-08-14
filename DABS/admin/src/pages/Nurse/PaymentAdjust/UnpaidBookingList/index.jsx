@@ -177,11 +177,11 @@ const filteredBookings = useMemo(() => {
 
               <Tabs activeKey={activeTab} onChange={setActiveTab}>
                 <TabPane key="all" tab={<span>Tất cả <Badge count={statusCounts.all} /></span>} />
-                <TabPane key="1" tab={<span>Pending <Badge count={statusCounts[1]} style={{ backgroundColor: 'gold' }} /></span>} />
-                <TabPane key="2" tab={<span>Completed <Badge count={statusCounts[2]} style={{ backgroundColor: 'green' }} /></span>} />
-                <TabPane key="3" tab={<span>Failed <Badge count={statusCounts[3]} style={{ backgroundColor: 'red' }} /></span>} />
-                <TabPane key="4" tab={<span>Refunded <Badge count={statusCounts[4]} style={{ backgroundColor: 'purple' }} /></span>} />
-                <TabPane key="5" tab={<span>Cancel <Badge count={statusCounts[5]} style={{ backgroundColor: 'grey' }} /></span>} />
+                <TabPane key="1" tab={<span>Đang chờ <Badge count={statusCounts[1]} style={{ backgroundColor: 'gold' }} /></span>} />
+                <TabPane key="2" tab={<span>Hoàn thành <Badge count={statusCounts[2]} style={{ backgroundColor: 'green' }} /></span>} />
+                <TabPane key="3" tab={<span>Thất bại <Badge count={statusCounts[3]} style={{ backgroundColor: 'red' }} /></span>} />
+                <TabPane key="4" tab={<span>Hoàn tiền <Badge count={statusCounts[4]} style={{ backgroundColor: 'purple' }} /></span>} />
+                <TabPane key="5" tab={<span>Đã huỷ <Badge count={statusCounts[5]} style={{ backgroundColor: 'grey' }} /></span>} />
               </Tabs>
 
               <Table

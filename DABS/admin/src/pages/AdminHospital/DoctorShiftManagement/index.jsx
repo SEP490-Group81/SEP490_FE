@@ -839,7 +839,7 @@ const AdminDoctorShiftManagement = () => {
                       <Checkbox.Group
                         options={weekdayOptions.map(opt => ({
                           ...opt,
-                          disabled: closedDays.includes(opt.value),  // disable nếu thứ bị đóng
+                          disabled: closedDays.includes(opt.value),  
                         }))}
                       />
                     </Form.Item>
