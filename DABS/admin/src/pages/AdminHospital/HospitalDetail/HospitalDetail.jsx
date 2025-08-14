@@ -10,7 +10,6 @@ import {
     Statistic,
     Descriptions,
     Spin,
-    message,
     Typography,
     Space,
     Rate,
@@ -46,7 +45,7 @@ import {
     createHospitalWorkingDates,
     updateHospitalWorkingDates
 } from '../../../services/hospitalService';
-import { setMessage } from '../../../redux/slices/messageSlice';
+import { setMessage, clearMessage } from '../../../redux/slices/messageSlice'; // ✅ Import clearMessage
 import EditHospital from './EditHospitalDetail';
 import './HospitalDetail.scss';
 
@@ -66,6 +65,11 @@ const MyHospital = () => {
     // Get hospital ID from user data
     const hospitalId = user?.hospitals?.[0]?.id;
 
+    // ✅ Clear messages on component mount
+    useEffect(() => {
+        dispatch(clearMessage());
+    }, [dispatch]);
+
     useEffect(() => {
         if (hospitalId) {
             fetchHospitalDetail();
@@ -77,23 +81,35 @@ const MyHospital = () => {
         setLoading(true);
         try {
             console.log('🏥 Fetching hospital detail for ID:', hospitalId);
+
+            // ✅ Loading message
+            dispatch(setMessage({
+                type: 'loading',
+                content: 'Đang tải thông tin bệnh viện...',
+                duration: 2
+            }));
+
             const response = await getHospitalById(hospitalId);
             console.log('✅ Hospital detail response:', response);
 
             // ✅ Extract data from API response structure
             const hospitalData = response.result || response;
             setHospital(hospitalData);
-            console.log("serivce in hospital : " + JSON.stringify(hospital));
+            console.log("service in hospital : " + JSON.stringify(hospital));
+
+            // ✅ Success message
             dispatch(setMessage({
                 type: 'success',
-                content: 'Hospital information loaded successfully',
+                content: 'Đã tải thành công thông tin bệnh viện',
                 duration: 3
             }));
         } catch (error) {
             console.error('❌ Error fetching hospital detail:', error);
+
+            // ✅ Error message
             dispatch(setMessage({
                 type: 'error',
-                content: 'Failed to load hospital information',
+                content: 'Không thể tải thông tin bệnh viện. Vui lòng thử lại.',
                 duration: 4
             }));
         } finally {
@@ -104,25 +120,52 @@ const MyHospital = () => {
     const fetchWorkingDates = async () => {
         try {
             console.log('📅 Fetching working dates for hospital ID:', hospitalId);
+
+            // ✅ Loading message for working dates
+            dispatch(setMessage({
+                type: 'info',
+                content: 'Đang tải lịch làm việc...',
+                duration: 1
+            }));
+
             const response = await getHospitalWorkingDates(hospitalId);
             console.log('✅ Working dates response:', response);
 
             const workingDatesData = response.workingDates || response || [];
             setWorkingDates(workingDatesData);
+
+            // ✅ Success message for working dates
+            if (workingDatesData.length > 0) {
+                dispatch(setMessage({
+                    type: 'success',
+                    content: `Đã tải ${workingDatesData.length} ngày làm việc`,
+                    duration: 2
+                }));
+            }
         } catch (error) {
             console.error('❌ Error fetching working dates:', error);
             setWorkingDates([]);
+
+            // ✅ Warning message for working dates
+            dispatch(setMessage({
+                type: 'warning',
+                content: 'Không thể tải lịch làm việc. Sử dụng lịch mặc định.',
+                duration: 3
+            }));
         }
     };
 
     const handleEditSuccess = (updatedHospital) => {
         setHospital(updatedHospital);
         setEditModalVisible(false);
+
+        // ✅ Success message for edit
         dispatch(setMessage({
             type: 'success',
-            content: 'Hospital information updated successfully',
+            content: 'Thông tin bệnh viện đã được cập nhật thành công',
             duration: 4
         }));
+
         // Refresh data
         fetchHospitalDetail();
     };
@@ -140,6 +183,9 @@ const MyHospital = () => {
 
     // Handle opening working schedule modal
     const handleOpenWorkingScheduleModal = () => {
+        // ✅ Modal opening message
+
+
         const dataToEdit = workingDates.length > 0 ? workingDates : getDefaultWorkingDates();
 
         // Convert time strings to dayjs objects for TimePicker
@@ -156,11 +202,27 @@ const MyHospital = () => {
 
         workingScheduleForm.setFieldsValue(formData);
         setWorkingScheduleModalVisible(true);
+
+        // ✅ Form loaded message
+        setTimeout(() => {
+            dispatch(setMessage({
+                type: 'success',
+                content: 'Form lịch làm việc đã được tải thành công',
+                duration: 2
+            }));
+        }, 500);
     };
 
     // Handle working schedule form submission
     const handleWorkingScheduleSubmit = async () => {
         try {
+            // ✅ Submission start message
+            dispatch(setMessage({
+                type: 'loading',
+                content: 'Đang xử lý lưu lịch làm việc...',
+                duration: 0
+            }));
+
             const values = await workingScheduleForm.validateFields();
 
             const workingDatesPayload = getDefaultWorkingDates().map(day => {
@@ -182,16 +244,20 @@ const MyHospital = () => {
 
             if (isUpdate) {
                 await updateHospitalWorkingDates(hospitalId, { workingDates: workingDatesPayload });
+
+                // ✅ Update success message
                 dispatch(setMessage({
                     type: 'success',
-                    content: 'Lịch làm việc đã được cập nhật thành công',
+                    content: 'Lịch làm việc đã được cập nhật thành công!',
                     duration: 4
                 }));
             } else {
                 await createHospitalWorkingDates(hospitalId, { workingDates: workingDatesPayload });
+
+                // ✅ Create success message
                 dispatch(setMessage({
                     type: 'success',
-                    content: 'Lịch làm việc đã được tạo thành công',
+                    content: 'Lịch làm việc mới đã được tạo thành công!',
                     duration: 4
                 }));
             }
@@ -199,14 +265,49 @@ const MyHospital = () => {
             setWorkingScheduleModalVisible(false);
             fetchWorkingDates(); // Refresh working dates data
 
+            // ✅ Additional success details
+            setTimeout(() => {
+                dispatch(setMessage({
+                    type: 'info',
+                    content: `Đã ${isUpdate ? 'cập nhật' : 'tạo'} lịch làm việc cho 7 ngày trong tuần`,
+                    duration: 3
+                }));
+            }, 2000);
+
         } catch (error) {
             console.error('❌ Error saving working schedule:', error);
+
+            // ✅ Clear loading and show error
+            dispatch(clearMessage());
             dispatch(setMessage({
                 type: 'error',
-                content: 'Có lỗi xảy ra khi lưu lịch làm việc',
-                duration: 4
+                content: 'Có lỗi xảy ra khi lưu lịch làm việc. Vui lòng thử lại.',
+                duration: 5
             }));
+
+            // ✅ Additional error details if available
+            if (error.response?.data?.message) {
+                setTimeout(() => {
+                    dispatch(setMessage({
+                        type: 'warning',
+                        content: `Chi tiết lỗi: ${error.response.data.message}`,
+                        duration: 4
+                    }));
+                }, 2000);
+            }
         }
+    };
+
+    // ✅ Handle modal cancel
+    const handleWorkingScheduleCancel = () => {
+        setWorkingScheduleModalVisible(false);
+
+        // ✅ Cancel message
+        dispatch(setMessage({
+            type: 'info',
+            content: 'Đã hủy chỉnh sửa lịch làm việc',
+            duration: 2
+        }));
     };
 
     const getHospitalType = (type) => {
@@ -370,7 +471,11 @@ const MyHospital = () => {
                     <Button
                         type="primary"
                         icon={<EditOutlined />}
-                        onClick={() => setEditModalVisible(true)}
+                        onClick={() => {
+                            // ✅ Edit button click message
+
+                            setEditModalVisible(true);
+                        }}
                     >
                         Chỉnh sửa Bệnh viện
                     </Button>
@@ -665,7 +770,15 @@ const MyHospital = () => {
             {/* Edit Modal */}
             <EditHospital
                 visible={editModalVisible}
-                onCancel={() => setEditModalVisible(false)}
+                onCancel={() => {
+                    // ✅ Cancel edit message
+                    dispatch(setMessage({
+                        type: 'info',
+                        content: 'Đã hủy chỉnh sửa thông tin bệnh viện',
+                        duration: 2
+                    }));
+                    setEditModalVisible(false);
+                }}
                 onSuccess={handleEditSuccess}
                 hospital={hospital}
             />
@@ -679,7 +792,7 @@ const MyHospital = () => {
                     </Space>
                 }
                 open={workingScheduleModalVisible}
-                onCancel={() => setWorkingScheduleModalVisible(false)}
+                onCancel={handleWorkingScheduleCancel} // ✅ Use custom cancel handler
                 onOk={handleWorkingScheduleSubmit}
                 width={600}
                 okText="Lưu"
@@ -688,6 +801,21 @@ const MyHospital = () => {
                 <Form
                     form={workingScheduleForm}
                     layout="vertical"
+                    onFieldsChange={(changedFields) => {
+                        // ✅ Field change message
+                        if (changedFields.length > 0) {
+                            const fieldName = changedFields[0].name[0];
+                            if (fieldName.includes('isClosed')) {
+                                const dayNumber = fieldName.split('_')[1];
+                                const dayName = getDefaultWorkingDates().find(d => d.dayOfWeek == dayNumber)?.dayOfWeekName;
+                                dispatch(setMessage({
+                                    type: 'info',
+                                    content: `Đã thay đổi trạng thái ${dayName}`,
+                                    duration: 1
+                                }));
+                            }
+                        }
+                    }}
                 >
                     {getDefaultWorkingDates().map((day) => (
                         <Card
@@ -719,6 +847,16 @@ const MyHospital = () => {
                                             disabled={
                                                 workingScheduleForm.getFieldValue(`day_${day.dayOfWeek}_isClosed`)
                                             }
+                                            onChange={(time) => {
+                                                // ✅ Time change message
+                                                if (time) {
+                                                    dispatch(setMessage({
+                                                        type: 'success',
+                                                        content: `${day.dayOfWeekName} - Giờ mở: ${time.format('HH:mm')}`,
+                                                        duration: 1
+                                                    }));
+                                                }
+                                            }}
                                         />
                                     </Form.Item>
                                 </Col>
@@ -735,6 +873,16 @@ const MyHospital = () => {
                                             disabled={
                                                 workingScheduleForm.getFieldValue(`day_${day.dayOfWeek}_isClosed`)
                                             }
+                                            onChange={(time) => {
+                                                // ✅ Time change message
+                                                if (time) {
+                                                    dispatch(setMessage({
+                                                        type: 'success',
+                                                        content: `${day.dayOfWeekName} - Giờ đóng: ${time.format('HH:mm')}`,
+                                                        duration: 1
+                                                    }));
+                                                }
+                                            }}
                                         />
                                     </Form.Item>
                                 </Col>
