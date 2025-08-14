@@ -83,7 +83,7 @@ function AppointmentSchedule({ onNext, defaultValue, infomationValue, onBack }) 
             dayjs(s.startTime, "HH:mm:ss").isBefore(dayjs("12:00:00", "HH:mm:ss"))
         );
         const afternoon = schedulesOfDay.some(s =>
-            dayjs(s.startTime, "HH:mm:ss").isAfter(dayjs("12:29:00", "HH:mm:ss"))
+            dayjs(s.startTime, "HH:mm:ss").isSameOrAfter(dayjs("12:00:00", "HH:mm:ss"))
         );
 
         setHasMorning(morning);

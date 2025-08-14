@@ -20,7 +20,7 @@ export default function UserBookingFlow() {
   const serviceId = searchParams.get("serviceId");
   const serviceName = searchParams.get("serviceName");
   const hospitalName = searchParams.get("hospitalName");
- 
+
   const location = useLocation();
   useEffect(() => {
     console.log("Location: ", location);
@@ -69,7 +69,8 @@ export default function UserBookingFlow() {
         state: {
           hospitalName,
           stepData: {
-            ...updatedStepData
+            ...updatedStepData,
+            backToStepIndex: steps.length - 1,
           }
         }
       });
@@ -107,8 +108,8 @@ export default function UserBookingFlow() {
   };
 
   return (
-    <div style={{ marginTop: 50, paddingTop: 50, background: '#eaf8ff', minHeight:700 }}>
-      <div style={{ display: "flex", justifyContent: "center", alignItems:"center" }}>
+    <div style={{ marginTop: 50, paddingTop: 50, background: '#eaf8ff', minHeight: 700 }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
         <Steps current={currentStepIndex} style={{ width: "70%" }}>
           {steps.map((s, i) => (
             <Step key={i} title={s.steps.name} />

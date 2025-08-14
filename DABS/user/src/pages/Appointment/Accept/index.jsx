@@ -121,7 +121,7 @@ function AppointmentReviewPage() {
     const handleBackToPayment = () => {
         navigate("/appointment/booking" +
             `?hospitalId=${stepData?.hospitalId}&serviceId=${stepData?.serviceId}&serviceName=${stepData?.serviceName}&hospitalName=${stepData?.hospitalName}`,
-            { state: { stepData: stepData, backToStepIndex: 3 } }
+            { state: { stepData: stepData, backToStepIndex: stepData.backToStepIndex ?? 0 } }
         );
     };
 

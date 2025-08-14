@@ -146,17 +146,18 @@ const ManageRoom = () => {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-       const { name, roomCode, specialty, department, description } = values;
+      const { name, roomCode, specialty, department, description } = values;
 
       const payload = {
-        specializationId: specialty,
         departmentId: department,
         hospitalId: hospitalId,
         roomName: name,
         roomCode: roomCode,
         description: description || "",
       };
-
+      if (specialty) {
+        payload.specializationId = specialty;  
+      }
       if (editing) {
         payload.roomId = editing.id;
         console.log("handle submit in edit room : " + JSON.stringify(payload));
