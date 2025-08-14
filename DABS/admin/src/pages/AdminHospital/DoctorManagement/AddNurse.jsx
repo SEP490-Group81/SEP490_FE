@@ -159,6 +159,33 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
         }
     };
 
+    // ✅ Enhanced error message mapping function
+    const getErrorMessage = (title) => {
+        const errorMessages = {
+            'PHONE_ALREADY_EXISTS': '❌ Số điện thoại đã được sử dụng. Vui lòng nhập số điện thoại khác và thử lại.',
+            'EMAIL_ALREADY_EXISTS': '❌ Email đã được sử dụng. Vui lòng nhập email khác và thử lại.',
+            'CCCD_ALREADY_EXISTS': '❌ Số CCCD đã được sử dụng. Vui lòng nhập số CCCD khác và thử lại.',
+            'INVALID_DEPARTMENT': '❌ Khoa không hợp lệ. Vui lòng chọn khoa khác và thử lại.',
+            'INVALID_HOSPITAL': '❌ Bệnh viện không hợp lệ. Vui lòng thử đăng nhập lại.',
+            'VALIDATION_ERROR': '❌ Thông tin không hợp lệ. Vui lòng kiểm tra lại các trường và thử lại.',
+            'PERMISSION_DENIED': '❌ Bạn không có quyền thực hiện thao tác này. Vui lòng liên hệ quản trị viên.',
+            'DEPARTMENT_FULL': '❌ Khoa đã đủ người. Vui lòng chọn khoa khác hoặc liên hệ quản trị viên.',
+            'WEAK_PASSWORD': '❌ Mật khẩu quá yếu. Vui lòng sử dụng mật khẩu mạnh hơn (ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt).',
+            'INVALID_DATE': '❌ Ngày sinh không hợp lệ. Vui lòng chọn ngày sinh phù hợp (trên 18 tuổi).',
+            'INVALID_PHONE_FORMAT': '❌ Định dạng số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam hợp lệ (10-11 chữ số).',
+            'INVALID_EMAIL_FORMAT': '❌ Định dạng email không hợp lệ. Vui lòng nhập email đúng định dạng.',
+            'INVALID_CCCD_FORMAT': '❌ Định dạng số CCCD không hợp lệ. Vui lòng nhập số CCCD/CMND hợp lệ (9-12 chữ số).',
+            'SERVER_ERROR': '❌ Lỗi máy chủ. Vui lòng thử lại sau ít phút.',
+            'DATABASE_ERROR': '❌ Lỗi cơ sở dữ liệu. Vui lòng thử lại sau.',
+            'NETWORK_ERROR': '❌ Lỗi kết nối mạng. Vui lòng kiểm tra kết nối internet và thử lại.',
+            'Network Error': '❌ Lỗi kết nối. Vui lòng kiểm tra internet và thử lại.',
+            'Request failed': '❌ Lỗi kết nối. Vui lòng kiểm tra internet và thử lại.',
+            'Request timeout': '❌ Kết nối quá chậm. Vui lòng thử lại sau.'
+        };
+
+        return errorMessages[title] || `❌ ${title}. Vui lòng kiểm tra lại thông tin và thử lại.`;
+    };
+
     const handleSubmit = async () => {
         setLoading(true);
 
@@ -192,10 +219,10 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                 
                 dispatch(setMessage({
                     type: 'error',
-                    content: errorMsg
+                    content: `❌ ${errorMsg}. Vui lòng hoàn thành thông tin và thử lại.`
                 }));
                 
-                throw new Error(errorMsg);
+                return;
             }
 
             // ✅ Prepare payload exactly matching API schema
@@ -223,10 +250,18 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
 
             // ✅ Final validation
             if (nursePayload.hospitalId === 0) {
-                throw new Error('Hospital ID không hợp lệ');
+                dispatch(setMessage({
+                    type: 'error',
+                    content: '❌ Hospital ID không hợp lệ. Vui lòng thử đăng nhập lại.'
+                }));
+                return;
             }
             if (nursePayload.departmentId === 0) {
-                throw new Error('Department ID không hợp lệ');
+                dispatch(setMessage({
+                    type: 'error',
+                    content: '❌ Vui lòng chọn khoa làm việc.'
+                }));
+                return;
             }
 
             // Call API
@@ -237,11 +272,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
             const isSuccess = (
                 response === true ||
                 response?.success === true ||
-                response?.success !== false ||
-                (response?.status >= 200 && response?.status < 300) ||
-                response?.message?.toLowerCase().includes('success') ||
-                response?.result ||
-                (!response?.error && response !== false && response !== null)
+                (response?.status >= 200 && response?.status < 300)
             );
 
             if (isSuccess) {
@@ -260,38 +291,48 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                 }, 1500);
 
             } else {
-                const errorMessage = response?.message || response?.error || 'Không thể tạo điều dưỡng';
-                console.error('❌ Tạo thất bại:', errorMessage);
+                // ✅ Enhanced error handling with title from response
+                const errorTitle = response?.title || response?.message || 'UNKNOWN_ERROR';
+                const errorStatus = response?.status || 400;
+                
+                console.error('❌ Tạo thất bại:', { title: errorTitle, status: errorStatus, response });
 
                 dispatch(setMessage({
                     type: 'error',
-                    content: `❌ ${errorMessage}`
+                    content: getErrorMessage(errorTitle)
                 }));
 
-                throw new Error(errorMessage);
+                return;
             }
 
         } catch (error) {
             console.error('❌ Lỗi khi tạo điều dưỡng:', error);
 
-            let errorMessage = 'Không thể tạo điều dưỡng. Vui lòng thử lại.';
+            let errorTitle = 'UNKNOWN_ERROR';
 
+            // ✅ Enhanced error handling - prioritize title from response
             if (error.response?.data) {
-                if (typeof error.response.data === 'string') {
-                    errorMessage = error.response.data;
-                } else if (error.response.data.message) {
-                    errorMessage = error.response.data.message;
-                } else if (error.response.data.errors) {
-                    const validationErrors = Object.values(error.response.data.errors).flat();
-                    errorMessage = validationErrors.join(', ');
+                const responseData = error.response.data;
+                
+                // ✅ First, check for title (priority)
+                if (responseData.title) {
+                    errorTitle = responseData.title;
+                } else if (responseData.message) {
+                    errorTitle = responseData.message;
+                } else if (typeof responseData === 'string') {
+                    errorTitle = responseData;
+                } else if (responseData.errors) {
+                    const validationErrors = Object.values(responseData.errors).flat();
+                    errorTitle = 'VALIDATION_ERROR';
+                    console.log('❌ Lỗi validation:', validationErrors.join(', '));
                 }
             } else if (error.message) {
-                errorMessage = error.message;
+                errorTitle = error.message;
             }
 
             dispatch(setMessage({
                 type: 'error',
-                content: `❌ ${errorMessage}`
+                content: getErrorMessage(errorTitle)
             }));
 
         } finally {
@@ -320,6 +361,12 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
             if (fieldsToValidate.length > 0) {
                 const values = await form.validateFields(fieldsToValidate);
                 setFormData(prev => ({ ...prev, ...values }));
+                
+                // ✅ Clear any previous error messages when validation passes
+                dispatch(setMessage({
+                    type: 'success',
+                    content: `✅ Bước ${currentStep + 1} hoàn thành. Tiến tới bước tiếp theo.`
+                }));
             }
 
             setCurrentStep(currentStep + 1);
@@ -329,8 +376,8 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                 const missingFields = errorFields.map(field => field.name[0]).join(', ');
                 
                 dispatch(setMessage({
-                    type: 'warning',
-                    content: `Vui lòng hoàn thành: ${missingFields}`
+                    type: 'error',
+                    content: `❌ Vui lòng hoàn thành các trường: ${missingFields}. Kiểm tra lại và thử lại.`
                 }));
             }
         }
@@ -340,6 +387,12 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
         const currentValues = form.getFieldsValue();
         setFormData(prev => ({ ...prev, ...currentValues }));
         setCurrentStep(currentStep - 1);
+        
+        // ✅ Clear any error messages when going back
+        dispatch(setMessage({
+            type: 'info',
+            content: `⬅️ Đã quay lại bước ${currentStep}.`
+        }));
     };
 
     // ✅ Updated steps - removed work info step
@@ -384,7 +437,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
 
                 <Alert
                     message={`Bệnh viện: ${user?.hospitals?.[0]?.name || 'Đang tải...'}`}
-                    description={`Đang tạo tài khoản điều dưỡng cho bệnh viện ID: ${hospitalId}. Vai trò: Điều dưỡng (roleType: 1).`}
+                    description={`Đang tạo tài khoản điều dưỡng cho bệnh viện ID: ${hospitalId}. Vai trò: Điều dưỡng (roleType: 7).`}
                     type="info"
                     showIcon
                     style={{ marginBottom: 16 }}
@@ -499,11 +552,10 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                             label="Ngày sinh"
                             rules={[{ required: true, message: 'Vui lòng chọn ngày sinh' }]}
                         >
-                            {/* ✅ Enhanced DatePicker with Vietnamese locale */}
                             <DatePicker
                                 style={{ width: '100%' }}
                                 placeholder="Chọn ngày sinh"
-                                format="DD/MM/YYYY"  // ✅ Vietnamese date format
+                                format="DD/MM/YYYY"
                                 locale={locale.DatePicker}
                                 disabledDate={(current) => {
                                     return current && current > dayjs().subtract(18, 'year');
@@ -557,7 +609,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
 
                 <Alert
                     message="Thông tin địa chỉ và phân công khoa"
-                    description={`Bệnh viện ID: ${hospitalId}. Vai trò: Điều dưỡng (roleType: 1 - cố định). Khoa có sẵn: ${departments.length}`}
+                    description={`Bệnh viện ID: ${hospitalId}. Vai trò: Điều dưỡng (roleType: 7 - cố định). Khoa có sẵn: ${departments.length}`}
                     type="success"
                     showIcon
                     style={{ marginBottom: 16 }}
@@ -801,7 +853,6 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
         <>
             {contextHolder}
             
-            {/* ✅ ConfigProvider with Vietnamese locale */}
             <ConfigProvider locale={locale}>
                 <Modal
                     title={
