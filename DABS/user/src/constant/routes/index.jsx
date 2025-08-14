@@ -91,9 +91,11 @@ export const routes = [
       },
       {
         path: "booking-history",
-
-        element: <BookingHistoryPage /> // đã vẽ report 3
-
+        element: (
+          <ProtectedRoute allowedRoles={['Patient']}>
+            <BookingHistoryPage />
+          </ProtectedRoute>
+        )
       },
       {
         path: "account",
