@@ -9,25 +9,29 @@ import {
     Button,
     Spin,
     DatePicker,
-    Upload,
     Alert,
     Steps,
-    message
+    message,
+    ConfigProvider
 } from 'antd';
 import {
     UserAddOutlined,
     SaveOutlined,
     UserOutlined,
-    MedicineBoxOutlined,
-    CheckCircleOutlined,
-    UploadOutlined
+    EnvironmentOutlined,
+    CheckCircleOutlined
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearMessage, setMessage } from '../../../redux/slices/messageSlice';
-import { createUser } from '../../../services/userService'; // ✅ Sử dụng service createUser
+import { createUser } from '../../../services/userService';
 import { getDepartmentsByHospitalId } from '../../../services/departmentService';
 import { getProvinces } from '../../../services/provinceService';
 import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import locale from 'antd/locale/vi_VN';
+
+// ✅ Set dayjs locale to Vietnamese
+dayjs.locale('vi');
 
 const { Option } = Select;
 const { Step } = Steps;
@@ -49,38 +53,26 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
     const messageState = useSelector((state) => state.message);
     const [messageApi, contextHolder] = message.useMessage();
 
-    // ✅ Lấy hospital ID từ user state
-    const hospitalId = user?.hospitals?.[0]?.id;
+    const hospitalId = user?.hospitals?.[0]?.id || 0;
 
-    // Theo dõi thay đổi message state
+    // ✅ Handle Redux messages
     useEffect(() => {
-        if (messageState && messageState.content) {
-            if (messageState.type === 'success') {
-                messageApi.success({
-                    content: messageState.content,
-                    duration: messageState.duration || 4,
-                });
-            } else if (messageState.type === 'error') {
-                messageApi.error({
-                    content: messageState.content,
-                    duration: messageState.duration || 8,
-                });
-            }
-
-            setTimeout(() => {
-                dispatch(clearMessage());
-            }, 100);
+        if (messageState) {
+            messageApi.open({
+                type: messageState.type,
+                content: messageState.content,
+            });
+            dispatch(clearMessage());
         }
     }, [messageState, messageApi, dispatch]);
 
-    // Lấy dữ liệu khi modal mở
     useEffect(() => {
         if (visible && hospitalId) {
             fetchInitialData();
+            resetForm();
         }
     }, [visible, hospitalId]);
 
-    // Cập nhật phường/xã khi tỉnh thay đổi
     useEffect(() => {
         if (selectedProvince && provinces.length > 0) {
             const provinceObj = provinces.find((p) => p.province === selectedProvince);
@@ -91,6 +83,33 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
         }
     }, [selectedProvince, provinces]);
 
+    const resetForm = () => {
+        form.resetFields();
+        setCurrentStep(0);
+        setFormData({});
+        setSelectedProvince(null);
+        setWards([]);
+
+        // ✅ Set default values based on API schema
+        form.setFieldsValue({
+            roleType: 7, // Fixed role type for nurse
+            hospitalId: hospitalId,
+            departmentId: 0,
+            fullname: "",
+            phoneNumber: "",
+            email: "",
+            password: "",
+            avatarUrl: "",
+            dob: null,
+            gender: "male", // Default to male
+            job: "Điều dưỡng", // ✅ Fixed job title
+            cccd: "",
+            province: "",
+            ward: "",
+            streetAddress: ""
+        });
+    };
+
     const fetchInitialData = async () => {
         try {
             setLoadingDepartments(true);
@@ -98,7 +117,11 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
 
             console.log('🔄 Đang tải dữ liệu ban đầu cho bệnh viện ID:', hospitalId);
 
-            // Tải departments và provinces song song
+            dispatch(setMessage({
+                type: 'info',
+                content: 'Đang tải dữ liệu khoa và địa danh...'
+            }));
+
             const [departmentsData, provincesData] = await Promise.all([
                 getDepartmentsByHospitalId(hospitalId),
                 getProvinces()
@@ -110,11 +133,10 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
             setDepartments(departmentsData || []);
             setProvinces(provincesData.data || []);
 
-            // ✅ Đặt giá trị mặc định cho điều dưỡng
-            form.setFieldsValue({
-                job: 'Điều dưỡng', // ✅ Chức danh mặc định
-                // ✅ roleType được hard-code là 7 (vai trò điều dưỡng)
-            });
+            dispatch(setMessage({
+                type: 'success',
+                content: `Đã tải ${departmentsData?.length || 0} khoa và ${provincesData.data?.length || 0} tỉnh thành`
+            }));
 
         } catch (error) {
             console.error('❌ Lỗi khi tải dữ liệu ban đầu:', error);
@@ -133,6 +155,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
             const newProvince = changedValues.province || null;
             setSelectedProvince(newProvince);
             form.setFieldsValue({ ward: undefined });
+            console.log('🔄 Tỉnh thành đã thay đổi thành:', newProvince);
         }
     };
 
@@ -147,60 +170,70 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
 
             console.log('📝 Giá trị form:', allValues);
 
-            // ✅ Kiểm tra trường bắt buộc
+            dispatch(setMessage({
+                type: 'loading',
+                content: 'Đang xử lý thông tin điều dưỡng...'
+            }));
+
+            // ✅ Validation based on API schema
             const requiredFields = [
                 'fullname', 'phoneNumber', 'email', 'password', 
-                'dob', 'gender', 'job', 'cccd', 
+                'dob', 'gender', 'cccd', 
                 'province', 'ward', 'streetAddress', 'departmentId'
             ];
 
-            const missingFields = requiredFields.filter(field => !allValues[field]);
+            const missingFields = requiredFields.filter(field => {
+                const value = allValues[field];
+                return value === undefined || value === null || value === '';
+            });
 
             if (missingFields.length > 0) {
                 const errorMsg = `Thiếu trường bắt buộc: ${missingFields.join(', ')}`;
-                messageApi.error({
-                    content: errorMsg,
-                    duration: 6,
-                });
+                
+                dispatch(setMessage({
+                    type: 'error',
+                    content: errorMsg
+                }));
+                
                 throw new Error(errorMsg);
             }
 
-            // ✅ Chuẩn bị payload điều dưỡng sử dụng format createUser
+            // ✅ Prepare payload exactly matching API schema
             const nursePayload = {
-                hospitalId: parseInt(hospitalId), // ✅ Từ user state
-                departmentId: parseInt(allValues.departmentId), // ✅ Từ lựa chọn form
-                roleType: 7, // ✅ Hard-code cho vai trò điều dưỡng
-                fullname: allValues.fullname?.trim() || "",
-                phoneNumber: allValues.phoneNumber?.trim() || "",
-                email: allValues.email?.trim() || "",
-                password: allValues.password?.trim() || "",
-                avatarUrl: allValues.avatarUrl?.trim() || "",
-                dob: allValues.dob ? (typeof allValues.dob === 'string' ? allValues.dob : allValues.dob.format('YYYY-MM-DD')) : null,
-                gender: allValues.gender === 'male', // ✅ Chuyển thành boolean
-                job: allValues.job?.trim() || "Điều dưỡng",
-                cccd: allValues.cccd?.trim() || "",
-                province: allValues.province?.trim() || "",
-                ward: allValues.ward?.trim() || "",
-                streetAddress: allValues.streetAddress?.trim() || ""
+                hospitalId: parseInt(hospitalId) || 0,
+                departmentId: parseInt(allValues.departmentId) || 0,
+                roleType: 7, // ✅ Fixed role type for nurse
+                fullname: (allValues.fullname || "").trim(),
+                phoneNumber: (allValues.phoneNumber || "").trim(),
+                email: (allValues.email || "").trim(),
+                password: (allValues.password || "").trim(),
+                avatarUrl: (allValues.avatarUrl || "").trim(),
+                dob: allValues.dob ? 
+                    (typeof allValues.dob === 'string' ? allValues.dob : allValues.dob.format('YYYY-MM-DD')) 
+                    : "2025-08-14", // Default date if not provided
+                gender: allValues.gender === 'male', // Convert to boolean
+                job: "Điều dưỡng", // ✅ Fixed job title
+                cccd: (allValues.cccd || "").trim(),
+                province: (allValues.province || "").trim(),
+                ward: (allValues.ward || "").trim(),
+                streetAddress: (allValues.streetAddress || "").trim()
             };
 
             console.log('🏥 Payload điều dưỡng cuối cùng:', JSON.stringify(nursePayload, null, 2));
 
-            // ✅ Hiển thị thông báo đang tải
-            messageApi.loading({
-                content: 'Đang tạo tài khoản điều dưỡng...',
-                duration: 0,
-                key: 'creating'
-            });
+            // ✅ Final validation
+            if (nursePayload.hospitalId === 0) {
+                throw new Error('Hospital ID không hợp lệ');
+            }
+            if (nursePayload.departmentId === 0) {
+                throw new Error('Department ID không hợp lệ');
+            }
 
-            // ✅ Gọi API createUser
+            // Call API
             const response = await createUser(nursePayload);
             console.log('📥 Phản hồi createUser:', response);
 
-            // ✅ Đóng thông báo đang tải
-            messageApi.destroy('creating');
-
-            // ✅ Kiểm tra thành công
+            // Check success
             const isSuccess = (
                 response === true ||
                 response?.success === true ||
@@ -214,23 +247,13 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
             if (isSuccess) {
                 console.log('✅ Tạo điều dưỡng thành công');
 
-                messageApi.success({
-                    content: '🎉 Tạo điều dưỡng thành công!',
-                    duration: 4,
-                });
-
                 dispatch(setMessage({
                     type: 'success',
-                    content: '🎉 Tài khoản điều dưỡng đã được tạo thành công!',
-                    duration: 4
+                    content: '🎉 Tạo điều dưỡng thành công!'
                 }));
 
                 // Reset form
-                form.resetFields();
-                setCurrentStep(0);
-                setFormData({});
-                setSelectedProvince(null);
-                setWards([]);
+                resetForm();
 
                 setTimeout(() => {
                     onSuccess();
@@ -240,10 +263,10 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                 const errorMessage = response?.message || response?.error || 'Không thể tạo điều dưỡng';
                 console.error('❌ Tạo thất bại:', errorMessage);
 
-                messageApi.error({
-                    content: `❌ ${errorMessage}`,
-                    duration: 8,
-                });
+                dispatch(setMessage({
+                    type: 'error',
+                    content: `❌ ${errorMessage}`
+                }));
 
                 throw new Error(errorMessage);
             }
@@ -266,10 +289,10 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                 errorMessage = error.message;
             }
 
-            messageApi.error({
-                content: `❌ ${errorMessage}`,
-                duration: 8,
-            });
+            dispatch(setMessage({
+                type: 'error',
+                content: `❌ ${errorMessage}`
+            }));
 
         } finally {
             setLoading(false);
@@ -284,11 +307,11 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                 case 0:
                     fieldsToValidate = [
                         'fullname', 'phoneNumber', 'email', 'password', 'confirmPassword',
-                        'gender', 'dob', 'cccd', 'province', 'ward', 'streetAddress'
+                        'gender', 'dob', 'cccd'
                     ];
                     break;
                 case 1:
-                    fieldsToValidate = ['job', 'departmentId', 'shift', 'experience'];
+                    fieldsToValidate = ['departmentId', 'province', 'ward', 'streetAddress'];
                     break;
                 default:
                     break;
@@ -304,10 +327,11 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
             const errorFields = error.errorFields || [];
             if (errorFields.length > 0) {
                 const missingFields = errorFields.map(field => field.name[0]).join(', ');
-                messageApi.error({
-                    content: `Vui lòng hoàn thành: ${missingFields}`,
-                    duration: 6,
-                });
+                
+                dispatch(setMessage({
+                    type: 'warning',
+                    content: `Vui lòng hoàn thành: ${missingFields}`
+                }));
             }
         }
     };
@@ -318,16 +342,17 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
         setCurrentStep(currentStep - 1);
     };
 
+    // ✅ Updated steps - removed work info step
     const steps = [
         {
-            title: 'Thông tin cơ bản',
-            description: 'Thông tin cá nhân',
+            title: 'Thông tin cá nhân',
+            description: 'Thông tin cơ bản',
             icon: <UserOutlined />
         },
         {
-            title: 'Thông tin nghề nghiệp',
-            description: 'Chi tiết công việc',
-            icon: <MedicineBoxOutlined />
+            title: 'Địa chỉ & Khoa',
+            description: 'Địa chỉ và phân công',
+            icon: <EnvironmentOutlined />
         },
         {
             title: 'Xem lại',
@@ -336,7 +361,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
         }
     ];
 
-    const renderBasicInfoStep = () => {
+    const renderPersonalInfoStep = () => {
         return (
             <div style={{
                 marginBottom: 32,
@@ -346,7 +371,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                 border: '1px solid #d6e4ff'
             }}>
                 <h3 style={{
-                    color: '#52c41a',
+                    color: '#1890ff',
                     marginBottom: 20,
                     fontSize: '16px',
                     fontWeight: 600,
@@ -354,12 +379,12 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     alignItems: 'center'
                 }}>
                     <UserOutlined style={{ marginRight: 8 }} />
-                    Thông tin cơ bản
+                    Thông tin cá nhân
                 </h3>
 
                 <Alert
                     message={`Bệnh viện: ${user?.hospitals?.[0]?.name || 'Đang tải...'}`}
-                    description={`Đang tạo tài khoản điều dưỡng cho bệnh viện ID: ${hospitalId}.`}
+                    description={`Đang tạo tài khoản điều dưỡng cho bệnh viện ID: ${hospitalId}. Vai trò: Điều dưỡng (roleType: 1).`}
                     type="info"
                     showIcon
                     style={{ marginBottom: 16 }}
@@ -459,6 +484,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                             name="gender"
                             label="Giới tính"
                             rules={[{ required: true, message: 'Vui lòng chọn giới tính' }]}
+                            initialValue="male"
                         >
                             <Select placeholder="Chọn giới tính">
                                 <Option value="male">👨 Nam</Option>
@@ -473,11 +499,15 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                             label="Ngày sinh"
                             rules={[{ required: true, message: 'Vui lòng chọn ngày sinh' }]}
                         >
+                            {/* ✅ Enhanced DatePicker with Vietnamese locale */}
                             <DatePicker
                                 style={{ width: '100%' }}
-                                placeholder="Chọn ngày"
-                                format="DD/MM/YYYY"
-                                disabledDate={(current) => current && current > dayjs().subtract(18, 'year')}
+                                placeholder="Chọn ngày sinh"
+                                format="DD/MM/YYYY"  // ✅ Vietnamese date format
+                                locale={locale.DatePicker}
+                                disabledDate={(current) => {
+                                    return current && current > dayjs().subtract(18, 'year');
+                                }}
                             />
                         </Form.Item>
                     </Col>
@@ -496,8 +526,108 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                     </Col>
                 </Row>
 
-                <Row gutter={16}>
+                {/* ✅ Hidden job field with fixed value */}
+                <Form.Item name="job" hidden initialValue="Điều dưỡng">
+                    <Input />
+                </Form.Item>
+            </div>
+        );
+    };
+
+    const renderAddressAndDepartmentStep = () => {
+        return (
+            <div style={{
+                marginBottom: 32,
+                padding: '20px',
+                background: '#f6ffed',
+                borderRadius: '8px',
+                border: '1px solid #b7eb8f'
+            }}>
+                <h3 style={{
+                    color: '#52c41a',
+                    marginBottom: 20,
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center'
+                }}>
+                    <EnvironmentOutlined style={{ marginRight: 8 }} />
+                    Địa chỉ & Phân công khoa
+                </h3>
+
+                <Alert
+                    message="Thông tin địa chỉ và phân công khoa"
+                    description={`Bệnh viện ID: ${hospitalId}. Vai trò: Điều dưỡng (roleType: 1 - cố định). Khoa có sẵn: ${departments.length}`}
+                    type="success"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                />
+
+                {/* ✅ Fixed Role and Hospital Info - Display only */}
+                <Row gutter={16} style={{ marginBottom: 16 }}>
                     <Col xs={24} md={8}>
+                        <Form.Item
+                            name="roleType"
+                            label="Vai trò"
+                            initialValue={7}
+                        >
+                            <Select disabled>
+                                <Option value={7}>🩺 Điều dưỡng (roleType: 7)</Option>
+                            </Select>
+                        </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={8}>
+                        <Form.Item
+                            name="hospitalId"
+                            label="ID Bệnh viện"
+                            initialValue={hospitalId}
+                        >
+                            <Input disabled />
+                        </Form.Item>
+                    </Col>
+
+                    <Col xs={24} md={8}>
+                        <Form.Item
+                            label="Chức danh"
+                            initialValue="Điều dưỡng"
+                        >
+                            <Input disabled value="Điều dưỡng" />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                {/* Department Selection */}
+                <Row gutter={16} style={{ marginBottom: 16 }}>
+                    <Col xs={24} md={24}>
+                        <Form.Item
+                            name="departmentId"
+                            label="Khoa"
+                            rules={[{ required: true, message: 'Vui lòng chọn khoa' }]}
+                        >
+                            <Select 
+                                placeholder="Chọn khoa làm việc" 
+                                showSearch
+                                loading={loadingDepartments}
+                                filterOption={(input, option) =>
+                                    (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
+                                }
+                            >
+                                {departments.map(dept => (
+                                    <Option key={dept.id} value={dept.id}>
+                                        🏥 {dept.name} (ID: {dept.id})
+                                    </Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                {/* Address Information */}
+                <h4 style={{ color: '#722ed1', marginBottom: 16 }}>📍 Thông tin địa chỉ</h4>
+                
+                <Row gutter={16}>
+                    <Col xs={24} md={12}>
                         <Form.Item
                             name="province"
                             label="Tỉnh/Thành phố"
@@ -519,7 +649,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                         </Form.Item>
                     </Col>
 
-                    <Col xs={24} md={8}>
+                    <Col xs={24} md={12}>
                         <Form.Item
                             name="ward"
                             label="Quận/Huyện"
@@ -540,126 +670,28 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                             />
                         </Form.Item>
                     </Col>
+                </Row>
 
-                    <Col xs={24} md={8}>
+                <Row gutter={16}>
+                    <Col xs={24}>
                         <Form.Item
                             name="streetAddress"
                             label="Địa chỉ cụ thể"
                             rules={[{ required: true, message: 'Vui lòng nhập địa chỉ cụ thể' }]}
                         >
-                            <Input placeholder="123 Đường ABC" />
-                        </Form.Item>
-                    </Col>
-                </Row>
-            </div>
-        );
-    };
-
-    const renderProfessionalStep = () => {
-        return (
-            <div style={{
-                marginBottom: 32,
-                padding: '20px',
-                background: '#f6ffed',
-                borderRadius: '8px',
-                border: '1px solid #b7eb8f'
-            }}>
-                <h3 style={{
-                    color: '#52c41a',
-                    marginBottom: 20,
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center'
-                }}>
-                    <MedicineBoxOutlined style={{ marginRight: 8 }} />
-                    Thông tin nghề nghiệp
-                </h3>
-
-                <Alert
-                    message="Phân công vai trò điều dưỡng"
-                    description={`Bệnh viện ID: ${hospitalId}. Khoa có sẵn: ${departments.length}`}
-                    type="success"
-                    showIcon
-                    style={{ marginBottom: 16 }}
-                />
-
-                <Row gutter={16}>
-                    <Col xs={24} md={12}>
-                        <Form.Item
-                            name="job"
-                            label="Chức danh"
-                            initialValue="Điều dưỡng"
-                            rules={[{ required: true, message: 'Vui lòng nhập chức danh' }]}
-                        >
-                            <Select placeholder="Chọn chức danh">
-                                <Option value="Điều dưỡng">👩‍⚕️ Điều dưỡng</Option>
-                                <Option value="Điều dưỡng trưởng">👩‍⚕️ Điều dưỡng trưởng</Option>
-                                <Option value="Điều dưỡng chuyên khoa">👩‍⚕️ Điều dưỡng chuyên khoa</Option>
-                                <Option value="Điều dưỡng ca">👩‍⚕️ Điều dưỡng ca</Option>
-                            </Select>
-                        </Form.Item>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                        <Form.Item
-                            name="departmentId"
-                            label="Khoa"
-                            rules={[{ required: true, message: 'Vui lòng chọn khoa' }]}
-                        >
-                            <Select 
-                                placeholder="Chọn khoa" 
-                                showSearch
-                                loading={loadingDepartments}
-                                filterOption={(input, option) =>
-                                    (option?.children ?? "").toLowerCase().includes(input.toLowerCase())
-                                }
-                            >
-                                {departments.map(dept => (
-                                    <Option key={dept.id} value={dept.id}>
-                                        🏥 {dept.name} (ID: {dept.id})
-                                    </Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                </Row>
-
-                <Row gutter={16}>
-                    <Col xs={24} md={12}>
-                        <Form.Item
-                            name="shift"
-                            label="Ca làm việc"
-                        >
-                            <Select placeholder="Chọn ca làm việc">
-                                <Option value="Ca ngày (7AM-7PM)">🌅 Ca ngày (7AM-7PM)</Option>
-                                <Option value="Ca đêm (7PM-7AM)">🌙 Ca đêm (7PM-7AM)</Option>
-                                <Option value="Luân phiên">🔄 Luân phiên</Option>
-                            </Select>
-                        </Form.Item>
-                    </Col>
-
-                    <Col xs={24} md={12}>
-                        <Form.Item
-                            name="experience"
-                            label="Năm kinh nghiệm"
-                        >
-                            <Select placeholder="Chọn số năm kinh nghiệm">
-                                <Option value="0-1 năm">🌱 0-1 năm</Option>
-                                <Option value="2-5 năm">🌿 2-5 năm</Option>
-                                <Option value="5-10 năm">🌳 5-10 năm</Option>
-                                <Option value="Trên 10 năm">🌲 Trên 10 năm</Option>
-                            </Select>
+                            <Input placeholder="123 Đường ABC, Phường XYZ" />
                         </Form.Item>
                     </Col>
                 </Row>
 
                 <div style={{ marginTop: 16, padding: 12, background: '#f0f0f0', borderRadius: 6, fontSize: '12px' }}>
-                    <strong>Thông tin debug:</strong><br />
-                    ID Bệnh viện: {hospitalId}<br />
-                    Loại vai trò: 7 (Điều dưỡng) - hard-coded<br />
-                    Khoa có sẵn: {departments.length}<br />
-                    Service: createUser (không phải createDoctor)
+                    <strong>Thông tin API Schema:</strong><br />
+                    hospitalId: {hospitalId} (từ user data)<br />
+                    departmentId: (người dùng chọn)<br />
+                    roleType: 7 (cố định - Điều dưỡng)<br />
+                    job: "Điều dưỡng" (cố định)<br />
+                    Service: createUser<br />
+                    Schema: hospitalId, departmentId, roleType, fullname, phoneNumber, email, password, avatarUrl, dob, gender, job, cccd, province, ward, streetAddress
                 </div>
             </div>
         );
@@ -693,7 +725,7 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
 
                 <Alert
                     message="Vui lòng xem lại tất cả thông tin trước khi tạo tài khoản điều dưỡng"
-                    description="Đảm bảo tất cả thông tin đều chính xác vì một số thông tin không thể thay đổi sau này."
+                    description="Đảm bảo tất cả thông tin đều chính xác. Chức danh sẽ được tự động gán là 'Điều dưỡng'."
                     type="warning"
                     showIcon
                     style={{ marginBottom: 20 }}
@@ -702,30 +734,37 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
                 <div style={{ background: 'white', padding: '16px', borderRadius: '6px' }}>
                     <Row gutter={32}>
                         <Col span={12}>
-                            <h4 style={{ color: '#52c41a', marginBottom: 12 }}>👤 Thông tin cá nhân</h4>
+                            <h4 style={{ color: '#1890ff', marginBottom: 12 }}>👤 Thông tin cá nhân</h4>
                             <p><strong>Họ tên:</strong> {allData.fullname || 'Chưa cung cấp'}</p>
                             <p><strong>Điện thoại:</strong> {allData.phoneNumber || 'Chưa cung cấp'}</p>
                             <p><strong>Email:</strong> {allData.email || 'Chưa cung cấp'}</p>
-                            <p><strong>Giới tính:</strong> {allData.gender === 'male' ? '👨 Nam' : '👩 Nữ'}</p>
+                            <p><strong>Giới tính:</strong> {allData.gender === 'male' ? '👨 Nam (true)' : '👩 Nữ (false)'}</p>
                             <p><strong>Ngày sinh:</strong> {allData.dob ? (typeof allData.dob === 'string' ? allData.dob : allData.dob.format('DD/MM/YYYY')) : 'Chưa cung cấp'}</p>
                             <p><strong>CCCD:</strong> {allData.cccd || 'Chưa cung cấp'}</p>
-                            <p><strong>Địa chỉ:</strong> {[allData.streetAddress, allData.ward, allData.province].filter(Boolean).join(', ') || 'Chưa cung cấp'}</p>
+                            <p><strong>Avatar URL:</strong> {allData.avatarUrl || 'Không có'}</p>
                         </Col>
                         <Col span={12}>
-                            <h4 style={{ color: '#52c41a', marginBottom: 12 }}>🏥 Thông tin nghề nghiệp</h4>
-                            <p><strong>Bệnh viện:</strong> {user?.hospitals?.[0]?.name || 'Đang tải...'} (ID: {hospitalId})</p>
-                            <p><strong>Loại vai trò:</strong> 7 (Điều dưỡng) - Hard-coded</p>
-                            <p><strong>Chức danh:</strong> {allData.job || 'Điều dưỡng'}</p>
-                            <p><strong>Khoa:</strong> {selectedDepartment?.name || 'Chưa chọn'} (ID: {allData.departmentId})</p>
-                            <p><strong>Ca làm việc:</strong> {allData.shift || 'Chưa xác định'}</p>
-                            <p><strong>Kinh nghiệm:</strong> {allData.experience || 'Chưa xác định'}</p>
+                            <h4 style={{ color: '#52c41a', marginBottom: 12 }}>🏥 Thông tin công việc</h4>
+                            <p><strong>Bệnh viện:</strong> {user?.hospitals?.[0]?.name || 'Đang tải...'}</p>
+                            <p><strong>Hospital ID:</strong> {hospitalId}</p>
+                            <p><strong>Department ID:</strong> {allData.departmentId}</p>
+                            <p><strong>Khoa:</strong> {selectedDepartment?.name || 'Chưa chọn'}</p>
+                            <p><strong>Role Type:</strong> 7 (Điều dưỡng - cố định)</p>
+                            <p><strong>Chức danh:</strong> Điều dưỡng (cố định)</p>
+                            
+                            <h4 style={{ color: '#722ed1', marginBottom: 12, marginTop: 16 }}>📍 Địa chỉ</h4>
+                            <p><strong>Tỉnh/TP:</strong> {allData.province || 'Chưa chọn'}</p>
+                            <p><strong>Quận/Huyện:</strong> {allData.ward || 'Chưa chọn'}</p>
+                            <p><strong>Địa chỉ cụ thể:</strong> {allData.streetAddress || 'Chưa cung cấp'}</p>
 
                             <div style={{ marginTop: 16, padding: 8, background: '#e6fffb', borderRadius: 4, fontSize: '12px' }}>
-                                <strong>Xem trước API Payload:</strong><br />
+                                <strong>✅ API Payload Preview:</strong><br />
                                 hospitalId: {hospitalId}<br />
-                                departmentId: {allData.departmentId}<br />
-                                roleType: 7 (hard-coded)<br />
-                                Service: createUser
+                                departmentId: {allData.departmentId || 0}<br />
+                                roleType: 7<br />
+                                job: "Điều dưỡng" (cố định)<br />
+                                gender: {allData.gender === 'male' ? 'true' : 'false'}<br />
+                                dob: {allData.dob ? (typeof allData.dob === 'string' ? allData.dob : allData.dob.format('YYYY-MM-DD')) : '2025-08-14'}
                             </div>
                         </Col>
                     </Row>
@@ -737,9 +776,9 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
     const renderStepContent = () => {
         switch (currentStep) {
             case 0:
-                return renderBasicInfoStep();
+                return renderPersonalInfoStep();
             case 1:
-                return renderProfessionalStep();
+                return renderAddressAndDepartmentStep();
             case 2:
                 return renderReviewStep();
             default:
@@ -747,119 +786,122 @@ const AddNurse = ({ visible, onCancel, onSuccess }) => {
         }
     };
 
+    const handleCancel = () => {
+        resetForm();
+        
+        dispatch(setMessage({
+            type: 'info',
+            content: 'Đã hủy tạo tài khoản điều dưỡng'
+        }));
+        
+        onCancel();
+    };
+
     return (
         <>
             {contextHolder}
-            <Modal
-                title={
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <UserAddOutlined style={{
-                            color: '#52c41a',
-                            marginRight: 8,
-                            fontSize: '20px'
-                        }} />
-                        <span style={{ fontSize: '18px', fontWeight: 600 }}>
-                            Thêm điều dưỡng mới
-                        </span>
-                    </div>
-                }
-                open={visible}
-                onCancel={() => {
-                    form.resetFields();
-                    setCurrentStep(0);
-                    setFormData({});
-                    setSelectedProvince(null);
-                    setWards([]);
-                    onCancel();
-                }}
-                footer={null}
-                width={1100}
-                destroyOnClose
-                style={{ top: 20 }}
-            >
-                <Spin spinning={loading}>
-                    <div style={{ maxHeight: '75vh', overflowY: 'auto', padding: '0 4px' }}>
-                        <div style={{ marginBottom: 32 }}>
-                            <Steps current={currentStep} size="small">
-                                {steps.map((step, index) => (
-                                    <Step
-                                        key={index}
-                                        title={step.title}
-                                        description={step.description}
-                                        icon={step.icon}
-                                    />
-                                ))}
-                            </Steps>
+            
+            {/* ✅ ConfigProvider with Vietnamese locale */}
+            <ConfigProvider locale={locale}>
+                <Modal
+                    title={
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <UserAddOutlined style={{
+                                color: '#52c41a',
+                                marginRight: 8,
+                                fontSize: '20px'
+                            }} />
+                            <span style={{ fontSize: '18px', fontWeight: 600 }}>
+                                Thêm điều dưỡng mới
+                            </span>
                         </div>
-
-                        <Form
-                            form={form}
-                            layout="vertical"
-                            preserve={true}
-                            onValuesChange={handleFormValuesChange}
-                        >
-                            {renderStepContent()}
-
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                gap: 12,
-                                paddingTop: 16,
-                                borderTop: '1px solid #f0f0f0'
-                            }}>
-                                <div>
-                                    {currentStep > 0 && (
-                                        <Button onClick={prevStep} size="large">
-                                            Quay lại
-                                        </Button>
-                                    )}
-                                </div>
-
-                                <div style={{ display: 'flex', gap: 12 }}>
-                                    <Button onClick={() => {
-                                        form.resetFields();
-                                        setCurrentStep(0);
-                                        setFormData({});
-                                        setSelectedProvince(null);
-                                        setWards([]);
-                                        onCancel();
-                                    }} size="large">
-                                        Hủy
-                                    </Button>
-
-                                    {currentStep < steps.length - 1 ? (
-                                        <Button
-                                            type="primary"
-                                            onClick={nextStep}
-                                            size="large"
-                                            style={{
-                                                backgroundColor: '#52c41a',
-                                                borderColor: '#52c41a'
-                                            }}
-                                        >
-                                            Tiếp theo
-                                        </Button>
-                                    ) : (
-                                        <Button
-                                            type="primary"
-                                            onClick={handleSubmit}
-                                            loading={loading}
-                                            size="large"
-                                            icon={<SaveOutlined />}
-                                            style={{
-                                                backgroundColor: '#52c41a',
-                                                borderColor: '#52c41a'
-                                            }}
-                                        >
-                                            Tạo điều dưỡng
-                                        </Button>
-                                    )}
-                                </div>
+                    }
+                    open={visible}
+                    onCancel={handleCancel}
+                    footer={null}
+                    width={1100}
+                    destroyOnClose
+                    style={{ top: 20 }}
+                    maskClosable={false}
+                >
+                    <Spin spinning={loading} tip={loading ? "Đang xử lý..." : undefined}>
+                        <div style={{ maxHeight: '75vh', overflowY: 'auto', padding: '0 4px' }}>
+                            <div style={{ marginBottom: 32 }}>
+                                <Steps current={currentStep} size="small">
+                                    {steps.map((step, index) => (
+                                        <Step
+                                            key={index}
+                                            title={step.title}
+                                            description={step.description}
+                                            icon={step.icon}
+                                        />
+                                    ))}
+                                </Steps>
                             </div>
-                        </Form>
-                    </div>
-                </Spin>
-            </Modal>
+
+                            <Form
+                                form={form}
+                                layout="vertical"
+                                preserve={true}
+                                onValuesChange={handleFormValuesChange}
+                            >
+                                {renderStepContent()}
+
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    gap: 12,
+                                    paddingTop: 16,
+                                    borderTop: '1px solid #f0f0f0'
+                                }}>
+                                    <div>
+                                        {currentStep > 0 && (
+                                            <Button onClick={prevStep} size="large" disabled={loading}>
+                                                Quay lại
+                                            </Button>
+                                        )}
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: 12 }}>
+                                        <Button onClick={handleCancel} size="large" disabled={loading}>
+                                            Hủy
+                                        </Button>
+
+                                        {currentStep < steps.length - 1 ? (
+                                            <Button
+                                                type="primary"
+                                                onClick={nextStep}
+                                                size="large"
+                                                disabled={loading}
+                                                style={{
+                                                    backgroundColor: '#52c41a',
+                                                    borderColor: '#52c41a'
+                                                }}
+                                            >
+                                                Tiếp theo
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                type="primary"
+                                                onClick={handleSubmit}
+                                                loading={loading}
+                                                size="large"
+                                                icon={<SaveOutlined />}
+                                                style={{
+                                                    backgroundColor: '#52c41a',
+                                                    borderColor: '#52c41a'
+                                                }}
+                                            >
+                                                Tạo điều dưỡng
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            </Form>
+                        </div>
+                    </Spin>
+                </Modal>
+            </ConfigProvider>
         </>
     );
 };
