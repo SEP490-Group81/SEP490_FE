@@ -140,11 +140,7 @@ function MenuSider() {
             label: <Link to="/nurse">Dashboard</Link>,
             icon: <DashboardOutlined />,
         },
-        {
-            key: "appointment",
-            label: <Link to="/nurse/appointment">Lịch hẹn</Link>,
-            icon: <CalendarOutlined />,
-        },
+        
         {
             key: "nurse-profile",
             label: <Link to="/nurse/nurse-profile">Hồ sơ cá nhân</Link>,
