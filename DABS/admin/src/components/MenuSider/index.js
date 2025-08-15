@@ -104,11 +104,11 @@ function MenuSider() {
             label: <Link to="/admin-hospital/leave-request-management">Đơn xin nghỉ phép</Link>,
             icon: <InboxOutlined />,
         },
-        {
-            key: "payment-list",
-            label: <Link to="/admin-hospital/payment-list">Thanh toán</Link>,
-            icon: <UnorderedListOutlined />,
-        },
+        // {
+        //     key: "payment-list",
+        //     label: <Link to="/admin-hospital/payment-list">Thanh toán</Link>,
+        //     icon: <UnorderedListOutlined />,
+        // },
     ];
 
     const doctorItems = [

@@ -76,7 +76,7 @@ export const routes = [
       { path: "medical-service-management", element: <MedicalServiceManagement /> },  // đã vẽ
       { path: "leave-request-management", element: <LeaveRequestManagement /> }, // đã vẽ
       { path: "hospital-statistic", element: <HospitalStatisticPage /> },
-      { path: "payment-list", element: <NurseUnpaidBookingList /> },
+    //  { path: "payment-list", element: <NurseUnpaidBookingList /> },
       {
         path: "hospital-detail",
         element: <MyHospital />,

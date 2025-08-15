@@ -45,7 +45,13 @@ export default function UserBookingFlow() {
   }, [serviceId]);
 
   const handlePrevStep = () => {
-    if (currentStepIndex > 0) {
+    if (currentStepIndex === 0) {
+      const queryString = searchParams.toString();
+      navigate(`/appointment?${queryString}`, {
+        replace: true,
+        state: { fromBookingFlow: true }
+      });
+    } else {
       setCurrentStepIndex(prev => prev - 1);
     }
   };

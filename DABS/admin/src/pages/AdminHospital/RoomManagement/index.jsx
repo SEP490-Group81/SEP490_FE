@@ -156,7 +156,7 @@ const ManageRoom = () => {
         description: description || "",
       };
       if (specialty) {
-        payload.specializationId = specialty;  
+        payload.specializationId = specialty;
       }
       if (editing) {
         payload.roomId = editing.id;
@@ -174,7 +174,13 @@ const ManageRoom = () => {
       setEditing(null);
       form.resetFields();
     } catch (error) {
-      message.error("Lỗi khi lưu phòng khám");
+      if (editing) {
+        dispatch(setMessage({ type: 'error', content: 'Lỗi khi cập nhật phòng khám!' }));
+   
+      } else {
+        dispatch(setMessage({ type: 'error', content: 'Lỗi khi tạo phòng khám!' }));
+       
+      }
       console.error(error);
     }
   };
