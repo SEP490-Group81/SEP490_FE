@@ -357,9 +357,11 @@ function AppointmentReviewPage() {
                                             label: "Ngày khám",
                                             value: (
                                                 <>
-                                                    {stepData?.date || "Không rõ"} (
+                                                    {stepData?.date
+                                                        ? dayjs(stepData.date).format("DD/MM/YYYY")
+                                                        : "Không rõ"} (
                                                     <span style={{ fontWeight: 500 }}>
-                                                        {stepData?.shift === 'morning' ? 'Buổi sáng' : 'Buổi chiều'}
+                                                        {stepData?.shift === "morning" ? "Buổi sáng" : "Buổi chiều"}
                                                     </span>
                                                     )
                                                 </>

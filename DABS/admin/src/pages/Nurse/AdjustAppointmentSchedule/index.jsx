@@ -218,7 +218,7 @@ const AdjustAppointmentSchedule = () => {
   }, [selectedEvent]);
 
   const isSpecializationStepEnabled = serviceSteps.some(step => step.steps.id === 1 && step.status === true);
-  const isDoctorStepEnabled = serviceSteps.some(step => step.steps.id === 5 && step.status === true);
+  const isDoctorStepEnabled = serviceSteps.some(step => step.steps.id === 2 && step.status === true);
 
   useEffect(() => {
     (async () => {
@@ -294,7 +294,7 @@ const AdjustAppointmentSchedule = () => {
               specializationName: item.doctorSchedule.specialization?.name,
               department: item.doctorSchedule.department,
               note: item.note,
-              serviceId: item.service?.id,
+              serviceId: item.serviceId,
               status: item.status,
               room: item.doctorSchedule.room?.name,
               serviceName: item.serviceName,

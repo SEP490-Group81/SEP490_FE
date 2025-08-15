@@ -145,7 +145,6 @@ const PatientAppointmentList = () => {
         }
     };
 
-    // Trigger fetchAppointments when patient changes
     useEffect(() => {
         if (!selectedPatientId) {
             setAppointmentList([]);
@@ -154,7 +153,6 @@ const PatientAppointmentList = () => {
         fetchAppointments(selectedPatientId);
     }, [selectedPatientId, patients]);
 
-    // Count status for badges
     const statusCounts = useMemo(() => {
         const counts = { all: 0 };
         Object.keys(statusMap).forEach((k) => (counts[k] = 0));
@@ -166,7 +164,6 @@ const PatientAppointmentList = () => {
         return counts;
     }, [appointmentList]);
 
-    // Filter by tab and search
     const filteredAppointments = useMemo(() => {
         const lowerSearch = searchText.toLowerCase();
         return appointmentList.filter((item) => {
@@ -181,7 +178,6 @@ const PatientAppointmentList = () => {
         });
     }, [appointmentList, searchText, activeTab]);
 
-    // Handle change appointment status
     const handleChangeStatus = async () => {
         if (!selectedAppointment) return;
 
