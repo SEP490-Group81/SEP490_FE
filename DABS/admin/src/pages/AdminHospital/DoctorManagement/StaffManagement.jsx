@@ -102,7 +102,7 @@ const StaffManagementPage = () => {
         }
     }, [user]);
 
-    // ✅ Simplified fetchStaff without any fallback/callback logic
+    // ✅ Simplified fetchStaff with role filtering for nurses
     const fetchStaff = async () => {
         if (!hospitalId) {
             console.warn('⚠️ Không có ID bệnh viện, không thể tải dữ liệu nhân viên');
@@ -166,46 +166,69 @@ const StaffManagementPage = () => {
                 });
             } else {
                 console.warn('⚠️ Định dạng phản hồi API bác sĩ không mong đợi:', doctorResponse);
-                doctors = []; // ✅ Empty array instead of fallback
+                doctors = [];
             }
 
             console.log('✅ Đã xử lý danh sách bác sĩ:', doctors);
 
-            // ✅ Fetch nurses from API - no fallback
+            // ✅ Fetch nurses from API with role filtering
             console.log('🔄 Đang tải danh sách điều dưỡng cho ID bệnh viện:', hospitalId);
             const nurseResponse = await getStaffNurseByHospitalId(hospitalId);
             console.log('📥 Phản hồi API Điều dưỡng:', nurseResponse);
 
             let nurses = [];
-            if (Array.isArray(nurseResponse)) {
-                console.log('📋 Đang xử lý danh sách điều dưỡng, số lượng:', nurseResponse.length);
-                nurses = nurseResponse.map((nurse, index) => {
-                    const nurseUser = nurse || {};
-                    console.log(`👩‍⚕️ Đang xử lý điều dưỡng ${index + 1}:`, nurseUser);
+            if (nurseResponse?.success && Array.isArray(nurseResponse.result)) {
+                console.log('📋 Đang xử lý danh sách điều dưỡng, số lượng:', nurseResponse.result.length);
+                
+                // ✅ Filter out nurses with null role
+                const validNurses = nurseResponse.result.filter(nurse => {
+                    const hasValidRole = nurse.role !== null && nurse.role !== undefined;
+                    if (!hasValidRole) {
+                        console.log('❌ Loại bỏ nhân viên không có role:', nurse.fullname, '(ID:', nurse.id, ')');
+                    }
+                    return hasValidRole;
+                });
+                
+                console.log('✅ Điều dưỡng hợp lệ sau khi lọc:', validNurses.length, '/', nurseResponse.result.length);
+                
+                nurses = validNurses.map((nurse, index) => {
+                    console.log(`👩‍⚕️ Đang xử lý điều dưỡng ${index + 1}:`, nurse.fullname, 'Role:', nurse.role?.name);
 
                     return {
-                        id: nurse.id || nurseUser.id || `nurse-${index}`,
+                        id: nurse.id || `nurse-${index}`,
+                        staffId: nurse.staffId,
                         type: 'nurse',
-                        name: nurseUser.fullname || 'Điều dưỡng chưa xác định',
-                        fullname: nurseUser.fullname || 'Điều dưỡng chưa xác định',
-                        email: nurseUser.email || 'Không có email',
-                        phone: nurseUser.phoneNumber || 'Không có điện thoại',
-                        phoneNumber: nurseUser.phoneNumber || 'Không có điện thoại',
-                        userName: nurseUser.userName || '',
-                        avatarUrl: nurseUser.avatarUrl || '',
-                        avatar: nurseUser.avatarUrl || '',
-                        gender: nurseUser.gender,
-                        dob: nurseUser.dob,
-                        cccd: nurseUser.cccd || '',
-                        province: nurseUser.province,
-                        ward: nurseUser.ward,
-                        streetAddress: nurseUser.streetAddress || '',
-                        job: nurseUser.job || 'Điều dưỡng',
+                        name: nurse.fullname || 'Điều dưỡng chưa xác định',
+                        fullname: nurse.fullname || 'Điều dưỡng chưa xác định',
+                        email: nurse.email || 'Không có email',
+                        phone: nurse.phoneNumber || 'Không có điện thoại',
+                        phoneNumber: nurse.phoneNumber || 'Không có điện thoại',
+                        userName: nurse.userName || '',
+                        avatarUrl: nurse.avatarUrl || '',
+                        avatar: nurse.avatarUrl || '',
+                        gender: nurse.gender,
+                        dob: nurse.dob,
+                        cccd: nurse.cccd || '',
+                        province: nurse.province,
+                        ward: nurse.ward,
+                        streetAddress: nurse.streetAddress || '',
+                        job: nurse.job || nurse.role?.name || 'Điều dưỡng',
                         description: nurse.description || 'Không có mô tả',
                         specialization: nurse.specialization || 'Điều dưỡng tổng quát',
+                        
+                        // ✅ Hospital information from API
+                        hospitalId: nurse.hospitalId,
+                        hospitalName: nurse.hospitalName,
+                        
+                        // ✅ Role information (guaranteed to exist after filtering)
+                        roleId: nurse.role.id,
+                        roleName: nurse.role.name,
+                        roleType: nurse.role.roleType,
+                        
+                        // ✅ Default values for display
                         departmentId: nurse.departmentId || 1,
                         departmentName: 'Khoa tổng quát',
-                        licenseNumber: `Y tá${nurse.id || index}`,
+                        licenseNumber: `Y tá-${nurse.staffId || nurse.id}`,
                         experience: nurse.experience || '3 năm',
                         education: nurse.education || 'Bằng Điều dưỡng',
                         status: nurse.status || 'active',
@@ -216,17 +239,94 @@ const StaffManagementPage = () => {
                         schedule: nurse.schedule || 'Thứ 2-6: 8:00-17:00',
                         shift: nurse.shift || 'Ca ngày (7AM-7PM)',
                         certifications: nurse.certifications || 'BLS, CPR',
+                        
+                        // ✅ Store original data for reference
                         originalData: {
                             nurse: nurse,
-                            user: nurseUser,
+                            user: nurse,
                             hospitalAffiliations: nurse.hospitalAffiliations || [],
-                            specializations: nurse.specializations || []
+                            specializations: nurse.specializations || [],
+                            apiResponse: nurseResponse
+                        }
+                    };
+                });
+            } else if (Array.isArray(nurseResponse)) {
+                // ✅ Fallback for direct array response
+                console.log('📋 Đang xử lý danh sách điều dưỡng (direct array), số lượng:', nurseResponse.length);
+                
+                // ✅ Filter out nurses with null role
+                const validNurses = nurseResponse.filter(nurse => {
+                    const hasValidRole = nurse.role !== null && nurse.role !== undefined;
+                    if (!hasValidRole) {
+                        console.log('❌ Loại bỏ nhân viên không có role:', nurse.fullname || nurse.userName, '(ID:', nurse.id, ')');
+                    }
+                    return hasValidRole;
+                });
+                
+                console.log('✅ Điều dưỡng hợp lệ sau khi lọc:', validNurses.length, '/', nurseResponse.length);
+                
+                nurses = validNurses.map((nurse, index) => {
+                    console.log(`👩‍⚕️ Đang xử lý điều dưỡng ${index + 1}:`, nurse.fullname, 'Role:', nurse.role?.name);
+
+                    return {
+                        id: nurse.id || `nurse-${index}`,
+                        staffId: nurse.staffId,
+                        type: 'nurse',
+                        name: nurse.fullname || nurse.userName || 'Điều dưỡng chưa xác định',
+                        fullname: nurse.fullname || nurse.userName || 'Điều dưỡng chưa xác định',
+                        email: nurse.email || 'Không có email',
+                        phone: nurse.phoneNumber || 'Không có điện thoại',
+                        phoneNumber: nurse.phoneNumber || 'Không có điện thoại',
+                        userName: nurse.userName || '',
+                        avatarUrl: nurse.avatarUrl || '',
+                        avatar: nurse.avatarUrl || '',
+                        gender: nurse.gender,
+                        dob: nurse.dob,
+                        cccd: nurse.cccd || '',
+                        province: nurse.province,
+                        ward: nurse.ward,
+                        streetAddress: nurse.streetAddress || '',
+                        job: nurse.job || nurse.role?.name || 'Điều dưỡng',
+                        description: nurse.description || 'Không có mô tả',
+                        specialization: nurse.specialization || 'Điều dưỡng tổng quát',
+                        
+                        // ✅ Hospital information
+                        hospitalId: nurse.hospitalId,
+                        hospitalName: nurse.hospitalName,
+                        
+                        // ✅ Role information (guaranteed to exist after filtering)
+                        roleId: nurse.role.id,
+                        roleName: nurse.role.name,
+                        roleType: nurse.role.roleType,
+                        
+                        // ✅ Default values
+                        departmentId: nurse.departmentId || 1,
+                        departmentName: 'Khoa tổng quát',
+                        licenseNumber: `Y tá-${nurse.staffId || nurse.id}`,
+                        experience: nurse.experience || '3 năm',
+                        education: nurse.education || 'Bằng Điều dưỡng',
+                        status: nurse.status || 'active',
+                        consultationFee: 0,
+                        totalPatients: nurse.totalPatients || Math.floor(Math.random() * 500),
+                        rating: nurse.rating || (4 + Math.random()).toFixed(1),
+                        createdAt: nurse.createdAt || new Date().toISOString(),
+                        schedule: nurse.schedule || 'Thứ 2-6: 8:00-17:00',
+                        shift: nurse.shift || 'Ca ngày (7AM-7PM)',
+                        certifications: nurse.certifications || 'BLS, CPR',
+                        
+                        // ✅ Store original data for reference
+                        originalData: {
+                            nurse: nurse,
+                            user: nurse,
+                            hospitalAffiliations: nurse.hospitalAffiliations || [],
+                            specializations: nurse.specializations || [],
+                            apiResponse: nurseResponse
                         }
                     };
                 });
             } else {
                 console.warn('⚠️ Định dạng phản hồi API điều dưỡng không mong đợi:', nurseResponse);
-                nurses = []; // ✅ Empty array instead of fallback
+                nurses = [];
             }
 
             console.log('✅ Đã xử lý danh sách điều dưỡng:', nurses);
@@ -312,7 +412,6 @@ const StaffManagementPage = () => {
                 content: 'Không thể tải dữ liệu nhân viên. Vui lòng thử lại.',
                 duration: 4
             }));
-            // ✅ Set empty arrays instead of fallback data
             setStaff([]);
             setStats({
                 totalDoctors: 0,
@@ -348,14 +447,12 @@ const StaffManagementPage = () => {
                 console.log('👩‍⚕️ Đang tải chi tiết điều dưỡng qua getUserById...');
                 staffData = await getUserById(staffMember.id);
             } else {
-                // Fallback for unknown type
                 console.log('👤 Loại không xác định, sử dụng getUserById...');
                 staffData = await getUserById(staffMember.id);
             }
 
             console.log('✅ Đã tải chi tiết nhân viên:', staffData);
 
-            // Set the detailed data for viewing
             setSelectedViewStaff({
                 ...staffMember,
                 detailedData: staffData,
@@ -371,7 +468,6 @@ const StaffManagementPage = () => {
                 duration: 4
             }));
 
-            // Show modal with existing data as fallback
             setSelectedViewStaff(staffMember);
             setViewModalVisible(true);
         }
@@ -381,7 +477,6 @@ const StaffManagementPage = () => {
         console.log('✏️ Đang chỉnh sửa nhân viên:', staffMember);
         console.log('🔍 Loại nhân viên:', staffMember.type);
 
-        // Add type info for the edit modal to know which service to use
         setSelectedStaff({
             ...staffMember,
             editApiType: staffMember.type === 'doctor' ? 'updateDoctor' : 'updateUser'
@@ -413,7 +508,6 @@ const StaffManagementPage = () => {
 
             console.log(`✅ Phản hồi ${apiUsed}:`, deleteResponse);
 
-            // Check if deletion was successful
             const isSuccess = deleteResponse === true ||
                 deleteResponse?.success === true ||
                 deleteResponse?.message?.toLowerCase().includes('success') ||
@@ -425,7 +519,7 @@ const StaffManagementPage = () => {
                     content: `${staffMember.type === 'doctor' ? 'Bác sĩ' : 'Điều dưỡng'} đã được xóa thành công!`,
                     duration: 4
                 }));
-                await fetchStaff(); // Refresh the staff list
+                await fetchStaff();
                 return Promise.resolve();
             } else {
                 throw new Error(deleteResponse?.message || `Không thể xóa ${staffMember.type === 'doctor' ? 'bác sĩ' : 'điều dưỡng'}`);
@@ -523,7 +617,6 @@ const StaffManagementPage = () => {
                             fetchStaff();
                         }
                     } else {
-                        // ✅ For nurses, just refresh without fallback message
                         fetchStaff();
                     }
                 } catch (error) {
@@ -640,7 +733,6 @@ const StaffManagementPage = () => {
             key: 'actions',
             width: 150,
             render: (_, staffMember) => {
-                // ✅ Determine action tooltips based on type
                 const viewTooltip = staffMember.type === 'doctor'
                     ? 'Xem Bác sĩ (getDoctorById)'
                     : 'Xem Điều dưỡng (getUserById)';
@@ -659,7 +751,7 @@ const StaffManagementPage = () => {
                             <Button
                                 type="text"
                                 icon={<EyeOutlined />}
-                                onClick={() => handleViewDetails(staffMember)} // ✅ Type-aware function
+                                onClick={() => handleViewDetails(staffMember)}
                                 style={{
                                     color: staffMember.type === 'doctor' ? '#1890ff' : '#52c41a'
                                 }}
@@ -670,7 +762,7 @@ const StaffManagementPage = () => {
                             <Button
                                 type="text"
                                 icon={<EditOutlined />}
-                                onClick={() => handleEditStaff(staffMember)} // ✅ Type-aware function
+                                onClick={() => handleEditStaff(staffMember)}
                                 style={{
                                     color: staffMember.type === 'doctor' ? '#1890ff' : '#52c41a'
                                 }}
@@ -712,7 +804,7 @@ const StaffManagementPage = () => {
 
     const handleAddStaff = (type) => {
         console.log('🔧 Thêm nhân viên loại:', type);
-        setAddingStaffType(type); // ✅ Set type for adding
+        setAddingStaffType(type);
         setAddModalVisible(true);
     };
 
@@ -884,7 +976,7 @@ const StaffManagementPage = () => {
                 />
             </Card>
 
-            {/* Edit Staff Modal - Unified for both Doctor and Nurse */}
+            {/* Edit Staff Modal */}
             {editModalVisible && selectedStaff && (
                 <EditStaff
                     visible={editModalVisible}
@@ -897,6 +989,7 @@ const StaffManagementPage = () => {
                 />
             )}
 
+            {/* View Staff Modal */}
             {viewModalVisible && selectedViewStaff && (
                 selectedViewStaff.type === 'doctor' ? (
                     <ViewStaff
@@ -908,10 +1001,10 @@ const StaffManagementPage = () => {
                         staff={selectedViewStaff}
                         apiSource={selectedViewStaff?.apiSource}
                         detailedData={selectedViewStaff?.detailedData}
-                        staffType="doctor" // ✅ Pass explicit type
+                        staffType="doctor"
                     />
                 ) : (
-                    <ViewStaff  // ✅ Có thể tạo ViewNurse component riêng hoặc dùng ViewStaff
+                    <ViewStaff
                         visible={viewModalVisible}
                         onCancel={() => {
                             setViewModalVisible(false);
@@ -920,7 +1013,7 @@ const StaffManagementPage = () => {
                         staff={selectedViewStaff}
                         apiSource={selectedViewStaff?.apiSource}
                         detailedData={selectedViewStaff?.detailedData}
-                        staffType="nurse" // ✅ Pass explicit type
+                        staffType="nurse"
                     />
                 )
             )}
