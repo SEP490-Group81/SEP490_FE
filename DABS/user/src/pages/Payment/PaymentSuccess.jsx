@@ -216,16 +216,16 @@ const PaymentSuccess = () => {
                 <Result
                     status={isPaymentSuccessful ? "success" : isCancelled ? "error" : "warning"}
                     title={
-                        isPaymentSuccessful 
+                        isPaymentSuccessful
                             ? "Thanh Toán Thành Công!"
-                            : isCancelled 
+                            : isCancelled
                                 ? "Thanh Toán Đã Bị Hủy"
                                 : "Trạng Thái Thanh Toán"
                     }
                     subTitle={
                         <div>
                             <Paragraph>
-                                {isPaymentSuccessful 
+                                {isPaymentSuccessful
                                     ? "Thanh toán của bạn đã được xử lý thành công. Cuộc hẹn của bạn đã được xác nhận."
                                     : isCancelled
                                         ? "Giao dịch thanh toán đã bị hủy. Vui lòng thực hiện lại giao dịch nếu cần."
@@ -248,7 +248,7 @@ const PaymentSuccess = () => {
                 <Alert
                     message={statusInfo.text}
                     description={
-                        isPaymentSuccessful 
+                        isPaymentSuccessful
                             ? "Thanh toán đã được xử lý thành công và cuộc hẹn của bạn hiện đã được xác nhận. Bạn sẽ nhận được email xác nhận trong thời gian ngắn."
                             : isCancelled
                                 ? `Giao dịch đã bị hủy ${paymentData?.canceledAt ? `vào ${formatDateTime(paymentData.canceledAt)}` : ''}. ${paymentData?.cancellationReason || 'Không có lý do hủy được cung cấp.'}`
@@ -265,9 +265,9 @@ const PaymentSuccess = () => {
                         <Card
                             title={
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <DollarOutlined style={{ 
-                                        marginRight: 8, 
-                                        color: isPaymentSuccessful ? '#52c41a' : '#faad14' 
+                                    <DollarOutlined style={{
+                                        marginRight: 8,
+                                        color: isPaymentSuccessful ? '#52c41a' : '#faad14'
                                     }} />
                                     Chi Tiết Thanh Toán
                                 </div>
@@ -282,9 +282,9 @@ const PaymentSuccess = () => {
                                     <Text code>{paymentData?.id}</Text>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Số tiền">
-                                    <Text strong style={{ 
-                                        color: isPaymentSuccessful ? '#52c41a' : '#faad14', 
-                                        fontSize: '16px' 
+                                    <Text strong style={{
+                                        color: isPaymentSuccessful ? '#52c41a' : '#faad14',
+                                        fontSize: '16px'
                                     }}>
                                         {formatAmount(paymentData?.amount)} VND
                                     </Text>
@@ -295,8 +295,8 @@ const PaymentSuccess = () => {
                                     </Text>
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Số tiền còn lại">
-                                    <Text strong style={{ 
-                                        color: paymentData?.amountRemaining > 0 ? '#faad14' : '#52c41a' 
+                                    <Text strong style={{
+                                        color: paymentData?.amountRemaining > 0 ? '#faad14' : '#52c41a'
                                     }}>
                                         {formatAmount(paymentData?.amountRemaining)} VND
                                     </Text>
@@ -348,8 +348,8 @@ const PaymentSuccess = () => {
                                                     <Text strong>{formatAmount(transaction.amount)} VND</Text>
                                                 </Descriptions.Item>
                                                 <Descriptions.Item label="Trạng thái">
-                                                    <Tag color={transaction.status === 'SUCCESS' ? 'success' : 'error'}>
-                                                        {transaction.status === 'SUCCESS' ? 'Thành công' : 'Thất bại'}
+                                                    <Tag color="success">
+                                                        Thành công
                                                     </Tag>
                                                 </Descriptions.Item>
                                                 <Descriptions.Item label="Thời gian">
@@ -363,7 +363,7 @@ const PaymentSuccess = () => {
 
                             <Divider />
 
-                            
+
                         </Card>
                     </Col>
 
@@ -385,8 +385,8 @@ const PaymentSuccess = () => {
                                                 <br />
                                                 <Text type="secondary" style={{ fontSize: '12px' }}>
                                                     {formatTime(
-                                                        paymentData?.createdAt 
-                                                            ? dayjs(paymentData.createdAt).subtract(2, 'minute').toISOString() 
+                                                        paymentData?.createdAt
+                                                            ? dayjs(paymentData.createdAt).subtract(2, 'minute').toISOString()
                                                             : dayjs().subtract(2, 'minute').toISOString()
                                                     )}
                                                 </Text>
@@ -398,9 +398,9 @@ const PaymentSuccess = () => {
                                         children: (
                                             <div>
                                                 <Text strong>
-                                                    {paymentData?.status === 'PAID' 
-                                                        ? 'Thanh toán thành công' 
-                                                        : paymentData?.status === 'CANCELLED' 
+                                                    {paymentData?.status === 'PAID'
+                                                        ? 'Thanh toán thành công'
+                                                        : paymentData?.status === 'CANCELLED'
                                                             ? 'Thanh toán bị hủy'
                                                             : 'Xử lý thanh toán'
                                                     }
@@ -427,7 +427,7 @@ const PaymentSuccess = () => {
                                                 </div>
                                             ),
                                         },
-                                        
+
                                     ] : [])
                                 ]}
                             />
