@@ -425,9 +425,7 @@ const BookingHistory = () => {
             render: (date, record) => (
                 <div>
                     <div><CalendarOutlined /> {date}</div>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
-                        {record.appointmentTime}
-                    </Text>
+
                 </div>
             )
         },
