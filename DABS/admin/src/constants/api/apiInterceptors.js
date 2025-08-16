@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { API_DOMAIN, PATH } from './api';
 import { isTokenExpired } from '../../utils/jwtUtils';
+import { useDispatch } from 'react-redux';
 
 
 const api = axios.create({
@@ -14,7 +15,6 @@ let logoutCallback = null;
 export const setAuthHandlers = ({ getAccessToken, refreshToken, logout }) => {
   refreshTokenCallback = refreshToken;
   logoutCallback = logout;
-
   api.interceptors.request.use(async (config) => {
     let token = getAccessToken();
     console.log("token in api intercetors : " + token);

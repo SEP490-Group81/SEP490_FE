@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { deleteAuth, getAuth, postAuth, putAuth } from '../utils/request';
+import { deleteAuth, get, getAuth, postAuth, putAuth } from '../utils/request';
 
 // Token cho authorization
 const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWRlbnRpZmllciI6IjEiLCJlbWFpbCI6ImFkbWluQGhvc3RuYW1lLmNvbSIsImZ1bGxOYW1lIjoiU3VwZXIgVXNlciIsIm5hbWUiOiJTdXBlciIsInN1cm5hbWUiOiJVc2VyIiwiaXBBZGRyZXNzIjoiMC4wLjAuMSIsImF2YXRhclVybCI6IiIsIm1vYmlsZXBob25lIjoiIiwiZXhwIjoxNzgxMjcwNDgzLCJpc3MiOiJodHRwczovL0JFLlNFUDQ5MC5uZXQiLCJhdWQiOiJCRS5TRVA0OTAifQ.kQIX9uvjN9UOPiBitp9JsO2DlPlFyIU4VTP1ZyM4k3Y";
@@ -167,23 +167,72 @@ export const deleteHospital = async (hospitalId) => {
 
 
 export const getSpecializationsByHospitalId = async (hospitalId) => {
-  try {
-    const result = await getAuth(`/hospitals/${hospitalId}/specialization`);
-    console.log(`🩺 Fetched specializations for hospital ${hospitalId}:`, result);
-    return result.result || result;
-  } catch (error) {
-    console.error(`❌ Error fetching specializations for hospital ${hospitalId}:`, error);
-    throw error;
-  }
+    try {
+        const result = await get(`/hospitals/${hospitalId}/specialization`);
+        console.log(`🩺 Fetched specializations for hospital ${hospitalId}:`, result);
+        return result.result || result;
+    } catch (error) {
+        console.error(`❌ Error fetching specializations for hospital ${hospitalId}:`, error);
+        throw error;
+    }
 };
 
 export const getDoctorsBySpecialization = async (hospitalId) => {
+    try {
+        const result = await getAuth(`/hospitals/${hospitalId}/doctors/grouped-by-specialization`);
+        console.log(`👨‍⚕️ Fetched doctors by specialization for hospital ${hospitalId}:`, result);
+        return result.result || result;
+    } catch (error) {
+        console.error(`❌ Error fetching doctors by specialization for hospital ${hospitalId}:`, error);
+        throw error;
+    }
+};
+
+
+export const getHospitalWorkingDates = async (hospitalId) => {
+    try {
+        const result = await getAuth(`/hospitals/${hospitalId}/working-date`);
+        console.log(`📅 Fetched working dates for hospital ${hospitalId}:`, result);
+        return result.result || result;
+    } catch (error) {
+        console.error(`❌ Error fetching working dates for hospital ${hospitalId}:`, error);
+        throw error;
+    }
+};
+
+
+export const createHospitalWorkingDates = async (hospitalId, workingDates) => {
+    try {
+        const result = await postAuth(`/hospitals/${hospitalId}/working-date`, workingDates);
+        console.log(`✅ Created working dates for hospital ${hospitalId}:`, result);
+        return result.result || result;
+    } catch (error) {
+        console.error(`❌ Error creating working dates for hospital ${hospitalId}:`, error);
+        throw error;
+    }
+};
+
+
+export const updateHospitalWorkingDates = async (hospitalId, workingDates) => {
+    try {
+        const result = await putAuth(`/hospitals/${hospitalId}/working-date`, workingDates);
+        console.log(`✅ Updated working dates for hospital ${hospitalId}:`, result);
+        return result.result || result;
+    } catch (error) {
+        console.error(`❌ Error updating working dates for hospital ${hospitalId}:`, error);
+        throw error;
+    }
+};
+
+export const getHospitalWorkDate = async (id) => {
   try {
-    const result = await getAuth(`/hospitals/${hospitalId}/doctors/grouped-by-specialization`);
-    console.log(`👨‍⚕️ Fetched doctors by specialization for hospital ${hospitalId}:`, result);
-    return result.result || result;
+    const result = await get(`/hospitals/${id}/working-date`);
+    if (!result || !result.result) {
+      throw new Error('Hospital workdate is missing in the response.');
+    }
+    return result.result;
   } catch (error) {
-    console.error(`❌ Error fetching doctors by specialization for hospital ${hospitalId}:`, error);
+    console.error(`Error fetching hospital workdate with ID ${id}:`, error.message);
     throw error;
   }
 };

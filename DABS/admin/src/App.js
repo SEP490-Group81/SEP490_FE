@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { setAuthHandlers } from './constants/api/apiInterceptors';
 import { decodeToken, isTokenExpired } from './utils/jwtUtils';
 import { getUserById } from './services/userService';
-import { refreshToken, logout, setUser, updateAccessToken } from './redux/slices/userSlice';
+import { refreshToken, logout, setUser, updateAccessToken, setIsLoggedOut } from './redux/slices/userSlice';
 function App() {
   const dispatch = useDispatch();
   const accessToken = useSelector((state) => state.user.accessToken);
@@ -23,6 +23,7 @@ function App() {
       logout: () => dispatch(logout()),
     });
   }, [dispatch]);
+
 
   useEffect(() => {
     const init = async () => {
