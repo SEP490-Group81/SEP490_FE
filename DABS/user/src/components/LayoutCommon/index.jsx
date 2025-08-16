@@ -245,7 +245,7 @@ function LayoutCommon() {
                         </Menu.Item> */}
 
                         {/* Tin tức (nếu có trang tin tức, tạm giữ submenu) */}
-                        <SubMenu
+                        {/* <SubMenu
                             key="news"
                             title={
                                 <span>
@@ -255,7 +255,7 @@ function LayoutCommon() {
                         >
                             <Menu.Item key="news-1" onClick={() => window.open('/', '_blank')}>Tin 1</Menu.Item>
                             <Menu.Item key="news-2" onClick={() => window.open('/', '_blank')}>Tin 2</Menu.Item>
-                        </SubMenu>
+                        </SubMenu> */}
 
                         {/* Hướng dẫn (UserGuide) */}
                         <SubMenu
@@ -280,8 +280,8 @@ function LayoutCommon() {
                                 </span>
                             }
                         >
-                            <Menu.Item key="contact-1" onClick={() => window.open('/', '_blank')}>Liên hệ 1</Menu.Item>
-                            <Menu.Item key="contact-2" onClick={() => window.open('/', '_blank')}>Liên hệ 2</Menu.Item>
+                            {/* <Menu.Item key="contact-1" onClick={() => window.open('/', '_blank')}>Liên hệ 1</Menu.Item>
+                            <Menu.Item key="contact-2" onClick={() => window.open('/', '_blank')}>Liên hệ 2</Menu.Item> */}
                         </SubMenu>
                     </Menu>
                 </div>
