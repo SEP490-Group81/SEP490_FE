@@ -86,20 +86,13 @@ function LayoutCommon() {
                     </Menu.Item>
                     <Menu.Item
                         key="password"
-                        onClick={() => navigate('/account/change-password')}
+                        onClick={() => navigate('/profile/change-password')}
                         icon={<KeyOutlined />}
                     >
                         Đổi mật khẩu
                     </Menu.Item>
-                    <Menu.Item key="health-records" icon={<FileTextOutlined />} onClick={() => navigate('/health-records')}>
-                        Hồ sơ bệnh nhân
-                    </Menu.Item>
-                    <Menu.Item key="records" icon={<FileTextOutlined />} onClick={() => navigate('/records')}>
-                        Phiếu khám
-                    </Menu.Item>
-                    <Menu.Item key="notification" icon={<BellOutlined />} onClick={() => navigate('/notifications')}>
-                        Thông báo
-                    </Menu.Item>
+               
+                 
                     <Menu.Divider />
                     <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={handleLogout}>
                         Đăng xuất
