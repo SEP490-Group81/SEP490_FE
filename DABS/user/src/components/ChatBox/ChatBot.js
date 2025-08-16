@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Button, Input, Avatar, Badge, Tooltip, message } from 'antd';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Button, Input, Avatar, Badge, Tooltip, message, Space } from 'antd';
 import {
     SendOutlined,
     CloseOutlined,
@@ -17,7 +17,8 @@ import {
     sendMessage as sendChatMessage,
     sendFirstMessage,
     extractTextFromResponse,
-    generateSessionId
+    generateSessionId,
+    extractMixedContentFromResponse
 } from '../../services/chatbotService';
 
 const ChatBot = () => {
@@ -43,34 +44,30 @@ const ChatBot = () => {
     const user = useSelector((state) => state.user?.user);
     const accessToken = useSelector((state) => state.user?.accessToken || state.auth?.accessToken);
 
-    const userId = user?.id || `guest_${Date.now()}`;
+    // ✅ Memoize userId to prevent infinite loops
+    const userId = useCallback(() => {
+        return user?.id || `guest_${Date.now()}`;
+    }, [user?.id]);
 
-
-    // ✅ Initialize chat session when component mounts
-    useEffect(() => {
-        if (userId && userId !== `guest_${Date.now()}` && accessToken) {
-            initializeChatSession();
-        }
-    }, [userId, accessToken]);
-
-    // ✅ Initialize chat session using chatbotService
-    const initializeChatSession = async () => {
-        if (isInitializing) return;
+    // ✅ Initialize chat session using useCallback to prevent infinite loops
+    const initializeChatSession = useCallback(async () => {
+        if (isInitializing || sessionId) return;
 
         setIsInitializing(true);
 
         try {
-            console.log('🔄 Initializing chat session for user:', userId);
+            const currentUserId = userId();
+            console.log('🔄 Initializing chat session for user:', currentUserId);
             console.log('🔑 Using access token:', accessToken ? 'Available' : 'Not available');
 
             // Generate unique session ID
             const newSessionId = generateSessionId();
 
             // ✅ Use accessToken as patient_token
-            const sessionResult = await createChatBotSession(newSessionId, userId, accessToken);
+            const sessionResult = await createChatBotSession(newSessionId, currentUserId, accessToken);
 
             console.log('✅ Session created:', sessionResult);
-            setSessionId(newSessionId);
+            setSessionId(sessionResult);
             setIsFirstMessage(true);
 
             message.success('Đã kết nối với trợ lý AI!');
@@ -82,46 +79,68 @@ const ChatBot = () => {
         } finally {
             setIsInitializing(false);
         }
-    };
+    }, [isInitializing, sessionId, userId, accessToken]);
 
-    // Cuộn xuống tin nhắn mới nhất
+    // ✅ Initialize chat session when component mounts - fixed dependencies
     useEffect(() => {
-        if (isOpen && messagesEndRef.current) {
+        const currentUserId = userId();
+        if (currentUserId && currentUserId !== `guest_${Date.now()}` && accessToken && !sessionId) {
+            initializeChatSession();
+        }
+    }, [user?.id, accessToken, initializeChatSession]); // ✅ Fixed dependencies
+
+    // ✅ Cuộn xuống tin nhắn mới nhất - use useCallback
+    const scrollToBottom = useCallback(() => {
+        if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [messages, isOpen]);
+    }, []);
 
-    // Focus vào input khi mở chat
+    useEffect(() => {
+        if (isOpen) {
+            scrollToBottom();
+        }
+    }, [messages, isOpen, scrollToBottom]);
+
+    // ✅ Focus vào input khi mở chat
     useEffect(() => {
         if (isOpen && inputRef.current) {
             inputRef.current.focus();
         }
     }, [isOpen]);
 
-    // Reset số tin nhắn chưa đọc khi mở chat
+    // ✅ Reset số tin nhắn chưa đọc khi mở chat
     useEffect(() => {
         if (isOpen) {
             setUnreadCount(0);
         }
     }, [isOpen]);
 
-    const toggleChat = () => {
-        setIsOpen(!isOpen);
-    };
+    const toggleChat = useCallback(() => {
+        setIsOpen(prev => !prev);
+    }, []);
 
-    const handleInputChange = (e) => {
+    const handleInputChange = useCallback((e) => {
         setInput(e.target.value);
-    };
+    }, []);
 
-    const handleKeyPress = (e) => {
+    const handleKeyPress = useCallback((e) => {
         if (e.key === 'Enter' && input.trim() && !isLoading) {
             sendMessage();
         }
-    };
+    }, [input, isLoading]); // ✅ Will be defined below
 
+    // ✅ Add message helper function to prevent direct state mutations
+    const addMessage = useCallback((newMessage) => {
+        setMessages(prev => [...prev, newMessage]);
+    }, []);
 
-    // ✅ Simplified sendMessage in ChatBot component
-    const sendMessage = async () => {
+    const addMessages = useCallback((newMessages) => {
+        setMessages(prev => [...prev, ...newMessages]);
+    }, []);
+
+    // ✅ Simplified sendMessage using useCallback to prevent infinite loops
+    const sendMessage = useCallback(async () => {
         if (!input.trim() || isLoading || !sessionId || !accessToken) {
             if (!accessToken) {
                 message.error('Vui lòng đăng nhập để sử dụng trợ lý AI');
@@ -130,41 +149,91 @@ const ChatBot = () => {
         }
 
         const userMessage = input.trim();
+        const currentUserId = userId();
+        
         setInput('');
         setIsLoading(true);
 
-        // Thêm tin nhắn của người dùng ngay lập tức
         const userMessageObj = {
             type: 'user',
             content: userMessage,
             time: new Date()
         };
 
-        setMessages(prev => [...prev, userMessageObj]);
+        addMessage(userMessageObj);
 
         try {
             console.log('🔄 Sending message to ADK agent...');
 
-            // ✅ Simplified - no need for user profile or first message logic
-            const response = await sendChatMessage(sessionId, userId, userMessage);
-
+            const response = await sendChatMessage(sessionId, currentUserId, userMessage);
             console.log('✅ Raw response from API:', response);
 
-            // ✅ Extract text from response using helper function
-            const botResponseText = extractTextFromResponse(response);
+            // ✅ Try both parsing methods
+            let parsedResponse = extractTextFromResponse(response);
+            
+            if (!parsedResponse || parsedResponse.length === 0) {
+                console.log('🔄 Trying mixed content parser...');
+                parsedResponse = extractMixedContentFromResponse(response);
+            }
+            
+            console.log('📋 Final parsed response:', parsedResponse);
 
-            console.log('✅ Bot response text:', botResponseText);
+            if (parsedResponse && parsedResponse.length > 0) {
+                const botMessages = [];
+                
+                parsedResponse.forEach((messageData, index) => {
+                    console.log(`📨 Processing message ${index + 1}:`, messageData);
+                    
+                    if (messageData.type === 'choice') {
+                        // ✅ Add choice message with buttons
+                        const choiceMessageObj = {
+                            type: 'bot',
+                            content: messageData.text,
+                            choices: messageData.choices,
+                            time: new Date()
+                        };
+                        console.log('🎯 Adding choice message:', choiceMessageObj);
+                        botMessages.push(choiceMessageObj);
+                    } else if (messageData.type === 'text' && messageData.content.trim()) {
+                        // ✅ Add regular text message (skip empty ones)
+                        const textMessageObj = {
+                            type: 'bot',
+                            content: messageData.content,
+                            time: new Date()
+                        };
+                        console.log('📝 Adding text message:', textMessageObj);
+                        botMessages.push(textMessageObj);
+                    }
+                });
 
-            // ✅ Add bot response to messages
-            const botMessageObj = {
-                type: 'bot',
-                content: botResponseText || 'Tôi đã nhận được tin nhắn của bạn nhưng không thể tạo phản hồi phù hợp.',
-                time: new Date()
-            };
+                if (botMessages.length > 0) {
+                    addMessages(botMessages);
+                }
+            } else {
+                // ✅ Fallback - try to extract plain text
+                console.log('⚠️ Parsing failed, trying plain text extraction...');
+                const plainText = response
+                    .map(event => event.content?.parts?.map(part => part.text).join(' '))
+                    .filter(Boolean)
+                    .join(' ');
+                    
+                if (plainText.trim()) {
+                    const fallbackMessageObj = {
+                        type: 'bot',
+                        content: plainText,
+                        time: new Date()
+                    };
+                    addMessage(fallbackMessageObj);
+                } else {
+                    const errorMessageObj = {
+                        type: 'bot',
+                        content: 'Tôi đã nhận được tin nhắn của bạn nhưng không thể tạo phản hồi phù hợp.',
+                        time: new Date()
+                    };
+                    addMessage(errorMessageObj);
+                }
+            }
 
-            setMessages(prev => [...prev, botMessageObj]);
-
-            // Update unread count if chat is closed
             if (!isOpen) {
                 setUnreadCount(prev => prev + 1);
             }
@@ -178,24 +247,173 @@ const ChatBot = () => {
                 time: new Date()
             };
 
-            setMessages(prev => [...prev, errorMessageObj]);
+            addMessage(errorMessageObj);
             message.error('Lỗi kết nối API. Vui lòng thử lại.');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [input, isLoading, sessionId, accessToken, userId, addMessage, addMessages, isOpen]);
 
-    // ✅ Function to start new chat session
-    const startNewSession = async () => {
+    // ✅ Handle choice click using useCallback
+    const handleChoiceClick = useCallback(async (choice) => {
+        console.log('🎯 Choice clicked:', choice);
+
+        const currentUserId = userId();
+        const userChoiceObj = {
+            type: 'user',
+            content: choice.label,
+            time: new Date()
+        };
+        
+        addMessage(userChoiceObj);
+
+        setIsLoading(true);
+        try {
+            console.log('🔄 Sending choice value to API:', choice.value);
+            
+            const response = await sendChatMessage(sessionId, currentUserId, choice.value);
+            console.log('✅ Choice response from API:', response);
+            
+            // ✅ Use same parsing logic
+            let parsedResponse = extractTextFromResponse(response);
+            
+            if (!parsedResponse || parsedResponse.length === 0) {
+                parsedResponse = extractMixedContentFromResponse(response);
+            }
+            
+            console.log('📋 Parsed choice response:', parsedResponse);
+
+            if (parsedResponse && parsedResponse.length > 0) {
+                const botMessages = [];
+                
+                parsedResponse.forEach((messageData, index) => {
+                    console.log(`📨 Processing choice response ${index + 1}:`, messageData);
+                    
+                    if (messageData.type === 'choice') {
+                        const choiceMessageObj = {
+                            type: 'bot',
+                            content: messageData.text,
+                            choices: messageData.choices,
+                            time: new Date()
+                        };
+                        botMessages.push(choiceMessageObj);
+                    } else if (messageData.type === 'text' && messageData.content.trim()) {
+                        const textMessageObj = {
+                            type: 'bot',
+                            content: messageData.content,
+                            time: new Date()
+                        };
+                        botMessages.push(textMessageObj);
+                    }
+                });
+
+                if (botMessages.length > 0) {
+                    addMessages(botMessages);
+                }
+            } else {
+                // ✅ Fallback for choice responses
+                const plainText = response
+                    .map(event => event.content?.parts?.map(part => part.text).join(' '))
+                    .filter(Boolean)
+                    .join(' ');
+                    
+                const fallbackMessageObj = {
+                    type: 'bot',
+                    content: plainText || 'Cảm ơn bạn đã chọn. Tôi đang xử lý yêu cầu của bạn.',
+                    time: new Date()
+                };
+                addMessage(fallbackMessageObj);
+            }
+        } catch (error) {
+            console.error('❌ Error sending choice:', error);
+            const errorMessageObj = {
+                type: 'bot',
+                content: 'Xin lỗi, có lỗi xảy ra khi xử lý lựa chọn của bạn.',
+                time: new Date()
+            };
+            addMessage(errorMessageObj);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [sessionId, userId, addMessage, addMessages]);
+
+    // ✅ Render message using useCallback
+    const renderMessage = useCallback((message, index) => (
+        <div
+            key={index}
+            className={`message ${message.type === 'user' ? 'user-message' : 'bot-message'}`}
+        >
+            {message.type === 'bot' && (
+                <Avatar
+                    icon={<RobotOutlined />}
+                    className="message-avatar"
+                    size="default"
+                />
+            )}
+
+            <div className="message-content">
+                <div className="message-bubble">
+                    {/* ✅ Always show the message content */}
+                    <div className="message-text">
+                        {message.content}
+                    </div>
+
+                    {/* ✅ Render choice buttons if available */}
+                    {message.choices && message.choices.length > 0 && (
+                        <div className="choice-buttons" style={{ marginTop: 12 }}>
+                            <Space direction="vertical" style={{ width: '100%' }} size="small">
+                                {message.choices.map((choice, choiceIndex) => (
+                                    <Button
+                                        key={choiceIndex}
+                                        type="default"
+                                        onClick={() => handleChoiceClick(choice)}
+                                        style={{
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            height: 'auto',
+                                            padding: '8px 12px',
+                                            whiteSpace: 'normal',
+                                            wordWrap: 'break-word',
+                                            border: '1px solid #d9d9d9',
+                                            borderRadius: '6px'
+                                        }}
+                                        disabled={isLoading}
+                                    >
+                                         {choice.label}
+                                    </Button>
+                                ))}
+                            </Space>
+                        </div>
+                    )}
+                </div>
+                <div className="message-time">
+                    {formatTime(message.time)}
+                </div>
+            </div>
+
+            {message.type === 'user' && (
+                <Avatar
+                    icon={<UserOutlined />}
+                    className="message-avatar"
+                    size="default"
+                />
+            )}
+        </div>
+    ), [handleChoiceClick, isLoading]);
+
+    // ✅ Function to start new chat session using useCallback
+    const startNewSession = useCallback(async () => {
         try {
             setIsLoading(true);
             console.log('🔄 Starting new session...');
 
+            const currentUserId = userId();
+            
             // Generate new session ID
             const newSessionId = generateSessionId();
 
             // Create new session
-            const sessionResult = await createChatBotSession(newSessionId, userId, accessToken);
+            const sessionResult = await createChatBotSession(newSessionId, currentUserId, accessToken);
 
             setSessionId(newSessionId);
             setIsFirstMessage(true);
@@ -203,16 +421,7 @@ const ChatBot = () => {
             // Reset messages with welcome message
             setMessages([{
                 type: 'bot',
-                content: `Xin chào! Tôi là DABS Assistant - Trợ lý đặt khám thông minh được hỗ trợ bởi AI.
-
-🏥 Tôi có thể giúp bạn:
-• Đặt lịch khám bệnh theo chuyên khoa
-• Tìm bác sĩ phù hợp với triệu chứng
-• Tư vấn quy trình khám chữa bệnh
-• Hướng dẫn chuẩn bị trước khi khám
-• Giải đáp thắc mắc về y tế
-
-Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
+                content: `Xin chào! Tôi là DABS Assistant`,
                 time: new Date()
             }]);
 
@@ -225,19 +434,19 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [userId, accessToken]);
 
-    // Format timestamp
-    const formatTime = (date) => {
+    // ✅ Format timestamp using useCallback
+    const formatTime = useCallback((date) => {
         return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    };
+    }, []);
 
-    // ✅ Get session status
-    const getSessionStatus = () => {
+    // ✅ Get session status using useCallback
+    const getSessionStatus = useCallback(() => {
         if (isInitializing) return { status: 'processing', text: 'Đang kết nối...' };
         if (!sessionId) return { status: 'error', text: 'Chưa kết nối' };
         return { status: 'success', text: 'Trực tuyến với AI' };
-    };
+    }, [isInitializing, sessionId]);
 
     const sessionStatus = getSessionStatus();
 
@@ -307,37 +516,7 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
                     </div>
 
                     <div className="chat-messages">
-                        {messages.map((message, index) => (
-                            <div
-                                key={index}
-                                className={`message ${message.type === 'user' ? 'user-message' : 'bot-message'}`}
-                            >
-                                {message.type === 'bot' && (
-                                    <Avatar
-                                        icon={<RobotOutlined />}
-                                        className="message-avatar"
-                                        size="small"
-                                    />
-                                )}
-
-                                <div className="message-content">
-                                    <div className="message-bubble">
-                                        {message.content}
-                                    </div>
-                                    <div className="message-time">
-                                        {formatTime(message.time)}
-                                    </div>
-                                </div>
-
-                                {message.type === 'user' && (
-                                    <Avatar
-                                        icon={<UserOutlined />}
-                                        className="message-avatar"
-                                        size="small"
-                                    />
-                                )}
-                            </div>
-                        ))}
+                        {messages.map((message, index) => renderMessage(message, index))}
 
                         {/* Loading indicator */}
                         {(isLoading || isInitializing) && (
@@ -345,7 +524,7 @@ Hãy cho tôi biết bạn cần hỗ trợ gì hôm nay!`,
                                 <Avatar
                                     icon={<RobotOutlined />}
                                     className="message-avatar"
-                                    size="small"
+                                    size="default"
                                 />
                                 <div className="message-content">
                                     <div className="message-bubble loading">

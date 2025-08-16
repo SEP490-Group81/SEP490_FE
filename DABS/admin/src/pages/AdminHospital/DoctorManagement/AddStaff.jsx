@@ -13,7 +13,8 @@ import {
     Upload,
     Alert,
     Steps,
-    message // ✅ Import message từ antd
+    message,
+    ConfigProvider
 } from 'antd';
 import {
     UserAddOutlined,
@@ -24,12 +25,18 @@ import {
     UploadOutlined,
     CheckCircleOutlined
 } from '@ant-design/icons';
-import { useDispatch, useSelector } from 'react-redux'; // ✅ Import useSelector
-import { clearMessage, setMessage } from '../../../redux/slices/messageSlice'; // ✅ Import clearMessage
+import { useDispatch, useSelector } from 'react-redux';
+import { clearMessage, setMessage } from '../../../redux/slices/messageSlice';
 import { createDoctor } from '../../../services/doctorService';
 import { getHospitalById, getSpecializationsByHospitalId } from '../../../services/hospitalService';
 import { getDepartmentsByHospitalId } from '../../../services/departmentService';
 import { getProvinces } from '../../../services/provinceService';
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import locale from 'antd/locale/vi_VN';
+
+// ✅ Set dayjs locale to Vietnamese
+dayjs.locale('vi');
 
 const { Option } = Select;
 const { Step } = Steps;
@@ -44,7 +51,7 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
     const [hospitalSpecializations, setHospitalSpecializations] = useState([]);
     const [hospitalDepartments, setHospitalDepartments] = useState([]);
 
-    // ✅ Add states for provinces and wards
+    // States for provinces and wards
     const [provinces, setProvinces] = useState([]);
     const [wards, setWards] = useState([]);
     const [selectedProvince, setSelectedProvince] = useState(null);
@@ -52,61 +59,39 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
 
     const dispatch = useDispatch();
     const user = useSelector((state) => state.user.user);
-    const messageState = useSelector((state) => state.message); // ✅ Get message state
-    const [messageApi, contextHolder] = message.useMessage(); // ✅ Use Ant Design message hook
+    const messageState = useSelector((state) => state.message);
+    const [messageApi, contextHolder] = message.useMessage();
 
-    // ✅ Watch for message state changes và hiển thị message
+    // ✅ Handle Redux messages
     useEffect(() => {
-        // ✅ Add null check for messageState
         if (messageState && messageState.content) {
-            if (messageState.type === 'success') {
-                messageApi.success({
-                    content: messageState.content,
-                    duration: messageState.duration || 4,
-                });
-            } else if (messageState.type === 'error') {
-                messageApi.error({
-                    content: messageState.content,
-                    duration: messageState.duration || 8,
-                });
-            } else if (messageState.type === 'warning') {
-                messageApi.warning({
-                    content: messageState.content,
-                    duration: messageState.duration || 6,
-                });
-            } else if (messageState.type === 'info') {
-                messageApi.info({
-                    content: messageState.content,
-                    duration: messageState.duration || 4,
-                });
-            }
-
-            // ✅ Clear message after showing
-            setTimeout(() => {
-                dispatch(clearMessage());
-            }, 100);
+            messageApi.open({
+                type: messageState.type,
+                content: messageState.content,
+            });
+            dispatch(clearMessage());
         }
     }, [messageState, messageApi, dispatch]);
 
-    console.log("🔍 Current user data:", JSON.stringify(user));
+    console.log("🔍 Dữ liệu user hiện tại:", JSON.stringify(user));
 
-    // ✅ Fetch provinces on component mount
+    // Fetch provinces on component mount
     useEffect(() => {
         if (visible) {
             fetchProvinces();
         }
     }, [visible]);
 
-    // ✅ Function to fetch provinces
+    // Function to fetch provinces
     const fetchProvinces = async () => {
         setLoadingProvinces(true);
         try {
-            console.log("🌏 Fetching provinces...");
+            console.log("🌏 Đang tải danh sách tỉnh thành...");
             const data = await getProvinces();
-            console.log("📍 Provinces loaded:", data.data);
+            console.log("📍 Đã tải tỉnh thành:", data.data);
             setProvinces(data.data || []);
         } catch (error) {
-            console.error("❌ Error fetching provinces:", error);
+            console.error("❌ Lỗi khi tải tỉnh thành:", error);
             dispatch(setMessage({
                 type: 'error',
                 content: 'Không thể tải danh sách tỉnh/thành phố'
@@ -116,26 +101,26 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
         }
     };
 
-    // ✅ Update wards when province changes
+    // Update wards when province changes
     useEffect(() => {
         if (selectedProvince && provinces.length > 0) {
             const provinceObj = provinces.find((p) => p.province === selectedProvince);
             const wardsList = provinceObj?.wards || [];
             setWards(wardsList);
-            console.log("🏘️ Wards for province", selectedProvince, ":", wardsList);
+            console.log("🏘️ Phường/xã của", selectedProvince, ":", wardsList);
         } else {
             setWards([]);
         }
     }, [selectedProvince, provinces]);
 
-    // ✅ Handle form value changes
+    // Handle form value changes
     const onFormValuesChange = (changedValues) => {
         if ("province" in changedValues) {
             const newProvince = changedValues.province || null;
             setSelectedProvince(newProvince);
             // Reset ward when province changes
             form.setFieldsValue({ ward: undefined });
-            console.log("🔄 Province changed to:", newProvince);
+            console.log("🔄 Tỉnh thành đã thay đổi thành:", newProvince);
         }
     };
 
@@ -145,8 +130,8 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
             setCurrentStep(0);
             setFileList([]);
             setFormData({});
-            setSelectedProvince(null); // ✅ Reset province selection
-            setWards([]); // ✅ Reset wards
+            setSelectedProvince(null);
+            setWards([]);
 
             fetchHospitalData();
         }
@@ -155,13 +140,13 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
     const fetchHospitalData = async () => {
         setLoading(true);
         try {
-            console.log('🔄 Fetching hospital data...');
+            console.log('🔄 Đang tải dữ liệu bệnh viện...');
 
             const hospitalId = user?.hospitals?.[0]?.id;
-            console.log('🏥 Hospital ID from user.hospitals[0].id:', hospitalId);
+            console.log('🏥 ID bệnh viện từ user.hospitals[0].id:', hospitalId);
 
             if (!hospitalId) {
-                throw new Error('Hospital ID not found in user.hospitals data');
+                throw new Error('Không tìm thấy ID bệnh viện trong dữ liệu user.hospitals');
             }
 
             const [hospital, specs, departments] = await Promise.all([
@@ -174,18 +159,18 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
             setHospitalSpecializations(specs);
             setHospitalDepartments(departments);
 
-            console.log('🏥 Current hospital set:', hospital);
-            console.log('🩺 Hospital specializations set:', specs);
-            console.log('🏢 Hospital departments set:', departments);
+            console.log('🏥 Bệnh viện hiện tại đã được thiết lập:', hospital);
+            console.log('🩺 Chuyên khoa bệnh viện đã được thiết lập:', specs);
+            console.log('🏢 Khoa bệnh viện đã được thiết lập:', departments);
 
         } catch (error) {
-            console.error('❌ Error fetching hospital data:', error);
+            console.error('❌ Lỗi khi tải dữ liệu bệnh viện:', error);
 
             const fallbackHospitalId = user?.hospitals?.[0]?.id || 105;
             setCurrentHospital({
                 id: fallbackHospitalId,
-                name: user?.hospitals?.[0]?.name || 'Default Hospital',
-                address: 'Unknown'
+                name: user?.hospitals?.[0]?.name || 'Bệnh viện mặc định',
+                address: 'Không rõ'
             });
 
             setHospitalSpecializations(specializations || []);
@@ -193,8 +178,7 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
 
             dispatch(setMessage({
                 type: 'warning',
-                content: 'Could not load hospital data. Using default values.',
-                duration: 5
+                content: 'Không thể tải dữ liệu bệnh viện. Đang sử dụng giá trị mặc định.'
             }));
         } finally {
             setLoading(false);
@@ -202,23 +186,22 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
     };
 
     const handleSubmit = async () => {
-        console.log('🚀 handleSubmit called');
+        console.log('🚀 handleSubmit được gọi');
         setLoading(true);
 
         try {
-            console.log('🔄 Starting form submission...');
+            console.log('🔄 Bắt đầu gửi form...');
 
             const currentStepValues = form.getFieldsValue();
             const allValues = { ...formData, ...currentStepValues };
 
-            console.log('📝 Current step values:', currentStepValues);
-            console.log('💾 Stored form data:', formData);
-            console.log('🔄 Merged values:', allValues);
+            console.log('📝 Giá trị bước hiện tại:', currentStepValues);
+            console.log('💾 Dữ liệu form đã lưu:', formData);
+            console.log('🔄 Giá trị đã hợp nhất:', allValues);
 
-            // ✅ Clear any previous messages
             dispatch(clearMessage());
 
-            // ✅ Validate required fields
+            // Enhanced validation
             const missingFields = [];
 
             if (!allValues.fullname) missingFields.push('fullname');
@@ -234,18 +217,29 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
             if (!allValues.position) missingFields.push('position');
             if (!allValues.departmentId) missingFields.push('departmentId');
 
+            // Fix specialization validation
             if (allValues.specialization === undefined || allValues.specialization === null || allValues.specialization === '') {
                 missingFields.push('specialization');
             }
 
-            if (missingFields.length > 0) {
-                console.error('❌ Missing required fields:', missingFields);
-                const errorMsg = `Missing required fields: ${missingFields.join(', ')}`;
+            console.log('🔍 Specialization validation:', {
+                value: allValues.specialization,
+                type: typeof allValues.specialization,
+                isUndefined: allValues.specialization === undefined,
+                isNull: allValues.specialization === null,
+                isEmpty: allValues.specialization === '',
+                isZero: allValues.specialization === 0,
+                isMissing: allValues.specialization === undefined || allValues.specialization === null || allValues.specialization === ''
+            });
 
-                messageApi.error({
-                    content: errorMsg,
-                    duration: 6,
-                });
+            if (missingFields.length > 0) {
+                console.error('❌ Thiếu các trường bắt buộc:', missingFields);
+                const errorMsg = `Thiếu các trường bắt buộc: ${missingFields.join(', ')}`;
+
+                dispatch(setMessage({
+                    type: 'error',
+                    content: errorMsg
+                }));
 
                 throw new Error(errorMsg);
             }
@@ -255,36 +249,47 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                 const hospitalId = user?.hospitals?.[0]?.id || currentHospital?.id;
 
                 if (!hospitalId) {
-                    const errorMsg = 'Hospital ID not found. Please contact administrator.';
-                    messageApi.error({
-                        content: errorMsg,
-                        duration: 6,
-                    });
+                    const errorMsg = 'Không tìm thấy ID bệnh viện. Vui lòng liên hệ quản trị viên.';
+                    dispatch(setMessage({
+                        type: 'error',
+                        content: errorMsg
+                    }));
                     throw new Error(errorMsg);
                 }
 
-                // Process specialization IDs
+                // Enhanced specialization processing
                 let specializationIds = [];
 
                 // Primary specialization
+                console.log('🩺 Processing primary specialization:', allValues.specialization);
+                
                 if (allValues.specialization !== undefined && allValues.specialization !== null && allValues.specialization !== '') {
                     let specId;
+                    
                     if (hospitalSpecializations && hospitalSpecializations.length > 0) {
-                        const hospitalSpec = hospitalSpecializations[allValues.specialization];
-                        specId = hospitalSpec?.id || parseInt(allValues.specialization) || allValues.specialization;
+                        // Handle both index-based and direct ID scenarios
+                        const selectedSpec = hospitalSpecializations[allValues.specialization];
+                        
+                        if (selectedSpec) {
+                            // If it's an object with id property
+                            specId = selectedSpec.id || allValues.specialization;
+                        } else {
+                            // If allValues.specialization is already an ID
+                            specId = parseInt(allValues.specialization);
+                        }
 
-                        // ✅ Debug log
-                        console.log('🩺 Primary specialization:', {
+                        console.log('🩺 Chuyên khoa chính:', {
                             selectedIndex: allValues.specialization,
-                            hospitalSpec: hospitalSpec,
-                            finalId: specId
+                            selectedSpec: selectedSpec,
+                            finalId: specId,
+                            hospitalSpecializations: hospitalSpecializations
                         });
                     } else {
-                        specId = parseInt(allValues.specialization) || allValues.specialization;
+                        specId = parseInt(allValues.specialization);
                     }
 
-                    // ✅ Thêm vào array nếu có giá trị hợp lệ
-                    if (specId !== undefined && specId !== null) {
+                    // Add to array if valid (including 0 and 1)
+                    if (specId !== undefined && specId !== null && !isNaN(specId)) {
                         specializationIds.push(specId);
                     }
                 }
@@ -294,21 +299,30 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     const additionalIds = allValues.specializationIds.map(id => {
                         if (hospitalSpecializations && hospitalSpecializations.length > 0) {
                             const hospitalSpec = hospitalSpecializations[id];
-                            return hospitalSpec?.id || parseInt(id) || id;
+                            return hospitalSpec?.id || parseInt(id);
                         }
-                        return parseInt(id) || id;
-                    }).filter(id => id !== undefined && id !== null && !specializationIds.includes(id));
+                        return parseInt(id);
+                    }).filter(id => id !== undefined && id !== null && !isNaN(id) && !specializationIds.includes(id));
 
                     specializationIds = [...specializationIds, ...additionalIds];
                 }
 
-                console.log('🩺 Final specialization IDs:', specializationIds);
+                console.log('🩺 ID chuyên khoa cuối cùng:', specializationIds);
 
-
-                // Default specializations if none selected
+                // Enhanced default specializations logic
                 if (specializationIds.length === 0) {
-                    console.warn('⚠️ No specializations selected, using default [1]');
-                    specializationIds = [1];
+                    console.warn('⚠️ Không có chuyên khoa nào được chọn');
+                    
+                    // Try to get first available specialization
+                    if (hospitalSpecializations && hospitalSpecializations.length > 0) {
+                        const firstSpec = hospitalSpecializations[0];
+                        const defaultId = firstSpec.id || 1;
+                        specializationIds = [defaultId];
+                        console.log('📋 Sử dụng chuyên khoa đầu tiên:', defaultId);
+                    } else {
+                        specializationIds = [1]; // Fallback
+                        console.log('📋 Sử dụng chuyên khoa mặc định: [1]');
+                    }
                 }
 
                 // Format date properly
@@ -318,7 +332,7 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                         : allValues.dob.format('YYYY-MM-DD'))
                     : null;
 
-                // ✅ Prepare doctor data
+                // Prepare doctor data
                 const doctorData = {
                     id: 0,
                     hospitalAffiliations: [
@@ -327,7 +341,7 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             departmentId: parseInt(allValues.departmentId),
                             contractStart: new Date().toISOString(),
                             contractEnd: new Date(Date.now() + (365 * 24 * 60 * 60 * 1000)).toISOString(),
-                            position: allValues.position?.trim() || "Doctor"
+                            position: allValues.position?.trim() || "Bác sĩ"
                         }
                     ],
                     user: {
@@ -338,7 +352,7 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                         avatarUrl: allValues.avatarUrl?.trim() || "",
                         dob: dobFormatted,
                         gender: allValues.gender === 'male',
-                        job: "Doctor",
+                        job: "Bác sĩ",
                         cccd: allValues.cccd?.trim() || "",
                         province: allValues.province?.trim() || "",
                         ward: allValues.ward?.trim() || "",
@@ -349,70 +363,63 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     specializationIds: specializationIds
                 };
 
-                console.log('🏥 Final doctor payload:', JSON.stringify(doctorData, null, 2));
+                console.log('🏥 Payload bác sĩ cuối cùng:', JSON.stringify(doctorData, null, 2));
 
-                // ✅ Validate critical fields trước khi call API
+                // Enhanced validation with better error messages
                 if (!doctorData.user.fullname) {
-                    const errorMsg = 'Full name is required';
-                    messageApi.error({ content: errorMsg, duration: 4 });
+                    const errorMsg = 'Họ tên là bắt buộc';
+                    dispatch(setMessage({ type: 'error', content: errorMsg }));
                     throw new Error(errorMsg);
                 }
                 if (!doctorData.user.phoneNumber) {
-                    const errorMsg = 'Phone number is required';
-                    messageApi.error({ content: errorMsg, duration: 4 });
+                    const errorMsg = 'Số điện thoại là bắt buộc';
+                    dispatch(setMessage({ type: 'error', content: errorMsg }));
                     throw new Error(errorMsg);
                 }
                 if (!doctorData.hospitalAffiliations[0].hospitalId) {
-                    const errorMsg = 'Hospital ID is required';
-                    messageApi.error({ content: errorMsg, duration: 4 });
+                    const errorMsg = 'ID bệnh viện là bắt buộc';
+                    dispatch(setMessage({ type: 'error', content: errorMsg }));
                     throw new Error(errorMsg);
                 }
                 if (!doctorData.hospitalAffiliations[0].departmentId) {
-                    const errorMsg = 'Department ID is required';
-                    messageApi.error({ content: errorMsg, duration: 4 });
+                    const errorMsg = 'ID khoa là bắt buộc';
+                    dispatch(setMessage({ type: 'error', content: errorMsg }));
                     throw new Error(errorMsg);
                 }
                 if (!doctorData.specializationIds.length) {
-                    const errorMsg = 'At least one specialization is required';
-                    messageApi.error({ content: errorMsg, duration: 4 });
+                    const errorMsg = 'Ít nhất một chuyên khoa là bắt buộc';
+                    dispatch(setMessage({ type: 'error', content: errorMsg }));
                     throw new Error(errorMsg);
                 }
 
-                console.log('✅ All validations passed, calling API...');
+                console.log('✅ Tất cả xác thực đã thành công, đang gọi API...');
 
-                // ✅ Show loading message
-                messageApi.loading({
-                    content: 'Creating doctor account...',
-                    duration: 0, // Don't auto dismiss
-                    key: 'creating'
-                });
+                // Show loading message
+                dispatch(setMessage({
+                    type: 'loading',
+                    content: 'Đang tạo tài khoản bác sĩ...'
+                }));
 
-                // ✅ Call API với enhanced logging
+                // Call API với enhanced logging
                 let response;
                 try {
-                    console.log('🌐 About to call createDoctor API...');
+                    console.log('🌐 Chuẩn bị gọi API createDoctor...');
                     response = await createDoctor(doctorData);
-                    console.log('📥 createDoctor returned:', response);
+                    console.log('📥 createDoctor trả về:', response);
                 } catch (apiError) {
-                    console.error('🔥 API Error caught:', apiError);
-                    console.error('🔥 API Error details:', {
+                    console.error('🔥 Lỗi API đã được bắt:', apiError);
+                    console.error('🔥 Chi tiết lỗi API:', {
                         message: apiError.message,
                         status: apiError.response?.status,
                         data: apiError.response?.data,
                         headers: apiError.response?.headers
                     });
 
-                    // ✅ Dismiss loading message
-                    messageApi.destroy('creating');
-
                     throw apiError; // Re-throw để handle ở catch bên ngoài
                 }
 
-                // ✅ Dismiss loading message
-                messageApi.destroy('creating');
-
-                // ✅ Check response với logging chi tiết
-                console.log('🔍 Checking response success...');
+                // Check response với logging chi tiết
+                console.log('🔍 Đang kiểm tra phản hồi thành công...');
                 console.log('- response:', response);
                 console.log('- response === true:', response === true);
                 console.log('- response?.success:', response?.success);
@@ -428,22 +435,15 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     (!response?.error && response !== false && response !== null)
                 );
 
-                console.log('🎯 isSuccess determined as:', isSuccess);
+                console.log('🎯 isSuccess được xác định là:', isSuccess);
 
                 if (isSuccess) {
-                    console.log('✅ Doctor created successfully');
+                    console.log('✅ Tạo bác sĩ thành công');
 
-                    // ✅ Show success message
-                    messageApi.success({
-                        content: '🎉 Doctor created successfully!',
-                        duration: 4,
-                    });
-
-                    // ✅ Also dispatch to Redux store (optional)
+                    // Show success message
                     dispatch(setMessage({
                         type: 'success',
-                        content: '🎉 Doctor account has been created successfully!',
-                        duration: 4
+                        content: '🎉 Tạo bác sĩ thành công!'
                     }));
 
                     // Reset form
@@ -454,32 +454,32 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     setSelectedProvince(null);
                     setWards([]);
 
-                    // ✅ Close modal sau một chút delay để user thấy success message
+                    // Close modal sau một chút delay để user thấy success message
                     setTimeout(() => {
                         onSuccess();
                     }, 1500);
 
                 } else {
-                    const errorMessage = response?.message || response?.error || response?.title || 'Failed to create doctor';
-                    console.error('❌ Create failed with message:', errorMessage);
+                    const errorMessage = response?.message || response?.error || response?.title || 'Tạo bác sĩ thất bại';
+                    console.error('❌ Tạo thất bại với thông báo:', errorMessage);
 
-                    // ✅ Show error message
-                    messageApi.error({
-                        content: `❌ ${errorMessage}`,
-                        duration: 8,
-                    });
+                    // Show error message
+                    dispatch(setMessage({
+                        type: 'error',
+                        content: `❌ ${errorMessage}`
+                    }));
 
                     throw new Error(errorMessage);
                 }
             }
         } catch (error) {
-            console.error('❌ Error in handleSubmit:', error);
+            console.error('❌ Lỗi trong handleSubmit:', error);
             console.error('🔍 Error stack:', error.stack);
 
-            let errorMessage = `Failed to create ${staffType}. Please try again.`;
+            let errorMessage = `Không thể tạo ${staffType === 'doctor' ? 'bác sĩ' : 'điều dưỡng'}. Vui lòng thử lại.`;
 
             if (error.response?.data) {
-                console.log('🔍 API Error Details:', error.response.data);
+                console.log('🔍 Chi tiết lỗi API:', error.response.data);
 
                 if (typeof error.response.data === 'string') {
                     errorMessage = error.response.data;
@@ -497,19 +497,12 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                 errorMessage = error.message;
             }
 
-            console.log('📤 Displaying error message:', errorMessage);
+            console.log('📤 Hiển thị thông báo lỗi:', errorMessage);
 
-            // ✅ Show error message
-            messageApi.error({
-                content: `❌ ${errorMessage}`,
-                duration: 8,
-            });
-
-            // ✅ Also dispatch to Redux store (optional)
+            // Show error message
             dispatch(setMessage({
                 type: 'error',
-                content: `❌ ${errorMessage}`,
-                duration: 8
+                content: `❌ ${errorMessage}`
             }));
 
         } finally {
@@ -540,35 +533,37 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
 
             if (fieldsToValidate.length > 0) {
                 const values = await form.validateFields(fieldsToValidate);
-                console.log(`✅ Step ${currentStep} validated values:`, values);
+                console.log(`✅ Bước ${currentStep} đã xác thực giá trị:`, values);
+
+                // Enhanced debug logging for specialization
+                if (values.specialization !== undefined) {
+                    console.log('🔍 Specialization validation in nextStep:', {
+                        value: values.specialization,
+                        type: typeof values.specialization,
+                        isValid: values.specialization !== undefined && values.specialization !== null && values.specialization !== ''
+                    });
+                }
 
                 setFormData(prev => ({
                     ...prev,
                     ...values
                 }));
 
-                console.log('💾 Updated form data state:', { ...formData, ...values });
+                console.log('💾 Dữ liệu form state đã cập nhật:', { ...formData, ...values });
             }
 
             setCurrentStep(currentStep + 1);
         } catch (error) {
-            console.log('❌ Step validation failed:', error);
+            console.log('❌ Xác thực bước thất bại:', error);
 
             const errorFields = error.errorFields || [];
             if (errorFields.length > 0) {
                 const missingFields = errorFields.map(field => field.name[0]).join(', ');
 
-                // ✅ Show validation error message
-                messageApi.error({
-                    content: `Please complete the following fields: ${missingFields}`,
-                    duration: 6,
-                });
-
-                // ✅ Also dispatch to Redux store
+                // Show validation error message
                 dispatch(setMessage({
                     type: 'error',
-                    content: `Please complete the following fields: ${missingFields}`,
-                    duration: 6
+                    content: `Vui lòng hoàn thành các trường sau: ${missingFields}`
                 }));
             }
         }
@@ -590,18 +585,18 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
 
     const steps = [
         {
-            title: 'Basic Info',
-            description: 'Personal information',
+            title: 'Thông tin cơ bản',
+            description: 'Thông tin cá nhân',
             icon: <UserOutlined />
         },
         {
-            title: 'Professional',
-            description: 'Work details',
+            title: 'Thông tin chuyên môn',
+            description: 'Chi tiết công việc',
             icon: staffType === 'doctor' ? <MedicineBoxOutlined /> : <HeartOutlined />
         },
         {
-            title: 'Review',
-            description: 'Confirm details',
+            title: 'Xem lại',
+            description: 'Xác nhận thông tin',
             icon: <CheckCircleOutlined />
         }
     ];
@@ -632,12 +627,12 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     alignItems: 'center'
                 }}>
                     <MedicineBoxOutlined style={{ marginRight: 8 }} />
-                    Professional Information
+                    Thông tin chuyên môn
                 </h3>
 
                 <Alert
-                    message={`Hospital Assignment: ${currentHospital?.name || user?.hospitals?.[0]?.name || 'Loading...'}`}
-                    description={`The doctor will be automatically affiliated with ${currentHospital?.name || user?.hospitals?.[0]?.name || 'the current hospital'} (ID: ${user?.hospitals?.[0]?.id || currentHospital?.id || 'Loading...'}) and assigned to the selected department. Available departments: ${availableDepartments.length}`}
+                    message={`Phân công bệnh viện: ${currentHospital?.name || user?.hospitals?.[0]?.name || 'Đang tải...'}`}
+                    description={`Bác sĩ sẽ được tự động liên kết với ${currentHospital?.name || user?.hospitals?.[0]?.name || 'bệnh viện hiện tại'} (ID: ${user?.hospitals?.[0]?.id || currentHospital?.id || 'Đang tải...'}) và được phân công vào khoa đã chọn. Số khoa có sẵn: ${availableDepartments.length}`}
                     type="info"
                     showIcon
                     style={{ marginBottom: 16 }}
@@ -647,11 +642,11 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="description"
-                            label="Professional Description"
-                            rules={[{ required: true, message: 'Please enter description' }]}
+                            label="Mô tả chuyên môn"
+                            rules={[{ required: true, message: 'Vui lòng nhập mô tả' }]}
                         >
                             <Input.TextArea
-                                placeholder="Experienced cardiologist with 10+ years in emergency medicine..."
+                                placeholder="Bác sĩ tim mạch có kinh nghiệm 10+ năm trong y học cấp cứu..."
                                 rows={3}
                             />
                         </Form.Item>
@@ -660,16 +655,16 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="position"
-                            label="Position"
-                            rules={[{ required: true, message: 'Please enter position' }]}
-                            initialValue="Doctor"
+                            label="Chức vụ"
+                            rules={[{ required: true, message: 'Vui lòng nhập chức vụ' }]}
+                            initialValue="Bác sĩ"
                         >
-                            <Select placeholder="Select position">
-                                <Option value="Doctor">👨‍⚕️ Doctor</Option>
-                                <Option value="Senior Doctor">👨‍⚕️ Senior Doctor</Option>
-                                <Option value="Chief Doctor">👨‍⚕️ Chief Doctor</Option>
-                                <Option value="Consultant">👨‍⚕️ Consultant</Option>
-                                <Option value="Specialist">👨‍⚕️ Specialist</Option>
+                            <Select placeholder="Chọn chức vụ">
+                                <Option value="Bác sĩ">👨‍⚕️ Bác sĩ</Option>
+                                <Option value="Bác sĩ chính">👨‍⚕️ Bác sĩ chính</Option>
+                                <Option value="Trưởng khoa">👨‍⚕️ Trưởng khoa</Option>
+                                <Option value="Bác sĩ tư vấn">👨‍⚕️ Bác sĩ tư vấn</Option>
+                                <Option value="Chuyên gia">👨‍⚕️ Chuyên gia</Option>
                             </Select>
                         </Form.Item>
                     </Col>
@@ -679,10 +674,10 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="departmentId"
-                            label="Department"
-                            rules={[{ required: true, message: 'Please select department' }]}
+                            label="Khoa"
+                            rules={[{ required: true, message: 'Vui lòng chọn khoa' }]}
                         >
-                            <Select placeholder="Select department" showSearch>
+                            <Select placeholder="Chọn khoa" showSearch>
                                 {availableDepartments?.map(dept => (
                                     <Option key={dept.id} value={dept.id}>
                                         🏥 {dept.name} (ID: {dept.id})
@@ -696,10 +691,21 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="specialization"
-                            label="Primary Specialization"
-                            rules={[{ required: true, message: 'Please select specialization' }]}
+                            label="Chuyên khoa chính"
+                            rules={[
+                                { required: true, message: 'Vui lòng chọn chuyên khoa' },
+                                // Custom validator to handle edge cases
+                                {
+                                    validator: (_, value) => {
+                                        if (value === undefined || value === null || value === '') {
+                                            return Promise.reject(new Error('Vui lòng chọn chuyên khoa'));
+                                        }
+                                        return Promise.resolve();
+                                    }
+                                }
+                            ]}
                         >
-                            <Select placeholder="Select specialization" showSearch>
+                            <Select placeholder="Chọn chuyên khoa" showSearch>
                                 {availableSpecializations.map((spec, index) => (
                                     <Option key={index} value={index}>
                                         🩺 {typeof spec === 'string' ? spec : spec.name || spec.title}
@@ -715,11 +721,11 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="specializationIds"
-                            label="Additional Specializations (Optional)"
+                            label="Chuyên khoa phụ (Tùy chọn)"
                         >
                             <Select
                                 mode="multiple"
-                                placeholder="Select additional specializations"
+                                placeholder="Chọn chuyên khoa phụ"
                                 showSearch
                             >
                                 {availableSpecializations.map((spec, index) => (
@@ -735,30 +741,30 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     <Col xs={24} md={12}>
                         <Form.Item
                             name="contractDuration"
-                            label="Contract Duration (Years)"
+                            label="Thời hạn hợp đồng (Năm)"
                             initialValue={1}
                         >
-                            <Select placeholder="Select contract duration">
-                                <Option value={1}>1 Year</Option>
-                                <Option value={2}>2 Years</Option>
-                                <Option value={3}>3 Years</Option>
-                                <Option value={5}>5 Years</Option>
-                                <Option value={10}>10 Years</Option>
+                            <Select placeholder="Chọn thời hạn hợp đồng">
+                                <Option value={1}>1 Năm</Option>
+                                <Option value={2}>2 Năm</Option>
+                                <Option value={3}>3 Năm</Option>
+                                <Option value={5}>5 Năm</Option>
+                                <Option value={10}>10 Năm</Option>
                             </Select>
                         </Form.Item>
                     </Col>
                 </Row>
 
                 <div style={{ marginTop: 16, padding: 8, background: '#f0f0f0', fontSize: '12px' }}>
-                    <strong>Debug Info:</strong>
-                    <br />User Hospital ID: {user?.hospitals?.[0]?.id || 'Not found'}
-                    <br />User Hospital Name: {user?.hospitals?.[0]?.name || 'Not found'}
-                    <br />Hospital Departments: {hospitalDepartments?.length || 0} items
-                    <br />Hospital Specializations: {hospitalSpecializations?.length || 0} items
-                    <br />Fallback Departments: {departments?.length || 0} items
-                    <br />Fallback Specializations: {specializations?.length || 0} items
-                    <br />Using Departments: {availableDepartments === hospitalDepartments ? 'Hospital departments' : 'Fallback departments'}
-                    <br />Using Specializations: {availableSpecializations === hospitalSpecializations ? 'Hospital specializations' : 'Fallback specializations'}
+                    <strong>Thông tin Debug:</strong>
+                    <br />ID Bệnh viện của User: {user?.hospitals?.[0]?.id || 'Không tìm thấy'}
+                    <br />Tên Bệnh viện của User: {user?.hospitals?.[0]?.name || 'Không tìm thấy'}
+                    <br />Khoa Bệnh viện: {hospitalDepartments?.length || 0} mục
+                    <br />Chuyên khoa Bệnh viện: {hospitalSpecializations?.length || 0} mục
+                    <br />Khoa dự phòng: {departments?.length || 0} mục
+                    <br />Chuyên khoa dự phòng: {specializations?.length || 0} mục
+                    <br />Đang sử dụng Khoa: {availableDepartments === hospitalDepartments ? 'Khoa bệnh viện' : 'Khoa dự phòng'}
+                    <br />Đang sử dụng Chuyên khoa: {availableSpecializations === hospitalSpecializations ? 'Chuyên khoa bệnh viện' : 'Chuyên khoa dự phòng'}
                 </div>
             </div>
         );
@@ -768,7 +774,7 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
         const currentValues = form.getFieldsValue();
         const allData = { ...formData, ...currentValues };
 
-        console.log('📋 Review data:', allData);
+        console.log('📋 Dữ liệu xem lại:', allData);
 
         const availableDepartments = hospitalDepartments && hospitalDepartments.length > 0
             ? hospitalDepartments
@@ -783,12 +789,32 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
         const primarySpecialization = availableSpecializations[allData.specialization];
         const primarySpecName = typeof primarySpecialization === 'string'
             ? primarySpecialization
-            : primarySpecialization?.name || primarySpecialization?.title || 'Unknown';
+            : primarySpecialization?.name || primarySpecialization?.title || 'Không rõ';
 
         const additionalSpecs = allData.specializationIds?.map(id => {
             const spec = availableSpecializations[id];
-            return typeof spec === 'string' ? spec : spec?.name || spec?.title || 'Unknown';
+            return typeof spec === 'string' ? spec : spec?.name || spec?.title || 'Không rõ';
         }).filter(Boolean) || [];
+
+        // Enhanced missing fields detection for review step
+        const missingFields = [];
+        if (!allData.fullname) missingFields.push('fullname');
+        if (!allData.phoneNumber) missingFields.push('phoneNumber');
+        if (!allData.password) missingFields.push('password');
+        if (!allData.cccd) missingFields.push('cccd');
+        if (!allData.gender) missingFields.push('gender');
+        if (!allData.dob) missingFields.push('dob');
+        if (!allData.province) missingFields.push('province');
+        if (!allData.ward) missingFields.push('ward');
+        if (!allData.streetAddress) missingFields.push('streetAddress');
+        if (!allData.description) missingFields.push('description');
+        if (!allData.position) missingFields.push('position');
+        if (!allData.departmentId) missingFields.push('departmentId');
+        
+        // Fix specialization check in review step
+        if (allData.specialization === undefined || allData.specialization === null || allData.specialization === '') {
+            missingFields.push('specialization');
+        }
 
         return (
             <div style={{
@@ -807,12 +833,12 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     alignItems: 'center'
                 }}>
                     <CheckCircleOutlined style={{ marginRight: 8 }} />
-                    Review Information
+                    Xem lại thông tin
                 </h3>
 
                 <Alert
-                    message="Please review all information before creating the account"
-                    description="Make sure all details are correct as some information cannot be changed later."
+                    message="Vui lòng xem lại tất cả thông tin trước khi tạo tài khoản"
+                    description="Đảm bảo tất cả thông tin đều chính xác vì một số thông tin không thể thay đổi sau này."
                     type="info"
                     showIcon
                     style={{ marginBottom: 20 }}
@@ -822,35 +848,40 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                     <div style={{ fontSize: '14px', lineHeight: '1.8' }}>
                         <Row gutter={32}>
                             <Col span={12}>
-                                <h4 style={{ color: '#1890ff', marginBottom: 12 }}>👤 Personal Information</h4>
-                                <p><strong>Name:</strong> {allData.fullname || 'Not provided'}</p>
-                                <p><strong>Phone:</strong> {allData.phoneNumber || 'Not provided'}</p>
-                                <p><strong>Gender:</strong> {allData.gender === 'male' ? '👨 Male' : allData.gender === 'female' ? '👩 Female' : 'Not selected'}</p>
-                                <p><strong>CCCD:</strong> {allData.cccd || 'Not provided'}</p>
-                                <p><strong>DOB:</strong> {allData.dob ? (typeof allData.dob === 'string' ? allData.dob : allData.dob.format('YYYY-MM-DD')) : 'Not provided'}</p>
-                                <p><strong>Address:</strong> {[allData.streetAddress, allData.ward, allData.province].filter(Boolean).join(', ') || 'Not provided'}</p>
+                                <h4 style={{ color: '#1890ff', marginBottom: 12 }}>👤 Thông tin cá nhân</h4>
+                                <p><strong>Họ tên:</strong> {allData.fullname || 'Chưa cung cấp'}</p>
+                                <p><strong>Điện thoại:</strong> {allData.phoneNumber || 'Chưa cung cấp'}</p>
+                                <p><strong>Giới tính:</strong> {allData.gender === 'male' ? '👨 Nam' : allData.gender === 'female' ? '👩 Nữ' : 'Chưa chọn'}</p>
+                                <p><strong>CCCD:</strong> {allData.cccd || 'Chưa cung cấp'}</p>
+                                <p><strong>Ngày sinh:</strong> {allData.dob ? (typeof allData.dob === 'string' ? allData.dob : allData.dob.format('DD/MM/YYYY')) : 'Chưa cung cấp'}</p>
+                                <p><strong>Địa chỉ:</strong> {[allData.streetAddress, allData.ward, allData.province].filter(Boolean).join(', ') || 'Chưa cung cấp'}</p>
                             </Col>
                             <Col span={12}>
-                                <h4 style={{ color: '#1890ff', marginBottom: 12 }}>🏥 Professional Information</h4>
-                                <p><strong>Hospital:</strong> {currentHospital?.name || user?.hospitals?.[0]?.name || 'Loading...'} (ID: {user?.hospitals?.[0]?.id || currentHospital?.id || 'N/A'})</p>
-                                <p><strong>Department:</strong> {selectedDepartment?.name || 'Not selected'} (ID: {allData.departmentId || 'N/A'})</p>
-                                <p><strong>Position:</strong> {allData.position || 'Not selected'}</p>
-                                <p><strong>Primary Specialization:</strong> {primarySpecName}</p>
+                                <h4 style={{ color: '#1890ff', marginBottom: 12 }}>🏥 Thông tin chuyên môn</h4>
+                                <p><strong>Bệnh viện:</strong> {currentHospital?.name || user?.hospitals?.[0]?.name || 'Đang tải...'} (ID: {user?.hospitals?.[0]?.id || currentHospital?.id || 'N/A'})</p>
+                                <p><strong>Khoa:</strong> {selectedDepartment?.name || 'Chưa chọn'} (ID: {allData.departmentId || 'N/A'})</p>
+                                <p><strong>Chức vụ:</strong> {allData.position || 'Chưa chọn'}</p>
+                                <p><strong>Chuyên khoa chính:</strong> {primarySpecName}</p>
                                 {additionalSpecs.length > 0 && (
-                                    <p><strong>Additional Specializations:</strong> {additionalSpecs.join(', ')}</p>
+                                    <p><strong>Chuyên khoa phụ:</strong> {additionalSpecs.join(', ')}</p>
                                 )}
-                                <p><strong>Description:</strong> {allData.description ? `${allData.description.substring(0, 100)}...` : 'Not provided'}</p>
+                                <p><strong>Mô tả:</strong> {allData.description ? `${allData.description.substring(0, 100)}...` : 'Chưa cung cấp'}</p>
 
                                 <div style={{ marginTop: 16, padding: 8, background: '#f0f0f0', fontSize: '12px' }}>
-                                    <strong>API Payload Preview:</strong>
-                                    <br />Hospital ID: {user?.hospitals?.[0]?.id || currentHospital?.id || 105}
-                                    <br />Department ID: {allData.departmentId || 'Not selected'}
-                                    <br />Department Name: {selectedDepartment?.name || 'Not found'}
-                                    <br />Specialization IDs: {[allData.specialization, ...(allData.specializationIds || [])].filter(id => id !== undefined).map(id => {
-                                        const spec = availableSpecializations[id];
-                                        return typeof spec === 'object' ? spec.id : id;
-                                    }).join(', ') || 'None'}
-                                    <br />Required missing: {['fullname', 'phoneNumber', 'password', 'cccd', 'gender', 'dob', 'province', 'ward', 'streetAddress', 'description', 'position', 'departmentId', 'specialization'].filter(field => !allData[field]).join(', ') || 'None'}
+                                    <strong>Xem trước API Payload:</strong>
+                                    <br />ID Bệnh viện: {user?.hospitals?.[0]?.id || currentHospital?.id || 105}
+                                    <br />ID Khoa: {allData.departmentId || 'Chưa chọn'}
+                                    <br />Tên Khoa: {selectedDepartment?.name || 'Không tìm thấy'}
+                                    <br />ID Chuyên khoa: {(() => {
+                                        const primaryId = allData.specialization !== undefined ? 
+                                            (availableSpecializations[allData.specialization]?.id || allData.specialization) : undefined;
+                                        const additionalIds = (allData.specializationIds || []).map(id => 
+                                            availableSpecializations[id]?.id || id
+                                        );
+                                        const allIds = [primaryId, ...additionalIds].filter(id => id !== undefined);
+                                        return allIds.join(', ') || 'Không có';
+                                    })()}
+                                    <br />Thiếu bắt buộc: {missingFields.join(', ') || 'Không có'}
                                 </div>
                             </Col>
                         </Row>
@@ -880,30 +911,30 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             alignItems: 'center'
                         }}>
                             <UserOutlined style={{ marginRight: 8 }} />
-                            Basic Information
+                            Thông tin cơ bản
                         </h3>
 
                         <Row gutter={16}>
                             <Col xs={24} md={12}>
                                 <Form.Item
                                     name="fullname"
-                                    label="Full Name"
+                                    label="Họ và tên"
                                     rules={[
-                                        { required: true, message: 'Please enter full name' },
-                                        { min: 2, message: 'Name must be at least 2 characters' }
+                                        { required: true, message: 'Vui lòng nhập họ tên' },
+                                        { min: 2, message: 'Tên phải có ít nhất 2 ký tự' }
                                     ]}
                                 >
-                                    <Input placeholder="Dr. John Smith" />
+                                    <Input placeholder="BS. Nguyễn Văn A" />
                                 </Form.Item>
                             </Col>
 
                             <Col xs={24} md={12}>
                                 <Form.Item
                                     name="phoneNumber"
-                                    label="Phone Number"
+                                    label="Số điện thoại"
                                     rules={[
-                                        { required: true, message: 'Please enter phone number' },
-                                        { pattern: /^[0-9]{10,11}$/, message: 'Phone number must be 10-11 digits' }
+                                        { required: true, message: 'Vui lòng nhập số điện thoại' },
+                                        { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại phải có 10-11 chữ số' }
                                     ]}
                                 >
                                     <Input placeholder="0123456789" />
@@ -915,12 +946,12 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             <Col xs={24} md={8}>
                                 <Form.Item
                                     name="gender"
-                                    label="Gender"
-                                    rules={[{ required: true, message: 'Please select gender' }]}
+                                    label="Giới tính"
+                                    rules={[{ required: true, message: 'Vui lòng chọn giới tính' }]}
                                 >
-                                    <Select placeholder="Select gender">
-                                        <Option value="male">👨 Male</Option>
-                                        <Option value="female">👩 Female</Option>
+                                    <Select placeholder="Chọn giới tính">
+                                        <Option value="male">👨 Nam</Option>
+                                        <Option value="female">👩 Nữ</Option>
                                     </Select>
                                 </Form.Item>
                             </Col>
@@ -928,13 +959,18 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             <Col xs={24} md={8}>
                                 <Form.Item
                                     name="dob"
-                                    label="Date of Birth"
-                                    rules={[{ required: true, message: 'Please select date of birth' }]}
+                                    label="Ngày sinh"
+                                    rules={[{ required: true, message: 'Vui lòng chọn ngày sinh' }]}
                                 >
+                                    {/* ✅ Enhanced DatePicker with Vietnamese locale */}
                                     <DatePicker
                                         style={{ width: '100%' }}
-                                        placeholder="Select date"
-                                        format="YYYY-MM-DD"
+                                        placeholder="Chọn ngày sinh"
+                                        format="DD/MM/YYYY"  // ✅ Vietnamese date format
+                                        locale={locale.DatePicker}
+                                        disabledDate={(current) => {
+                                            return current && current > dayjs().endOf('day');
+                                        }}
                                     />
                                 </Form.Item>
                             </Col>
@@ -942,13 +978,13 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             <Col xs={24} md={8}>
                                 <Form.Item
                                     name="cccd"
-                                    label="CCCD/ID Card Number"
+                                    label="Số CCCD/CMND"
                                     rules={[
-                                        { required: true, message: 'Please enter ID number' },
-                                        { pattern: /^[0-9]{9,12}$/, message: 'ID must be 9-12 digits' }
+                                        { required: true, message: 'Vui lòng nhập số CCCD' },
+                                        { pattern: /^[0-9]{9,12}$/, message: 'CCCD phải có 9-12 chữ số' }
                                     ]}
                                 >
-                                    <Input placeholder="Enter ID number" />
+                                    <Input placeholder="Nhập số CCCD" />
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -957,34 +993,34 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             <Col xs={24} md={12}>
                                 <Form.Item
                                     name="password"
-                                    label="Password"
+                                    label="Mật khẩu"
                                     rules={[
-                                        { required: true, message: 'Please enter password' },
-                                        { min: 6, message: 'Password must be at least 6 characters' }
+                                        { required: true, message: 'Vui lòng nhập mật khẩu' },
+                                        { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' }
                                     ]}
                                 >
-                                    <Input.Password placeholder="Enter password" />
+                                    <Input.Password placeholder="Nhập mật khẩu" />
                                 </Form.Item>
                             </Col>
 
                             <Col xs={24} md={12}>
                                 <Form.Item
                                     name="confirmPassword"
-                                    label="Confirm Password"
+                                    label="Xác nhận mật khẩu"
                                     dependencies={['password']}
                                     rules={[
-                                        { required: true, message: 'Please confirm password' },
+                                        { required: true, message: 'Vui lòng xác nhận mật khẩu' },
                                         ({ getFieldValue }) => ({
                                             validator(_, value) {
                                                 if (!value || getFieldValue('password') === value) {
                                                     return Promise.resolve();
                                                 }
-                                                return Promise.reject(new Error('Passwords do not match!'));
+                                                return Promise.reject(new Error('Mật khẩu không khớp!'));
                                             },
                                         }),
                                     ]}
                                 >
-                                    <Input.Password placeholder="Confirm password" />
+                                    <Input.Password placeholder="Xác nhận mật khẩu" />
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -993,7 +1029,7 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             <Col xs={24} md={12}>
                                 <Form.Item
                                     name="avatarUrl"
-                                    label="Profile Image URL"
+                                    label="URL ảnh đại diện"
                                 >
                                     <Input placeholder="https://example.com/photo.jpg" />
                                 </Form.Item>
@@ -1002,15 +1038,15 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             <Col xs={24} md={12}>
                                 <Form.Item
                                     name="job"
-                                    label="Job Title"
-                                    initialValue="Doctor"
+                                    label="Chức danh nghề nghiệp"
+                                    initialValue="Bác sĩ"
                                 >
-                                    <Input placeholder="Doctor" disabled />
+                                    <Input placeholder="Bác sĩ" disabled />
                                 </Form.Item>
                             </Col>
                         </Row>
 
-                        {/* ✅ Updated Province and Ward selection */}
+                        {/* Updated Province and Ward selection */}
                         <Row gutter={16}>
                             <Col xs={24} md={8}>
                                 <Form.Item
@@ -1033,7 +1069,7 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                                         }))}
                                         allowClear
                                         onSelect={(value) => {
-                                            console.log("🏙️ Province selected:", value);
+                                            console.log("🏙️ Đã chọn tỉnh:", value);
                                         }}
                                     />
                                 </Form.Item>
@@ -1042,13 +1078,13 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                             <Col xs={24} md={8}>
                                 <Form.Item
                                     name="ward"
-                                    label="Phường/Xã"
-                                    rules={[{ required: true, message: 'Vui lòng chọn phường/xã!' }]}
+                                    label="Quận/Huyện"
+                                    rules={[{ required: true, message: 'Vui lòng chọn quận/huyện!' }]}
                                 >
                                     <Select
                                         placeholder={
                                             selectedProvince
-                                                ? "Chọn phường/xã"
+                                                ? "Chọn quận/huyện"
                                                 : "Chọn tỉnh/thành phố trước"
                                         }
                                         showSearch
@@ -1065,7 +1101,7 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                                         }
                                         allowClear
                                         onSelect={(value) => {
-                                            console.log("🏘️ Ward selected:", value);
+                                            console.log("🏘️ Đã chọn quận/huyện:", value);
                                         }}
                                     />
                                 </Form.Item>
@@ -1077,12 +1113,12 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                                     label="Số nhà, đường"
                                     rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}
                                 >
-                                    <Input placeholder="123 Nguyen Hue Street" />
+                                    <Input placeholder="123 Đường Nguyễn Huệ" />
                                 </Form.Item>
                             </Col>
                         </Row>
 
-                        {/* ✅ Debug info for provinces (remove in production) */}
+                        {/* Debug info for provinces (remove in production) */}
                         {process.env.NODE_ENV === 'development' && (
                             <div style={{
                                 background: "#f0f0f0",
@@ -1091,11 +1127,11 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
                                 fontSize: '12px',
                                 marginTop: 16
                             }}>
-                                <strong>🔍 Province Debug Info:</strong><br />
-                                Provinces loaded: {provinces.length}<br />
-                                Selected province: {selectedProvince || "None"}<br />
-                                Available wards: {wards.length}<br />
-                                Loading provinces: {loadingProvinces ? "Yes" : "No"}
+                                <strong>🔍 Thông tin Debug Tỉnh thành:</strong><br />
+                                Đã tải tỉnh thành: {provinces.length}<br />
+                                Tỉnh được chọn: {selectedProvince || "Không có"}<br />
+                                Quận/huyện có sẵn: {wards.length}<br />
+                                Đang tải tỉnh thành: {loadingProvinces ? "Có" : "Không"}
                             </div>
                         )}
                     </div>
@@ -1115,102 +1151,106 @@ const AddStaff = ({ visible, onCancel, onSuccess, staffType = 'doctor', departme
     return (
         <>
             {contextHolder}
-            <Modal
-                title={
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <UserAddOutlined style={{
-                            color: staffType === 'doctor' ? '#1890ff' : '#52c41a',
-                            marginRight: 8,
-                            fontSize: '20px'
-                        }} />
-                        <span style={{ fontSize: '18px', fontWeight: 600 }}>
-                            Add New {staffType === 'doctor' ? 'Doctor' : 'Nurse'}
-                        </span>
-                    </div>
-                }
-                open={visible}
-                onCancel={onCancel}
-                footer={null}
-                width={1100}
-                destroyOnClose
-                style={{ top: 20 }}
-            >
-                <Spin spinning={loading}>
-                    <div style={{ maxHeight: '75vh', overflowY: 'auto', padding: '0 4px' }}>
-                        <div style={{ marginBottom: 32 }}>
-                            <Steps current={currentStep} size="small">
-                                {steps.map((step, index) => (
-                                    <Step
-                                        key={index}
-                                        title={step.title}
-                                        description={step.description}
-                                        icon={step.icon}
-                                    />
-                                ))}
-                            </Steps>
+            
+            {/* ✅ ConfigProvider with Vietnamese locale */}
+            <ConfigProvider locale={locale}>
+                <Modal
+                    title={
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <UserAddOutlined style={{
+                                color: staffType === 'doctor' ? '#1890ff' : '#52c41a',
+                                marginRight: 8,
+                                fontSize: '20px'
+                            }} />
+                            <span style={{ fontSize: '18px', fontWeight: 600 }}>
+                                Thêm {staffType === 'doctor' ? 'Bác sĩ' : 'Điều dưỡng'} mới
+                            </span>
                         </div>
-
-                        <Form
-                            form={form}
-                            layout="vertical"
-                            preserve={true}
-                            onValuesChange={onFormValuesChange} // ✅ Add onValuesChange handler
-                        >
-                            {renderStepContent()}
-
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                gap: 12,
-                                paddingTop: 16,
-                                borderTop: '1px solid #f0f0f0'
-                            }}>
-                                <div>
-                                    {currentStep > 0 && (
-                                        <Button onClick={prevStep} size="large">
-                                            Previous
-                                        </Button>
-                                    )}
-                                </div>
-
-                                <div style={{ display: 'flex', gap: 12 }}>
-                                    <Button onClick={onCancel} size="large">
-                                        Cancel
-                                    </Button>
-
-                                    {currentStep < steps.length - 1 ? (
-                                        <Button
-                                            type="primary"
-                                            onClick={nextStep}
-                                            size="large"
-                                            style={{
-                                                backgroundColor: staffType === 'doctor' ? '#1890ff' : '#52c41a',
-                                                borderColor: staffType === 'doctor' ? '#1890ff' : '#52c41a'
-                                            }}
-                                        >
-                                            Next
-                                        </Button>
-                                    ) : (
-                                        <Button
-                                            type="primary"
-                                            onClick={handleSubmit}
-                                            loading={loading}
-                                            size="large"
-                                            icon={<SaveOutlined />}
-                                            style={{
-                                                backgroundColor: staffType === 'doctor' ? '#1890ff' : '#52c41a',
-                                                borderColor: staffType === 'doctor' ? '#1890ff' : '#52c41a'
-                                            }}
-                                        >
-                                            Create {staffType === 'doctor' ? 'Doctor' : 'Nurse'}
-                                        </Button>
-                                    )}
-                                </div>
+                    }
+                    open={visible}
+                    onCancel={onCancel}
+                    footer={null}
+                    width={1100}
+                    destroyOnClose
+                    style={{ top: 20 }}
+                >
+                    <Spin spinning={loading}>
+                        <div style={{ maxHeight: '75vh', overflowY: 'auto', padding: '0 4px' }}>
+                            <div style={{ marginBottom: 32 }}>
+                                <Steps current={currentStep} size="small">
+                                    {steps.map((step, index) => (
+                                        <Step
+                                            key={index}
+                                            title={step.title}
+                                            description={step.description}
+                                            icon={step.icon}
+                                        />
+                                    ))}
+                                </Steps>
                             </div>
-                        </Form>
-                    </div>
-                </Spin>
-            </Modal>
+
+                            <Form
+                                form={form}
+                                layout="vertical"
+                                preserve={true}
+                                onValuesChange={onFormValuesChange}
+                            >
+                                {renderStepContent()}
+
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    gap: 12,
+                                    paddingTop: 16,
+                                    borderTop: '1px solid #f0f0f0'
+                                }}>
+                                    <div>
+                                        {currentStep > 0 && (
+                                            <Button onClick={prevStep} size="large">
+                                                Quay lại
+                                            </Button>
+                                        )}
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: 12 }}>
+                                        <Button onClick={onCancel} size="large">
+                                            Hủy
+                                        </Button>
+
+                                        {currentStep < steps.length - 1 ? (
+                                            <Button
+                                                type="primary"
+                                                onClick={nextStep}
+                                                size="large"
+                                                style={{
+                                                    backgroundColor: staffType === 'doctor' ? '#1890ff' : '#52c41a',
+                                                    borderColor: staffType === 'doctor' ? '#1890ff' : '#52c41a'
+                                                }}
+                                            >
+                                                Tiếp theo
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                type="primary"
+                                                onClick={handleSubmit}
+                                                loading={loading}
+                                                size="large"
+                                                icon={<SaveOutlined />}
+                                                style={{
+                                                    backgroundColor: staffType === 'doctor' ? '#1890ff' : '#52c41a',
+                                                    borderColor: staffType === 'doctor' ? '#1890ff' : '#52c41a'
+                                                }}
+                                            >
+                                                Tạo {staffType === 'doctor' ? 'Bác sĩ' : 'Điều dưỡng'}
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            </Form>
+                        </div>
+                    </Spin>
+                </Modal>
+            </ConfigProvider>
         </>
     );
 };

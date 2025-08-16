@@ -4,7 +4,7 @@ import { LockOutlined, HomeOutlined, MailOutlined } from "@ant-design/icons";
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from "react-redux";
 import { clearMessage, setMessage } from "../../redux/slices/messageSlice";
-import { loginUser } from "../../redux/slices/userSlice";
+import { loginUser, setIsLoggedOut } from "../../redux/slices/userSlice";
 import {
     DOCTOR,
     NURSE,
@@ -18,9 +18,11 @@ const { Title } = Typography;
 function Login() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { user } = useSelector((state) => state.user);
+    const { user, isLoggedOut } = useSelector((state) => state.user);
     const [messageApi, contextHolder] = message.useMessage();
     const messageState = useSelector((state) => state.message)
+
+
     useEffect(() => {
         if (messageState) {
             messageApi.open({
@@ -129,9 +131,12 @@ function Login() {
                     marginRight: 0,
                     zIndex: 2,
                     background: "rgba(255,255,255,0.97)",
+                    justifyContent: "center",    
+                    alignItems: "center",
+                    
                 }}
             >
-                <div style={{ textAlign: "center", marginBottom: 24 }}>
+                <div style={{ textAlign: "center", marginTop: 45 }}>
 
                     <Title level={2} style={{ color: "#1890ff", margin: 0 }}>
                         Đăng nhập DABS
@@ -187,11 +192,7 @@ function Login() {
                             Đăng nhập
                         </Button>
                     </Form.Item>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginTop: 40 }}>
-                        <Link to="/login/forget-password" style={{ color: "#1890ff" }}>Quên mật khẩu?</Link>
-                        <Link to="/login/register" style={{ color: "#1890ff" }}>Đăng ký</Link>
 
-                    </div>
                 </Form>
 
             </Card></>
