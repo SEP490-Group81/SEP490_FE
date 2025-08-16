@@ -40,7 +40,6 @@ function MenuSider() {
         }
     ];
 
-
     const hospitalAdminItems = [
         {
             key: "home",
