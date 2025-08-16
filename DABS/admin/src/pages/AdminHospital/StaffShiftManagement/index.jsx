@@ -35,18 +35,23 @@ import { getStaffNurseList } from "../../../services/staffNurseService";
 import { getUserById } from "../../../services/userService";
 import { createStaffSchedules, deleteStaffSchedule, getScheduleByStaffNurseId, updateStaffSchedule } from "../../../services/scheduleService";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
+import utc from "dayjs/plugin/utc";
+import viLocale from "@fullcalendar/core/locales/vi";
+import { getHospitalWorkDate } from "../../../services/hospitalService";
 
+dayjs.extend(utc);
 const { Option, OptGroup } = Select;
 const { RangePicker } = DatePicker;
 
 const weekdayOptions = [
-  { label: "Chủ nhật", value: 0 },
+
   { label: "Thứ 2", value: 1 },
   { label: "Thứ 3", value: 2 },
   { label: "Thứ 4", value: 3 },
   { label: "Thứ 5", value: 4 },
   { label: "Thứ 6", value: 5 },
   { label: "Thứ 7", value: 6 },
+  { label: "Chủ nhật", value: 0 }
 ];
 
 dayjs.extend(customParseFormat);
@@ -69,6 +74,7 @@ const isShiftDisabled = (event) => {
 
 const eventColor = (info) => {
   const { type, status, patients } = info.event.extendedProps;
+  console.log("Event extendedProps:", info.event.extendedProps);
   if (type === "booking") {
     Object.assign(info.el.style, {
       backgroundColor: "#3575d3",
@@ -124,8 +130,9 @@ const eventColor = (info) => {
 
 
 const StaffShiftManagement = () => {
-  const [filteredShifts, setFilteredShifts] = useState([]);
-  const [staffDetail, setStaffDetail] = useState(null);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [shiftToDelete, setShiftToDelete] = useState(null);
+  //const [staffDetail, setStaffDetail] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingShift, setEditingShift] = useState(null);
   const [form] = Form.useForm();
@@ -133,7 +140,6 @@ const StaffShiftManagement = () => {
   const [modalDetail, setModalDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const user = useSelector((state) => state.user.user);
-  console.log("hospital nurse id is: " + user.hospitals[0]?.id);
   const [allStaffs, setAllStaffs] = useState([]);
   const [nurses, setNurses] = useState([]);
   const [selectedPersonId, setSelectedPersonId] = useState(null);
@@ -143,8 +149,46 @@ const StaffShiftManagement = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const messageState = useSelector((state) => state.message)
   const calendarRef = useRef();
-  console.log("Selected person ID:", selectedPersonId);
+  const shiftSelectMode = editingShift ? undefined : "multiple";
+  const [workingDates, setWorkingDates] = useState([]);
 
+  useEffect(() => {
+    const fetchHospitalWorkDates = async () => {
+      if (!user?.hospitals?.[0]?.id) return;
+      try {
+        const response = await getHospitalWorkDate(user.hospitals[0].id);
+        console.log("response log is :  " + JSON.stringify(response));
+        if (response?.workingDates) {
+          setWorkingDates(response.workingDates);
+        }
+      } catch (error) {
+        console.error("Lỗi lấy lịch làm việc bệnh viện:", error);
+        setWorkingDates([]);
+      }
+    };
+    fetchHospitalWorkDates();
+  }, [user?.hospitals]);
+
+  const getShiftTimesByDay = (dayOfWeek) => {
+    const dayInfo = workingDates.find((d) => d.dayOfWeek === dayOfWeek);
+
+    if (
+      !dayInfo ||
+      dayInfo.isClosed ||
+      dayInfo.startTime === "00:00:00" ||
+      dayInfo.endTime === "00:00:00"
+    ) {
+      return {
+        morning: { startTime: "00:00:00", endTime: "00:00:00" },
+        afternoon: { startTime: "00:00:00", endTime: "00:00:00" },
+      };
+    }
+
+    return {
+      morning: { startTime: dayInfo.startTime, endTime: "12:00:00" },
+      afternoon: { startTime: "12:00:00", endTime: dayInfo.endTime },
+    };
+  };
 
   useEffect(() => {
     if (messageState) {
@@ -176,12 +220,14 @@ const StaffShiftManagement = () => {
     console.log("Fetching staff schedule for:", selectedPersonId, "from", from, "to", to, "and hospital ID:", user.hospitals[0]?.id);
 
     try {
+      console.log("Fetching schedule for staff ID:", selectedPersonId, "from", from, "to", to, "hospital ID:", user.hospitals[0]?.id);
       const data = await getScheduleByStaffNurseId(selectedPersonId, from, to, user.hospitals[0]?.id);
-
+      console.log("Fetched staff schedule data:", data, "for staff ID:", selectedPersonId);
       const schedules = data?.schedules || [];
       const now = dayjs();
 
       const formattedEvents = schedules.map((item) => {
+
         const dateStr = item.workDate.split("T")[0];
         const startStr = `${dateStr}T${item.startTime}`;
         const endStr = `${dateStr}T${item.endTime}`;
@@ -226,14 +272,16 @@ const StaffShiftManagement = () => {
 
         return {
           id: item.id,
-          title: item.timeShift === 1 ? "Ca sáng" : "Ca chiều",
+          title: item.timeShift === 1 ? "Ca sáng " : "Ca chiều",
           start: start.toISOString(),
           end: end.toISOString(),
           extendedProps: {
             type: status.includes("rỗng") ? "shift" : "appointment",
+            department: item.room?.department?.name || "Không rõ",
             room: item.room?.name || "Không rõ",
             status,
             patients,
+            doctorScheduleId: item.doctorScheduleId || 0,
           },
         };
       });
@@ -253,7 +301,7 @@ const StaffShiftManagement = () => {
         const staffList = await getStaffNurseList(user.hospitals[0].id);
         setAllStaffs(staffList || []);
         console.log("Fetched all staff:", JSON.stringify(staffList));
-        setSelectedPersonId(staffList?.[0]?.id || null);
+        setSelectedPersonId(staffList?.[0]?.staffId || null);
         const nurseList = (staffList || []).filter((s) => s.role?.name === 'Nurse');
         setNurses(nurseList);
         console.log("Fetched nurses:", nurseList);
@@ -268,23 +316,23 @@ const StaffShiftManagement = () => {
     fetchStaffs();
   }, [user?.hospitals]);
 
-  useEffect(() => {
-    const fetchDoctor = async () => {
-      if (!selectedPersonId) return;
-      const result = await getUserById(selectedPersonId);
-      if (result) {
-        console.log("result doctor detail : " + result);
-        setStaffDetail(result);
-        console.log("staff detail: " + JSON.stringify(staffDetail));
-      } else {
-        console.error("Không tìm thấy thông tin bác sĩ.");
-      }
-    };
-    fetchDoctor();
-  }, [selectedPersonId]);
+  // useEffect(() => {
+  //   const fetchDoctor = async () => {
+  //     if (!selectedPersonId) return;
+  //     const result = await getUserById(selectedPersonId);
+  //     if (result) {
+  //       console.log("result nurse detail : " + JSON.stringify(result));
+  //       setStaffDetail(result);
+  //       console.log("staff detail: " + JSON.stringify(staffDetail));
+  //     } else {
+  //       console.error("Không tìm thấy thông tin bác sĩ.");
+  //     }
+  //   };
+  //   fetchDoctor();
+  // }, [selectedPersonId]);
 
   const normalStaffs = allStaffs.filter(
-    (s) => !nurses.find((n) => n.id === s.id)
+    (s) => !nurses.find((n) => n.staffId === s.staffId)
   );
 
 
@@ -306,70 +354,122 @@ const StaffShiftManagement = () => {
   //   },
   // }));
 
+  const showDeleteConfirm = (shift) => {
+    setShiftToDelete(shift);
+    setDeleteConfirmVisible(true);
+  };
+
   const onAddShift = (dateStr = null) => {
     setEditingShift(null);
     form.resetFields();
     if (dateStr) form.setFieldValue("workDate", dayjs(dateStr));
     setModalVisible(true);
   };
+  const handleEventClick = ({ event }) => {
+    setSelectedEvent(event);
 
-  const onEditShift = (shift) => {
-    setSelectedEvent(shift);
-    console.log("Selected event for edit:", selectedEvent);
+    setEditingShift({
+      id: event.id,
+      doctorScheduleId: event.extendedProps.doctorScheduleId || 0,
+      staffId: event.extendedProps.staffId || selectedPersonId,
+      workDate: dayjs(event.start).local().startOf('day'),
+      timeShift: event.title.includes("sáng") ? 1 : 2,
+      isAvailable: true,
+      reasonOfUnavailability: event.extendedProps.reasonOfUnavailability || "",
+    });
+
+    form.setFieldsValue({
+      staffId: event.extendedProps.staffId || selectedPersonId,
+      workDate: dayjs(event.start).local().startOf('day'),
+      shift: event.title.includes("sáng") ? ["morning"] : ["afternoon"],
+    });
+
     setModalDetail(true);
   };
 
-  const onDeleteShift = async (id) => {
-    Modal.confirm({
-      title: "Xác nhận xóa ca làm việc?",
-      onOk: async () => {
-        try {
-          await deleteStaffSchedule(id);
-          setFlag(prev => !prev);
-          dispatch(setMessage({ type: 'success', content: 'Xóa ca làm việc thành công!' }));
 
-          setModalDetail(false);
-        } catch (error) {
-          console.error("Lỗi xóa ca làm việc:", error);
-          dispatch(setMessage({ type: 'error', content: 'Lỗi xoá ca làm việc!' }));
-        }
-      },
-    });
-  };
 
   const onFinish = async (values) => {
-    const { shift } = values;
-    const shiftsPayload = shift.map((sh) => ({
-      startTime: shiftTimesMap[sh].startTime,
-      endTime: shiftTimesMap[sh].endTime,
-    }));
+    const { shift, workDate } = values;
+    console.log("shift is " + shift + "work date is " + workDate);
+    let shiftArray = [];
+
+    if (Array.isArray(shift)) {
+      shiftArray = shift;
+    } else if (typeof shift === "string" && shift) {
+      shiftArray = [shift];
+    } else {
+      shiftArray = [];
+    }
+    if (shiftArray.length === 0 || !workDate) {
+      dispatch(
+        setMessage({
+          type: "error",
+          content: "Vui lòng chọn ngày và ca làm việc",
+        })
+      );
+      return;
+    }
+    console.log("shift Array : " + JSON.stringify(shiftArray));
+    const dayOfWeek = dayjs(workDate).day();
+    const shiftTimesMap = getShiftTimesByDay(dayOfWeek);
+
+    console.log("day of week: " + JSON.stringify(dayOfWeek) + "shift time map : " + JSON.stringify(shiftTimesMap));
+    const validShifts = shiftArray.every(sh => {
+      const times = shiftTimesMap[sh];
+      console.log("times is : " + JSON.stringify(times));
+      return times && times.startTime !== "00:00:00" && times.endTime !== "00:00:00";
+    });
+    console.log("valid shifts is : " + validShifts);
+    if (!validShifts) {
+      dispatch(setMessage({
+        type: 'error',
+        content: 'Ngày làm việc này không hỗ trợ ca làm đã chọn vì bệnh viện đóng cửa hoặc thời gian không hợp lệ.'
+      }));
+      return;
+    }
+
+    const shiftsPayload = shiftArray.map((sh) => {
+      const times = shiftTimesMap[sh];
+      // if (!times || !times.startTime || !times.endTime) {
+      //   throw new Error(`Ca làm '${sh}' không có thời gian hợp lệ trong ngày đã chọn`);
+      // }
+      return {
+        startTime: times.startTime,
+        endTime: times.endTime,
+      };
+    });
 
     try {
       if (editingShift) {
+        const shiftKey = shiftArray[0];
+        const times = shiftTimesMap[shiftKey];
+
         const updatePayload = {
           id: editingShift.id,
-          doctorScheduleId: editingShift.doctorScheduleId || 0,
-          userId: values.staffId,
-          workDate: values.workDate.toISOString(),
-          timeShift: shiftsPayload[0].startTime < "12:00:00" ? 1 : 2,
+          doctorScheduleId: editingShift.doctorScheduleId || null,
+          staffId: values.staffId,
+          workDate: workDate ? workDate.format("YYYY-MM-DD") : null,
+          startTime: times.startTime,
+          endTime: times.endTime,
           isAvailable: true,
           reasonOfUnavailability: "",
         };
-        console.log("Update payload:", updatePayload);
+        console.log("Update payload:", JSON.stringify(updatePayload));
         await updateStaffSchedule(updatePayload);
         dispatch(setMessage({ type: 'success', content: 'Cập nhật ca làm việc thành công!' }));
       } else {
         const payload = {
-          userIds: [values.staffId],
+          staffIds: [values.staffId],
           hospitalId: user.hospitals[0]?.id,
-          daysOfWeek: [dayjs(values.workDate).day()],
+          daysOfWeek: [dayOfWeek],
           shifts: shiftsPayload,
-          startDate: values.workDate.format("YYYY-MM-DD"),  // ngày bắt đầu lịch (ngày làm việc)
-          endDate: values.workDate.format("YYYY-MM-DD"),
+          startDate: dayjs(workDate).format("YYYY-MM-DD"),
+          endDate: dayjs(workDate).format("YYYY-MM-DD"),
           isAvailable: false,
           reasonOfUnavailability: "",
         };
-        console.log("Create payload:", payload);
+        console.log("Create payload:", JSON.stringify(payload));
         await createStaffSchedules(payload);
         dispatch(setMessage({ type: 'success', content: 'Tạo ca làm việc thành công!' }));
       }
@@ -380,13 +480,9 @@ const StaffShiftManagement = () => {
       dispatch(setMessage({ type: 'error', content: 'Xảy ra lỗi khi lưu ca làm việc!' }));
     }
   };
-
-
-
-  const shiftTimesMap = {
-    morning: { startTime: "07:30:00", endTime: "11:30:00" },
-    afternoon: { startTime: "12:30:00", endTime: "16:30:00" }
-  };
+  const closedDays = React.useMemo(() => {
+    return workingDates.filter(d => d.isClosed).map(d => d.dayOfWeek);
+  }, [workingDates]);
 
   const renderEventContent = (eventInfo) => {
     const { title, extendedProps } = eventInfo.event;
@@ -403,6 +499,11 @@ const StaffShiftManagement = () => {
           boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
           lineHeight: 1.3,
+          overflow: "hidden",
+          WebkitBoxOrient: "vertical",
+          display: "-webkit-box",
+          WebkitLineClamp: 6,
+          height: "100%"
         }}
       >
         {(department) && (
@@ -436,6 +537,7 @@ const StaffShiftManagement = () => {
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis",
+            maxWidth: 120,
           }}
           title={title}
         >
@@ -461,55 +563,82 @@ const StaffShiftManagement = () => {
       </div>
     );
   };
+
   const onFinishBulk = async (values) => {
     const { staffIds, weekdays, shift, dateRange } = values;
+
     if (!staffIds || staffIds.length === 0) {
-      message.error("Vui lòng chọn Nhân viên");
+      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn nhân viên!' }));
       return;
     }
     if (!weekdays || weekdays.length === 0) {
-      message.error("Vui lòng chọn ngày trong tuần");
+      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ngày trong tuần!' }));
       return;
     }
     if (!shift || shift.length === 0) {
-      message.error("Vui lòng chọn ca làm");
+      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ca làm!' }));
       return;
     }
     if (!dateRange || dateRange.length !== 2) {
-      message.error("Vui lòng chọn khoảng thời gian");
+      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn khoảng thời gian!' }));
       return;
     }
 
-    const shiftsPayload = shift.map((sh) => ({
-      startTime: shiftTimesMap[sh].startTime,
-      endTime: shiftTimesMap[sh].endTime,
-    }));
-
     try {
-      for (const userId of staffIds) {
-        const payload = {
-          userIds: [userId],
-          hospitalId: user.hospitals[0]?.id,
-          daysOfWeek: weekdays,
-          shifts: shiftsPayload,
-          startDate: dateRange[0].format("YYYY-MM-DD"),
-          endDate: dateRange[1].format("YYYY-MM-DD"),
-          isAvailable: true,
-          reasonOfUnavailability: "",
-        };
+      for (const dayOfWeek of weekdays) {
+        const shiftTimesMap = getShiftTimesByDay(dayOfWeek);
+        const validShifts = shift.every(sh => {
+          const times = shiftTimesMap[sh];
+          return times &&
+            times.startTime &&
+            times.endTime &&
+            times.startTime.trim() !== "00:00:00" &&
+            times.endTime.trim() !== "00:00:00";
+        });
 
-        console.log("Bulk create payload:", payload);
-        await createStaffSchedules(payload);
+        if (!validShifts) {
+          dispatch(setMessage({
+            type: 'error',
+            content: `Ngày ${weekdayOptions.find(d => d.value === dayOfWeek)?.label || dayOfWeek} không hỗ trợ ca làm đã chọn do bệnh viện đóng cửa hoặc thời gian không hợp lệ.`,
+          }));
+          return;
+        }
       }
 
-      dispatch(setMessage({ type: 'success', content: 'Tạo ca làm việc thành công!' }));
+      const firstDayShiftTimesMap = getShiftTimesByDay(weekdays[0]);
+      const shiftsPayload = shift.map(sh => {
+        const times = firstDayShiftTimesMap[sh];
+        return {
+          startTime: times.startTime,
+          endTime: times.endTime,
+        };
+      });
+
+      const payload = {
+        staffIds,
+        hospitalId: user?.hospitals?.[0]?.id || 0,
+        daysOfWeek: weekdays,
+        shifts: shiftsPayload,
+        startDate: dateRange[0].format("YYYY-MM-DD"),
+        endDate: dateRange[1].format("YYYY-MM-DD"),
+        isAvailable: true,
+        reasonOfUnavailability: "",
+      };
+
+      console.log("Bulk create staff schedule payload:", JSON.stringify(payload));
+
+      await createStaffSchedules(payload);
+
+      dispatch(setMessage({ type: 'success', content: 'Tạo lịch làm việc thành công!' }));
       bulkForm.resetFields();
       setFlag(prev => !prev);
+
     } catch (error) {
-      console.error("Lỗi tạo lịch mẫu:", error);
-      dispatch(setMessage({ type: 'error', content: 'Xảy ra lỗi khi tạo ca làm việc!' }));
+      console.error("Lỗi khi tạo lịch làm việc:", error);
+      dispatch(setMessage({ type: 'error', content: 'Tạo lịch làm việc thất bại, vui lòng thử lại sau!' }));
     }
   };
+
 
   const Legend = () => (
     <Row justify="center" gutter={16} style={{ marginBottom: 20 }}>
@@ -589,17 +718,17 @@ const StaffShiftManagement = () => {
                 style={{ width: 300 }}
                 optionFilterProp="children"
                 filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
-                onChange={setSelectedPersonId}
+                onChange={(value) => setSelectedPersonId(value)}
                 value={selectedPersonId}
               >
                 <OptGroup label="Y tá (Nurse)">
                   {nurses.map(n => (
-                    <Option key={`nurse-${n.id}`} value={n.id}>{n.fullname}</Option>
+                    <Option key={`nurse-${n.staffId}`} value={n.staffId}>{n.fullname}</Option>
                   ))}
                 </OptGroup>
                 <OptGroup label="Nhân viên (Staff)">
                   {normalStaffs.map(s => (
-                    <Option key={`staff-${s.id}`} value={s.id}>{s.fullname}</Option>
+                    <Option key={`staff-${s.staffId}`} value={s.staffId}>{s.fullname}</Option>
                   ))}
                 </OptGroup>
               </Select>
@@ -645,7 +774,7 @@ const StaffShiftManagement = () => {
                         placeholder="Chọn Nhân viên"
                         onChange={(value) => {
                           if (value.includes("all")) {
-                            const allIds = allStaffs.map((n) => n.id);
+                            const allIds = allStaffs.map((n) => n.staffId);
                             bulkForm.setFieldsValue({ staffIds: allIds });
                           }
                         }}
@@ -655,7 +784,7 @@ const StaffShiftManagement = () => {
                           Tất cả
                         </Option>
                         {allStaffs.map((doc) => (
-                          <Option key={doc.id} value={doc.id}>
+                          <Option key={doc.staffId} value={doc.staffId}>
                             {doc.fullname}
                           </Option>
                         ))}
@@ -667,7 +796,12 @@ const StaffShiftManagement = () => {
                       label="Ngày trong tuần"
                       rules={[{ required: true, message: "Vui lòng chọn ngày trong tuần." }]}
                     >
-                      <Checkbox.Group options={weekdayOptions} />
+                      <Checkbox.Group
+                        options={weekdayOptions.map(opt => ({
+                          ...opt,
+                          disabled: closedDays.includes(opt.value),
+                        }))}
+                      />
                     </Form.Item>
 
                     <Form.Item
@@ -714,7 +848,7 @@ const StaffShiftManagement = () => {
                     flexDirection: "column",
                   }}
                 >
-                  <Row justify="end" style={{ marginBottom: 8 }}>
+                  {/* <Row justify="end" style={{ marginBottom: 8 }}>
                     <Button
                       type="primary"
                       icon={<PlusOutlined />}
@@ -729,7 +863,7 @@ const StaffShiftManagement = () => {
                     >
                       Tạo sự kiện
                     </Button>
-                  </Row>
+                  </Row> */}
 
                   <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -741,9 +875,9 @@ const StaffShiftManagement = () => {
                       center: "title",
                       end: "dayGridMonth,timeGridWeek,timeGridDay",
                     }}
-                    locale="vi"
+                    locale={viLocale}
                     height={600}
-                    eventClick={(info) => onEditShift(info.event.extendedProps)}
+                    eventClick={handleEventClick}
                     events={events}
                     eventDidMount={eventColor}
                     datesSet={handleDatesSet}
@@ -792,6 +926,7 @@ const StaffShiftManagement = () => {
                 onFinish={onFinish}
                 initialValues={{
                   status: "pending",
+                  staffId: selectedPersonId
                 }}
                 scrollToFirstError
               >
@@ -804,7 +939,7 @@ const StaffShiftManagement = () => {
                     >
                       <Select placeholder="Chọn Nhân viên" style={{ borderRadius: 8 }}>
                         {allStaffs.map((doc) => (
-                          <Option key={doc?.id} value={doc?.id}>
+                          <Option key={doc?.staffId} value={doc?.staffId}>
                             {doc?.fullname}
                           </Option>
                         ))}
@@ -830,20 +965,126 @@ const StaffShiftManagement = () => {
                       label="Ca làm"
                       rules={[{ required: true, message: "Vui lòng chọn ca làm." }]}
                     >
-                      <Select mode="multiple" style={{ borderRadius: 8 }}>
+                      <Select mode={shiftSelectMode} style={{ borderRadius: 8 }}>
                         <Option value="morning">Sáng</Option>
                         <Option value="afternoon">Chiều</Option>
                       </Select>
                     </Form.Item>
+
+                  </Col>
+                  <Col span={12}>
+
+                    {form.getFieldValue("workDate") ? (() => {
+                      const dayOfWeek = dayjs(form.getFieldValue("workDate")).day();
+                      const times = getShiftTimesByDay(dayOfWeek);
+                      return (
+                        <div style={{ fontSize: 14, color: "#555", userSelect: "none", marginTop: 24 }}>
+                          {times.morning?.startTime && times.morning?.endTime ? (
+                            <div>
+                              <b>Ca sáng:</b> {times.morning.startTime} - {times.morning.endTime}
+                            </div>
+                          ) : (
+                            <div>
+                              <b>Ca sáng:</b> Không có giờ làm việc
+                            </div>
+                          )}
+                          {times.afternoon?.startTime && times.afternoon?.endTime ? (
+                            <div>
+                              <b>Ca chiều:</b> {times.afternoon.startTime} - {times.afternoon.endTime}
+                            </div>
+                          ) : (
+                            <div>
+                              <b>Ca chiều:</b> Không có giờ làm việc
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })() : (
+                      <div style={{ fontSize: 14, color: "#999", userSelect: "none", marginTop: 8 }}>
+                        Chọn ngày để xem giờ làm việc ca sáng/chiều
+                      </div>
+                    )}
                   </Col>
                 </Row>
               </Form>
             </Modal>
 
             <Modal
+              visible={deleteConfirmVisible}
+              title="Xác nhận xóa ca làm việc?"
+              onOk={async () => {
+                try {
+                  console.log("Deleting shift:", shiftToDelete.id);
+                  await deleteStaffSchedule(shiftToDelete.id);
+                  setFlag(prev => !prev);
+                  dispatch(setMessage({ type: 'success', content: 'Xóa ca làm việc thành công!' }));
+                } catch (error) {
+                  dispatch(setMessage({ type: 'error', content: 'Lỗi xoá ca làm việc!' }));
+                } finally {
+                  setDeleteConfirmVisible(false);
+                  setShiftToDelete(null);
+                  setModalDetail(false);
+                }
+              }}
+              onCancel={() => {
+                setDeleteConfirmVisible(false);
+                setShiftToDelete(null);
+              }}
+              okText="Xóa"
+              cancelText="Hủy"
+              centered
+            />
+
+
+            <Modal
               open={modalDetail}
               onCancel={() => setModalDetail(false)}
-              footer={null}
+              footer={[
+                <Button
+                  key="edit"
+                  type="primary"
+                  disabled={isShiftDisabled(selectedEvent)}
+                  onClick={() => {
+                    setEditingShift({
+                      id: selectedEvent.id,
+                      doctorScheduleId: selectedEvent.extendedProps.doctorScheduleId || 0,
+                      staffId: selectedEvent.extendedProps.staffId || selectedPersonId,
+                      workDate: selectedEvent.start,
+                      timeShift: selectedEvent.title.includes("sáng") ? 1 : 2,
+                      isAvailable: true,
+                      reasonOfUnavailability: selectedEvent.extendedProps.reasonOfUnavailability || "",
+                    });
+
+                    form.setFieldsValue({
+                      staffId: selectedEvent.extendedProps.staffId || selectedPersonId,
+                      workDate: dayjs(selectedEvent.start).local().startOf('day'),
+                      shift: selectedEvent.title.includes("sáng") ? ["morning"] : ["afternoon"],
+                    });
+
+                    setModalVisible(true);
+                    setModalDetail(false);
+                  }}
+                  style={{ borderRadius: 8 }}
+                >
+                  Sửa
+                </Button>,
+                <Button
+                  key="delete"
+                  danger
+                  disabled={isShiftDisabled(selectedEvent)}
+                  onClick={() => showDeleteConfirm(selectedEvent)}
+                  style={{ borderRadius: 8 }}
+                >
+                  Xoá
+                </Button>,
+                <Button
+                  key="close"
+                  onClick={() => setModalDetail(false)}
+                  style={{ borderRadius: 8 }}
+                >
+                  Đóng
+                </Button>,
+              ]}
               title={
                 selectedEvent && (
                   <div>
@@ -871,70 +1112,34 @@ const StaffShiftManagement = () => {
               centered
               bodyStyle={{
                 borderRadius: 18,
-                background: "#fcfcfe",
-                padding: 28,
                 minHeight: 280,
               }}
             >
               {selectedEvent ? (
                 <>
-                  {selectedEvent?.room && (
-                    <p><b>🏥 Phòng khám:</b> {selectedEvent.room}</p>
-                  )}
-                  <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
-                  <p><b>👥 Số bệnh nhân:</b> {selectedEvent.extendedProps?.patients?.length || 0}</p>
-                  <p><b>📌 Trạng thái:</b> {selectedEvent.extendedProps?.status || "Không rõ"}</p>
-
+                  {selectedEvent.extendedProps.room && <p>🏥 Phòng khám: {selectedEvent.extendedProps.room}</p>}
+                  <p>🕒 Thời gian: {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
+                  <p>👥 Số bệnh nhân: {selectedEvent.extendedProps.patients?.length || 0}</p>
+                  <p>📌 Trạng thái: {selectedEvent.extendedProps.status || "Không rõ"}</p>
+                  {/* <p>📌 id doctor schedule: {selectedEvent.extendedProps.doctorScheduleId || "Không rõ"}</p> */}
                   <List
                     bordered
-                    dataSource={selectedEvent.patients || []}
-                    renderItem={(p) => (
-                      <List.Item key={p.id} style={{ borderRadius: 10 }}>
-                        <List.Item.Meta
-                          title={<b>{p.name}</b>}
-                          description={`Tuổi: ${p.age} | Ghi chú: ${p.note || "Không có"}`}
-                        />
+                    dataSource={selectedEvent.extendedProps.patients || []}
+                    renderItem={p => (
+                      <List.Item key={p.id}>
+                        <List.Item.Meta title={p.name} description={`Tuổi: ${p.age} | Ghi chú: ${p.note || "Không có"}`} />
                       </List.Item>
                     )}
                     locale={{ emptyText: "Chưa có bệnh nhân nào trong ca này." }}
-                    style={{ marginBottom: 22, borderRadius: 12, background: "#fff" }}
+                    style={{ marginBottom: 22 }}
                   />
-                  <div
-                    style={{
-                      marginTop: 16,
-                      textAlign: "right",
-                      display: "flex",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Button
-                      type="primary"
-                      style={{ borderRadius: 8 }}
-                      onClick={() => {
-                        setEditingShift(selectedEvent);
-                        form.setFieldsValue({
-                          staffId: selectedEvent.staffId,
-                          workDate: dayjs(selectedEvent.workDate),
-                          startTime: dayjs(selectedEvent.startTime, "HH:mm:ss"),
-                          endTime: dayjs(selectedEvent.endTime, "HH:mm:ss"),
-                          roomName: selectedEvent.roomName,
-                          departmentName: selectedEvent.departmentName,
-                          status: selectedEvent.status,
-                        });
-                        setModalVisible(true);
-                        setModalDetail(false);
-                      }}
-                    >
-                      Chỉnh sửa
-                    </Button>
-                    <Button danger style={{ borderRadius: 8 }} onClick={() => onDeleteShift(selectedEvent.id)}>
-                      Xóa
-                    </Button>
-                  </div>
+
+
                 </>
               ) : (
                 <div>Không có dữ liệu lịch làm việc.</div>
               )}
+
             </Modal>
           </div>
         </div>

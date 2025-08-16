@@ -1,104 +1,258 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import viLocale from "@fullcalendar/core/locales/vi";
-import { Modal, List, ConfigProvider } from "antd";
+import { Modal, List, ConfigProvider, Tag, Row, Col } from "antd";
 import viVN from "antd/es/locale/vi_VN";
 import dayjs from "dayjs";
+import { useSelector } from "react-redux";
+import { getScheduleByStaffNurseId } from "../../../services/scheduleService"; // API call
 import "dayjs/locale/vi";
-import "./style.scss";
+import { getStaffNurseByUserId } from "../../../services/staffNurseService";
+
 dayjs.locale("vi");
 
-const workShiftsTest = [
-  {
-    id: "shift-1",
-    title: "Ca làm việc",
-    start: "2025-07-03T08:00:00",
-    end: "2025-07-03T12:00:00",
-    extendedProps: {
-      type: "shift",
-      department: "Khoa Nội",
-      room: "Phòng 101",
-      status: "Đang khám",
-      patients: [
-        { id: 1, name: "Nguyễn Văn A", age: 30, note: "Khám tổng quát" },
-        { id: 2, name: "Trần Thị B", age: 25, note: "Khám tim mạch" },
-      ],
-    },
-  },
-  {
-    id: "shift-2",
-    title: "Ca làm việc",
-    start: "2025-07-04T08:00:00",
-    end: "2025-07-04T12:00:00",
-  },
-  {
-    id: "shift-3",
-    title: "Ca làm việc",
-    start: "2025-07-05T08:00:00",
-    end: "2025-07-05T12:00:00",
-    extendedProps: {
-      type: "shift",
-      department: "Khoa Nội",
-      room: "Phòng 101",
-      status: "Chưa bắt đầu",
-      patients: [
-        { id: 1, name: "Nguyễn Văn A", age: 30, note: "Khám tổng quát" },
-        { id: 2, name: "Trần Thị B", age: 25, note: "Khám tim mạch" },
-      ],
-    },
-  },
-];
-
 const LegendColor = () => (
-  <div style={{ marginBottom: 24, display: "flex", justifyContent:"center", gap: 8 }}>
-    <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-      {[
-        { color: "#4caf50", border: "#388e3c", label: "Đang khám" },
-        { color: "#ffd54f", border: "#ffa000", label: "Chưa bắt đầu" },
-        { color: "#ffb3b3", border: "#ff7875", label: "Ca đặt lịch (booking)" },
-        { color: "#64b5f6", border: "#1976d2", label: "Ca làm việc khác" },
-      ].map(({ color, border, label }) => (
-        <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{
-            width: 16,
-            height: 16,
-            backgroundColor: color,
-            border: `1px solid ${border}`,
-            borderRadius: 4,
-           
-          }} />
-          <span>{label}</span>
-        </div>
-      ))}
-    </div>
-  </div>
+  <Row justify="center" gutter={16} style={{ marginBottom: 24 }}>
+    <Col>
+      <Tag color="#4caf50" style={{ borderRadius: 8 }}>
+        Đang khám
+      </Tag>
+    </Col>
+    <Col>
+      <Tag color="#ffd54f" style={{ borderRadius: 8, color: "#4e342e" }}>
+        Chưa bắt đầu
+      </Tag>
+    </Col>
+    <Col>
+      <Tag color="#ffb3b3" style={{ borderRadius: 8 }}>
+        Ca đặt lịch (booking)
+      </Tag>
+    </Col>
+    <Col>
+      <Tag color="#64b5f6" style={{ borderRadius: 8 }}>
+        Ca làm việc khác
+      </Tag>
+    </Col>
+  </Row>
 );
 
 const WorkScheduleNurse = () => {
+  const user = useSelector((state) => state.user.user);
+  console.log("Current user:", user);
+  const hospitalId = user?.hospitals?.[0]?.id;
+  const calendarRef = useRef();
   const [events, setEvents] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [staffNurseDetail, setStaffNurseDetail] = useState(null);
 
   useEffect(() => {
-    // Chỉ lấy các ca có extendedProps dạng shift (tức ca làm việc)
-    const shiftsOnly = workShiftsTest.filter(e => e.extendedProps?.type === "shift");
-    setEvents(shiftsOnly);
-  }, []);
+    const fetchDoctor = async () => {
+      if (!user?.id) return;
+      const result = await getStaffNurseByUserId(user.id);
+      if (result) {
+        console.log("result staff nurse detail : " + result);
+        setStaffNurseDetail(result);
+      } else {
+        console.error("Không tìm thấy thông tin bác sĩ.");
+      }
+    };
+    fetchDoctor();
+  }, [user?.id]);
+
+  const handleDatesSet = useCallback(async (arg) => {
+    if (!staffNurseDetail?.staffId || !hospitalId) {
+      setEvents([]);
+      return;
+    }
+
+    try {
+      const from = dayjs(arg.start).toISOString();
+      const to = dayjs(arg.end).toISOString();
+
+      const data = await getScheduleByStaffNurseId(staffNurseDetail?.staffId, from, to, hospitalId);
+      const schedules = data?.schedules || [];
+
+      const now = dayjs();
+
+      const eventsFormatted = schedules.map((item) => {
+        const dateStr = item.workDate.split("T")[0];
+        const start = dayjs(`${dateStr}T${item.startTime}`).toISOString();
+        const end = dayjs(`${dateStr}T${item.endTime}`).toISOString();
+
+        let status = "Ca làm việc khác";
+        const hasAppointments = (item.appointment?.length || 0) > 0;
+
+        if (hasAppointments) {
+          if (now.isAfter(dayjs(end))) status = "Đã khám";
+          else if (now.isBefore(dayjs(start))) status = "Chưa bắt đầu";
+          else status = "Đang khám";
+        } else {
+          if (now.isAfter(dayjs(end))) status = "Ca rỗng (đã qua)";
+          else if (now.isBefore(dayjs(start))) status = "Ca rỗng (sắp tới)";
+          else status = "Ca rỗng (đang chờ)";
+        }
+
+        const patients = item.appointment?.map((appt) => ({
+          id: appt.id,
+          name: appt.patient.fullname,
+          age: dayjs().diff(dayjs(appt.patient.dob), "year"),
+          note: appt.note || "",
+        })) || [];
+
+        return {
+          id: item.id,
+          title: item.timeShift === 1 ? "Ca sáng" : "Ca chiều",
+          start,
+          end,
+          extendedProps: {
+            type: status.includes("rỗng") ? "shift" : "appointment",
+            status,
+            room: item.room?.name || "Không rõ",
+            patients,
+          },
+        };
+      });
+
+      setEvents(eventsFormatted);
+    } catch (error) {
+      console.error("Lỗi khi tải lịch làm việc nhân viên:", error);
+      setEvents([]);
+    }
+  },
+    [staffNurseDetail, hospitalId]
+  );
+
+  useEffect(() => {
+    if (staffNurseDetail && hospitalId && calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      const view = calendarApi.view;
+      handleDatesSet({ start: view.activeStart, end: view.activeEnd });
+    }
+  }, [staffNurseDetail, hospitalId, handleDatesSet]);
 
   const handleEventClick = ({ event }) => {
     setSelectedEvent(event);
     setModalOpen(true);
   };
 
-  // Mặc định 1 kiểu màu cho mọi ca
-  const defaultEventStyle = {
-    backgroundColor: "#90caf9",
-    color: "#000",
-    borderRadius: "8px",
-    border: "1px solid #42a5f5",
-    boxShadow: "0 2px 6px rgba(66,165,245,0.2)",
+  const renderEventContent = (eventInfo) => {
+    const { title, extendedProps } = eventInfo.event;
+    const { status, patients, department, room } = extendedProps;
+    console.log("Event info:", eventInfo);
+    console.log("Extended props:", extendedProps);
+
+    return (
+      <div
+        style={{
+          padding: 8,
+          borderRadius: 6,
+          backgroundColor: "#f9f9f9",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+          lineHeight: 1.3,
+        }}
+      >
+        {(department) && (
+          <div
+            style={{
+              fontWeight: "600",
+              color: "#2c3e50",
+              marginBottom: 4,
+            }}
+          >
+            {department}
+          </div>
+        )}
+        {(room) && (
+          <div
+            style={{
+              fontWeight: "600",
+              color: "#2c3e50",
+              marginBottom: 4,
+            }}
+          >
+            {room}
+          </div>
+        )}
+        <div
+          style={{
+            fontWeight: "700",
+            fontSize: 14,
+            color: "#34495e",
+            marginBottom: 6,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+          title={title}
+        >
+          {title.split(" - ")[0]}
+        </div>
+
+        <hr style={{ border: "none", borderTop: "1px solid #ddd", margin: "6px 0" }} />
+
+        <div
+          style={{
+            fontSize: 12,
+            color: status === "Completed" ? "green" : "#e67e22",
+            fontWeight: "600",
+            marginBottom: 4,
+          }}
+        >
+          {status}
+        </div>
+
+        <div style={{ fontSize: 12, color: "#555" }}>
+          👥 <strong>{patients.length}</strong> bệnh nhân
+        </div>
+      </div>
+    );
+  };
+
+  const eventColor = (info) => {
+    const { status } = info.event.extendedProps;
+
+    let backgroundColor = "#90caf9";
+    let borderColor = "#42a5f5";
+    let color = "#000";
+
+    switch (status) {
+      case "Đang khám":
+        backgroundColor = "#4caf50";
+        borderColor = "#388e3c";
+        color = "#fff";
+        break;
+      case "Chưa bắt đầu":
+        backgroundColor = "#ffd54f";
+        borderColor = "#ffa000";
+        color = "#4e342e";
+        break;
+      case "Ca đặt lịch (booking)":
+        backgroundColor = "#ffb3b3";
+        borderColor = "#ff7875";
+        color = "#000";
+        break;
+      case "Ca rỗng (đã qua)":
+      case "Ca rỗng (sắp tới)":
+      case "Ca rỗng (đang chờ)":
+      default:
+        backgroundColor = "#64b5f6";
+        borderColor = "#1976d2";
+        color = "#000";
+        break;
+    }
+
+    Object.assign(info.el.style, {
+      backgroundColor,
+      border: `1px solid ${borderColor}`,
+      color,
+      borderRadius: 8,
+      boxShadow: `0 2px 6px rgba(0, 0, 0, 0.15)`,
+      fontWeight: "600",
+    });
   };
 
   return (
@@ -107,7 +261,7 @@ const WorkScheduleNurse = () => {
         style={{
           maxWidth: 1200,
           margin: "0 auto",
-          padding: 5,
+          padding: 24,
           background: "#f9fafb",
           borderRadius: 16,
           boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
@@ -127,16 +281,18 @@ const WorkScheduleNurse = () => {
           Lịch trực của tôi
         </h2>
 
+        <LegendColor />
+
         <FullCalendar
           plugins={[timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
+          ref={calendarRef}
           locale={viLocale}
           events={events}
           height={600}
+          eventContent={renderEventContent}
           eventClick={handleEventClick}
-          eventDidMount={(info) => {
-            Object.assign(info.el.style, defaultEventStyle);
-          }}
+          eventDidMount={eventColor}
           nowIndicator={true}
           headerToolbar={{
             left: "prev,next today",
@@ -146,6 +302,7 @@ const WorkScheduleNurse = () => {
           allDaySlot={false}
           slotMinTime="06:00:00"
           slotMaxTime="20:00:00"
+          datesSet={handleDatesSet}
         />
 
         <Modal
@@ -153,32 +310,44 @@ const WorkScheduleNurse = () => {
           onCancel={() => setModalOpen(false)}
           footer={null}
           centered
-          title={selectedEvent ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span style={{ fontWeight: 700, fontSize: 20 }}>
-                {selectedEvent.title}
-              </span>
-              {selectedEvent.extendedProps?.department && (
-                <span style={{ fontSize: 15, color: "#1a73e8" }}>
-                  {selectedEvent.extendedProps.department} - {selectedEvent.extendedProps.room}
-                </span>
-              )}
-            </div>
-          ) : null}
           width={600}
+          title={
+            selectedEvent ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                  userSelect: "none",
+                }}
+              >
+                <span style={{ fontWeight: 700, fontSize: 20 }}>{selectedEvent.title}</span>
+                {selectedEvent.extendedProps?.room && (
+                  <span style={{ fontSize: 15, color: "#1a73e8" }}>
+                    Phòng: {selectedEvent.extendedProps.room}
+                  </span>
+                )}
+              </div>
+            ) : null
+          }
         >
           {selectedEvent ? (
             <>
-              <p><b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} - {dayjs(selectedEvent.end).format("HH:mm")}</p>
-              <p><b>👥 Bệnh nhân:</b> {selectedEvent.extendedProps?.patients?.length || 0}</p>
+              <p>
+                <b>🕒 Thời gian:</b> {dayjs(selectedEvent.start).format("HH:mm")} -{" "}
+                {dayjs(selectedEvent.end).format("HH:mm")}
+              </p>
+              <p>
+                <b>👥 Bệnh nhân:</b> {selectedEvent.extendedProps?.patients?.length || 0}
+              </p>
 
               <List
                 dataSource={selectedEvent.extendedProps?.patients || []}
-                renderItem={(p) => (
-                  <List.Item key={p.id}>
+                renderItem={(patient) => (
+                  <List.Item key={patient.id}>
                     <List.Item.Meta
-                      title={<b>{p.name}</b>}
-                      description={`Tuổi: ${p.age} | Ghi chú: ${p.note || "Không có"}`}
+                      title={<b>{patient.name}</b>}
+                      description={`Tuổi: ${patient.age} | Ghi chú: ${patient.note || "Không có"}`}
                     />
                   </List.Item>
                 )}
@@ -194,4 +363,5 @@ const WorkScheduleNurse = () => {
     </ConfigProvider>
   );
 };
+
 export default WorkScheduleNurse;

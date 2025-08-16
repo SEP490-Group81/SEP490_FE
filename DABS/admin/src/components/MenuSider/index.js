@@ -2,14 +2,12 @@ import { Menu } from "antd";
 
 import {
     BankOutlined,
-    MedicineBoxOutlined,
     InboxOutlined,
     LineChartOutlined,
     ExperimentOutlined,
     DashboardOutlined,
     ReadOutlined,
     UserSwitchOutlined,
-    UsergroupAddOutlined,
     ApartmentOutlined,
     ScheduleOutlined,
     TeamOutlined,
@@ -18,7 +16,6 @@ import {
     UserOutlined,
     ClockCircleOutlined,
     EditOutlined,
-    CheckCircleOutlined,
     UnorderedListOutlined,
     FormOutlined,
 } from "@ant-design/icons";
@@ -56,9 +53,15 @@ function MenuSider() {
             icon: <LineChartOutlined />,
         },
         {
-            key: "users",
-            label: <Link to="/admin-hospital/users">Nhân viên</Link>,
+            key: "staffs",
+            label: <Link to="/admin-hospital/staff-management">Nhân viên</Link>,
             icon: <TeamOutlined />,
+        },
+        {
+            key: 'hospital-detail',
+            icon: <BankOutlined />,
+            label: <Link to="/admin-hospital/hospital-detail">Bệnh viện của tôi</Link>,
+
         },
         {
             key: "department-room",
@@ -87,14 +90,10 @@ function MenuSider() {
         // },
         {
             key: "department-management",
-            label: <Link to="/admin-hospital/departments">Department Management</Link>,
+            label: <Link to="/admin-hospital/departments">Quản lý phòng ban</Link>,
             icon: <BankOutlined />
         },
-        {
-            key: "hospital-management",
-            label: <Link to="/admin-hospital/hospitals">Hospital Management</Link>,
-            icon: <MedicineBoxOutlined />
-        },
+
         {
             key: "medical-services",
             label: <Link to="/admin-hospital/medical-service-management">Dịch vụ y tế</Link>,
@@ -105,11 +104,11 @@ function MenuSider() {
             label: <Link to="/admin-hospital/leave-request-management">Đơn xin nghỉ phép</Link>,
             icon: <InboxOutlined />,
         },
-        {
-            key: "payment-list",
-            label: <Link to="/admin-hospital/payment-list">Thanh toán</Link>,
-            icon: <UnorderedListOutlined />,
-        },
+        // {
+        //     key: "payment-list",
+        //     label: <Link to="/admin-hospital/payment-list">Thanh toán</Link>,
+        //     icon: <UnorderedListOutlined />,
+        // },
     ];
 
     const doctorItems = [
@@ -141,11 +140,7 @@ function MenuSider() {
             label: <Link to="/nurse">Dashboard</Link>,
             icon: <DashboardOutlined />,
         },
-        {
-            key: "appointment",
-            label: <Link to="/nurse/appointment">Lịch hẹn</Link>,
-            icon: <CalendarOutlined />,
-        },
+        
         {
             key: "nurse-profile",
             label: <Link to="/nurse/nurse-profile">Hồ sơ cá nhân</Link>,
@@ -162,9 +157,19 @@ function MenuSider() {
             icon: <EditOutlined />,
         },
         {
+            key: "patient-appointment-list",
+            label: <Link to="/nurse/patient-appointment-list">Lịch hẹn bệnh nhân</Link>,
+            icon: <CalendarOutlined />,
+        },
+        {
             key: "payment-list",
             label: <Link to="/nurse/payment-list">Xử lý thanh toán</Link>,
             icon: <UnorderedListOutlined />,
+        },
+        {
+            key: "request-leave",
+            label: <Link to="/nurse/request-leave">Xin nghỉ</Link>,
+            icon: <FormOutlined />,
         },
     ];
 
@@ -178,6 +183,16 @@ function MenuSider() {
             key: "staff-profile",
             label: <Link to="/staff/staff-profile">Hồ sơ cá nhân</Link>,
             icon: <UserOutlined />,
+        },
+        {
+            key: "work-schedule",
+            label: <Link to="/staff/work-schedule">Lịch làm việc</Link>,
+            icon: <ClockCircleOutlined />,
+        },
+        {
+            key: "request-leave",
+            label: <Link to="/staff/request-leave">Xin nghỉ</Link>,
+            icon: <FormOutlined />,
         },
     ];
     const getMenuItems = (role) => {
