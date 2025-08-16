@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAuth, postAuth, putAuth, putAuthNum } from '../utils/request';
 
 const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1laWRlbnRpZmllciI6IjEiLCJlbWFpbCI6ImFkbWluQGhvc3RuYW1lLmNvbSIsImZ1bGxOYW1lIjoiU3VwZXIgVXNlciIsIm5hbWUiOiJTdXBlciIsInN1cm5hbWUiOiJVc2VyIiwiaXBBZGRyZXNzIjoiMC4wLjAuMSIsImF2YXRhclVybCI6IiIsIm1vYmlsZXBob25lIjoiIiwiZXhwIjoxNzgxMjcwNDgzLCJpc3MiOiJodHRwczovL0JFLlNFUDQ5MC5uZXQiLCJhdWQiOiJCRS5TRVA0OTAifQ.kQIX9uvjN9UOPiBitp9JsO2DlPlFyIU4VTP1ZyM4k3Y";
 
@@ -344,7 +345,6 @@ export const getAppointmentStatistics = async () => {
     }
 };
 
-// Get departments list
 export const getDepartments = async () => {
     try {
         if (process.env.NODE_ENV === 'development') {
@@ -360,4 +360,53 @@ export const getDepartments = async () => {
         console.error('Error fetching departments:', error);
         throw error;
     }
+};
+
+export const getAppointmentsByUserId = async (userId, from = null, to = null) => {
+  try {
+    let url = `/user/${userId}/appointments`;
+    if (from && to) {
+      const query = new URLSearchParams({ from, to }).toString();
+      url = `${url}?${query}`;
+    }
+    const result = await getAuth(url);
+    return result.result;
+  } catch (error) {
+    console.error(`Error fetching appointments for user ${userId}:`, error.message);
+    throw error;
+  }
+};
+
+
+export const changeAppointmentTime = async (appointmentId, scheduleId) => {
+  try {
+    const result = await putAuth(`/appointments/${appointmentId}/change-time/${scheduleId}`);
+    return result;
+  } catch (error) {
+    console.error(
+      `Error changing appointment time for appointmentId=${appointmentId}, scheduleId=${scheduleId}:`,
+      error.message
+    );
+    throw error;
+  }
+};
+
+export const changeAppointmentStatus = async (appointmentId, newStatus) => {
+  try {
+    const body = JSON.stringify(String(newStatus)); 
+    
+       const result = await putAuthNum(
+      `/appointments/${appointmentId}/change-status`,
+      body,
+      { 'Content-Type': 'application/json' }
+    );
+
+    return result;
+  } catch (error) {
+    console.error(
+      `Error changing appointment status for appointmentId=${appointmentId} to status=${newStatus}:`,
+      error.message
+    );
+    throw error;
+  }
 };

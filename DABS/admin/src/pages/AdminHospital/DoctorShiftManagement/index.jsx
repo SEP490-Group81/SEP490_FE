@@ -23,6 +23,8 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { useDispatch, useSelector } from 'react-redux';
+import viLocale from "@fullcalendar/core/locales/vi";
+
 import {
   PlusOutlined,
   CalendarOutlined,
@@ -32,11 +34,12 @@ import {
 } from "@ant-design/icons";
 import { getDoctorByHospitalId, getDoctorByUserId } from "../../../services/doctorService";
 import { useRef } from "react";
-import { createSchedule, getScheduleByDoctorId, updateSchedule } from "../../../services/scheduleService";
+import { createSchedule, deleteDoctorSchedule, getScheduleByDoctorId, updateSchedule } from "../../../services/scheduleService";
 import { getHospitalDepartments } from "../../../services/departmentService";
 import { getHospitalRooms } from "../../../services/roomService";
 import { clearMessage, setMessage } from "../../../redux/slices/messageSlice";
 import { getStaffNurseList } from "../../../services/staffNurseService";
+import { getHospitalWorkDate } from "../../../services/hospitalService";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -111,16 +114,10 @@ const eventColor = (info) => {
   }
 };
 
-const shiftTimesMap = {
-  morning: { startTime: "07:30:00", endTime: "11:30:00" },
-  afternoon: { startTime: "12:30:00", endTime: "16:30:00" }
-};
 
 const renderEventContent = (eventInfo) => {
   const { title, extendedProps } = eventInfo.event;
   const { status, patients, department, room } = extendedProps;
-  console.log("Event info:", eventInfo);
-  console.log("Extended props:", extendedProps);
 
   return (
     <div
@@ -131,25 +128,43 @@ const renderEventContent = (eventInfo) => {
         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
         fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
         lineHeight: 1.3,
+        overflow: "hidden",
+        WebkitBoxOrient: "vertical",
+        display: "-webkit-box",
+        WebkitLineClamp: 6,
+        height: "100%"
       }}
     >
-      {(department) && (
+      {department && (
         <div
           style={{
             fontWeight: "600",
             color: "#2c3e50",
             marginBottom: 4,
+            whiteSpace: "normal",
+
+            display: "-webkit-box",
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {department}
         </div>
       )}
-      {(room) && (
+      {room && (
         <div
           style={{
             fontWeight: "600",
             color: "#2c3e50",
             marginBottom: 4,
+            whiteSpace: "normal",
+            display: "-webkit-box",
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {room}
@@ -164,6 +179,7 @@ const renderEventContent = (eventInfo) => {
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
+          maxWidth: 120,
         }}
         title={title}
       >
@@ -178,17 +194,21 @@ const renderEventContent = (eventInfo) => {
           color: status === "Completed" ? "green" : "#e67e22",
           fontWeight: "600",
           marginBottom: 4,
+          whiteSpace: "normal",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
         }}
       >
         {status}
       </div>
 
-      <div style={{ fontSize: 12, color: "#555" }}>
+      <div style={{ fontSize: 12, color: "#555", whiteSpace: "normal" }}>
         👥 <strong>{patients.length}</strong> bệnh nhân
       </div>
     </div>
   );
 };
+
 
 const AdminDoctorShiftManagement = () => {
   const [shifts, setShifts] = useState([]);
@@ -200,6 +220,8 @@ const AdminDoctorShiftManagement = () => {
   const [modalDetail, setModalDetail] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [doctors, setDoctors] = useState([]);
+  const [shiftToDelete, setShiftToDelete] = useState(null);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
   const [doctorDetail, setDoctorDetail] = useState(null);
   const [events, setEvents] = useState([]);
   const dispatch = useDispatch();
@@ -211,10 +233,49 @@ const AdminDoctorShiftManagement = () => {
   const [flag, setFlag] = useState(false);
   const [nurses, setNurses] = useState([]);
   const user = useSelector((state) => state.user.user);
-  console.log("user is: " + JSON.stringify(user));
-  console.log("hospital admin id is: " + user.hospitals[0]?.id);
-  console.log("hospital admin is: " + JSON.stringify(user));
-  console.log("doctor detail: " + JSON.stringify(doctorDetail));
+  const shiftSelectMode = editingShift ? undefined : "multiple";
+  // console.log("user is: " + JSON.stringify(user));
+  // console.log("hospital admin id is: " + user.hospitals[0]?.id);
+  // console.log("hospital admin is: " + JSON.stringify(user));
+  // console.log("doctor detail: " + JSON.stringify(doctorDetail));
+  const [workingDates, setWorkingDates] = useState([]);
+
+  useEffect(() => {
+    const fetchHospitalWorkDates = async () => {
+      if (!user?.hospitals?.[0]?.id) return;
+      try {
+        const response = await getHospitalWorkDate(user.hospitals[0].id);
+        console.log("response log is : ", response);
+        if (response?.workingDates) {
+          setWorkingDates(response.workingDates);
+        }
+      } catch (error) {
+        console.error("Lỗi lấy lịch làm việc bệnh viện:", error);
+        setWorkingDates([]);
+      }
+    };
+    fetchHospitalWorkDates();
+  }, [user?.hospitals]);
+
+  const getShiftTimesByDay = (dayOfWeek) => {
+    const dayInfo = workingDates.find((d) => d.dayOfWeek === dayOfWeek);
+    if (
+      !dayInfo ||
+      dayInfo.isClosed ||
+      dayInfo.startTime === "00:00:00" ||
+      dayInfo.endTime === "00:00:00"
+    ) {
+      return {
+        morning: { startTime: null, endTime: null },
+        afternoon: { startTime: null, endTime: null },
+      };
+    }
+    return {
+      morning: { startTime: dayInfo.startTime, endTime: "12:00:00" },
+      afternoon: { startTime: "12:00:00", endTime: dayInfo.endTime },
+    };
+  };
+
   const isShiftDisabled = (event) => {
     if (!event) return true;
 
@@ -231,7 +292,7 @@ const AdminDoctorShiftManagement = () => {
   };
   useEffect(() => {
     const fetchDoctor = async () => {
-      if (!user.id) return;
+      if (!user?.id) return;
       const result = await getDoctorByHospitalId(user.hospitals[0]?.id);
       setSelectedDoctorId(result?.[0]?.user?.id || null);
       if (result) {
@@ -242,7 +303,7 @@ const AdminDoctorShiftManagement = () => {
       }
     };
     fetchDoctor();
-  }, [user.hospitals[0]?.id]);
+  }, [user?.hospitals[0]?.id]);
 
 
   useEffect(() => {
@@ -251,7 +312,7 @@ const AdminDoctorShiftManagement = () => {
 
       try {
         const staffList = await getStaffNurseList(user.hospitals[0].id);
-
+        console.log("Staff nurse list: ", JSON.stringify(staffList));
         const nurseList = (staffList || []).filter((s) => s.role?.name === 'Nurse');
         setNurses(nurseList);
         console.log("Nurse list: ", JSON.stringify(nurses));
@@ -278,14 +339,14 @@ const AdminDoctorShiftManagement = () => {
   }, [messageState, dispatch]);
 
   useEffect(() => {
-    const hospitalId = user.hospitals[0]?.id;
+    const hospitalId = user?.hospitals[0]?.id;
     if (!hospitalId) return;
     const fetchData = async () => {
       const roomData = await getHospitalRooms(hospitalId);
       setRooms(roomData || []);
     };
     fetchData();
-  }, [user.hospitals[0]?.id]);
+  }, [user?.hospitals[0]?.id]);
 
   useEffect(() => {
     const fetchDoctor = async () => {
@@ -311,7 +372,10 @@ const AdminDoctorShiftManagement = () => {
   }, [doctorDetail, flag]);
 
 
-
+  const showDeleteConfirm = (shift) => {
+    setShiftToDelete(shift);
+    setDeleteConfirmVisible(true);
+  };
 
   const handleDatesSet = async (arg) => {
     if (!doctorDetail) return;
@@ -364,7 +428,8 @@ const AdminDoctorShiftManagement = () => {
               age,
               note: appt.note || "",
               gender: appt.patient.gender ? "Nam" : "Nữ",
-              service: appt.service?.name || "Không rõ",
+              serviceName: appt.serviceName || "Không rõ",
+              servicePrice: appt.servicePrice || 0,
             };
           }) || [];
 
@@ -376,9 +441,11 @@ const AdminDoctorShiftManagement = () => {
           end: end.toISOString(),
           extendedProps: {
             type: status.includes("rỗng") ? "shift" : "appointment",
+            department: item.room?.department?.name || "Không rõ",
             room: item.room?.name || "Không rõ",
             status,
             patients,
+            nurseId: item.nurseInfo?.id || null,
           },
         };
       });
@@ -401,6 +468,7 @@ const AdminDoctorShiftManagement = () => {
     console.log("Selected even in doctor shift management " + JSON.stringify(selectedEvent));
     setModalDetail(true);
   };
+  
   const onDeleteShift = (id) => {
     confirm({
       title: "Xác nhận xóa ca làm việc?",
@@ -417,53 +485,107 @@ const AdminDoctorShiftManagement = () => {
     try {
       const hospitalAffiliationId = doctorDetail?.hospitalAffiliations?.[0]?.id || 0;
       const doctorId = doctorDetail?.id || 0;
+      let shiftArray = [];
+      const { roomId, shift, weekday, workDate, nurseId } = values;
 
-      const { roomId, shift, weekday, workDate } = values;
-
-      if (!shift || shift.length === 0) {
-        dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ca làm!' }));
+      if (Array.isArray(shift)) {
+        shiftArray = shift;
+      } else if (typeof shift === "string" && shift) {
+        shiftArray = [shift];
+      } else {
+        shiftArray = [];
+      }
+      if (shiftArray.length === 0 || !workDate) {
+        dispatch(
+          setMessage({
+            type: "error",
+            content: "Vui lòng chọn ngày và ca làm việc",
+          })
+        );
         return;
       }
 
-      const daysOfWeekArr = Array.isArray(weekday) && weekday.length > 0 ? weekday : [dayjs(workDate).day()];
-      const shiftsPayload = shift.map((sh) => shiftTimesMap[sh]);
+      const dayOfWeek = Array.isArray(weekday) && weekday.length > 0
+        ? weekday[0]
+        : (workDate ? dayjs(workDate).day() : null);
+
+      if (dayOfWeek === null) {
+        dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ngày làm việc hoặc ngày trong tuần!' }));
+        return;
+      }
+      const shiftTimesMap = getShiftTimesByDay(dayOfWeek);
+      console.log("shiftTimesMap is : " + JSON.stringify(shiftTimesMap));
+
+      const validShifts = shiftArray.every(sh => {
+        const times = shiftTimesMap[sh];
+        return times && times.startTime && times.endTime && times.startTime.trim() !== "00:00:00" && times.endTime.trim() !== "00:00:00";
+      });
+      console.log("validShifts is : " + shiftTimesMap);
+      if (!validShifts) {
+        dispatch(setMessage({
+          type: "error",
+          content: "Ngày làm việc này không hỗ trợ ca làm đã chọn vì bệnh viện đóng cửa hoặc thời gian không hợp lệ.",
+        }));
+        return;
+      }
+
+
+      const shiftsPayload = shiftArray.map((sh) => {
+        const times = shiftTimesMap[sh];
+        if (!times || !times.startTime || !times.endTime) {
+          throw new Error(`Ca làm '${sh}' không có thời gian hợp lệ trong ngày đã chọn`);
+        }
+        return {
+          startTime: times.startTime,
+          endTime: times.endTime,
+        };
+      });
 
       if (editingShift) {
-
+        console.log("is updating ...");
         const scheduleId = editingShift.id || 0;
-        const daysOfWeek = typeof values.weekday === "number" ? values.weekday : daysOfWeekArr[0];
-        const shiftKey = shift[0];
+        const shiftKey = shiftArray[0];
+        const times = shiftTimesMap[shiftKey];
+        if (!times || !times.startTime || !times.endTime) {
+          dispatch(setMessage({
+            type: 'error',
+            content: 'Ngày làm việc này không hỗ trợ ca làm đã chọn vì bệnh viện đóng cửa hoặc thời gian không hợp lệ.'
+          }));
+          return;
+        }
 
-        const payload = {
+        const updatePayload = {
           id: scheduleId,
           hospitalAffiliationId,
-          staffId: doctorId,
+          userId: nurseId,
           roomId,
-          daysOfWeek,
-          startTime: shiftTimesMap[shiftKey]?.startTime || "00:00:00",
-          endTime: shiftTimesMap[shiftKey]?.endTime || "00:00:00",
-          workDate: workDate ? workDate.format("YYYY-MM-DD") : null,
+          daysOfWeek: dayOfWeek,
+          startTime: times.startTime,
+          endTime: times.endTime,
+          workDate: workDate ? dayjs(workDate).format("YYYY-MM-DD") : null,
           isAvailable: true,
           reasonOfUnavailability: "",
         };
-
-        console.log("Payload cập nhật:", JSON.stringify(payload) + " scheduleId: " + scheduleId);
-        await updateSchedule(scheduleId, payload);
+        console.log("Payload cập nhật:", JSON.stringify(updatePayload));
+        await updateSchedule(scheduleId, updatePayload);
         setFlag(prev => !prev);
         dispatch(setMessage({ type: 'success', content: 'Cập nhật ca làm việc thành công!' }));
       } else {
+        const daysOfWeekArr = Array.isArray(weekday) && weekday.length > 0
+          ? weekday
+          : (workDate ? [dayjs(workDate).day()] : []);
 
         const payload = {
           doctorIds: [doctorId],
           daysOfWeek: daysOfWeekArr,
           shifts: shiftsPayload,
-          startDate: workDate ? workDate.format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
-          endDate: workDate ? workDate.format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
+          startDate: workDate ? dayjs(workDate).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
+          endDate: workDate ? dayjs(workDate).format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
           isAvailable: false,
           reasonOfUnavailability: "",
         };
 
-        console.log("Payload tạo mới:", payload);
+        console.log("Payload tạo mới:", JSON.stringify(payload));
         await createSchedule(payload);
         setFlag(prev => !prev);
         dispatch(setMessage({ type: 'success', content: 'Tạo ca làm việc thành công!' }));
@@ -476,33 +598,55 @@ const AdminDoctorShiftManagement = () => {
     } catch (error) {
       console.error("Lỗi khi lưu ca làm việc:", error);
       dispatch(setMessage({ type: 'error', content: 'Lưu ca làm việc thất bại, vui lòng thử lại!' }));
-
     }
   };
 
 
-
-
   const onFinishBulk = async (values) => {
-    const { doctorIds, weekdays, shift, dateRange } = values;
+  const { doctorIds, weekdays, shift, dateRange } = values;
 
-    if (!doctorIds || doctorIds.length === 0) {
-      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn bác sĩ!' }));
-      return;
+  if (!doctorIds || doctorIds.length === 0) {
+    dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn bác sĩ!' }));
+    return;
+  }
+  if (!weekdays || weekdays.length === 0) {
+    dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ngày trong tuần!' }));
+    return;
+  }
+  if (!shift || shift.length === 0) {
+    dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ca làm!' }));
+    return;
+  }
+  if (!dateRange || dateRange.length !== 2) {
+    dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn khoảng thời gian!' }));
+    return;
+  }
+
+  try {
+    // Check từng ngày trong weekdays, để đảm bảo ca làm hợp lệ trên từng ngày
+    for (const dayOfWeek of weekdays) {
+      const shiftTimesMap = getShiftTimesByDay(dayOfWeek);
+      const validShifts = shift.every((sh) => {
+        const times = shiftTimesMap[sh];
+        return times && times.startTime && times.endTime && times.startTime.trim() !== "00:00:00" && times.endTime.trim() !== "00:00:00";
+      });
+      if (!validShifts) {
+        dispatch(setMessage({
+          type: "error",
+          content: `Ngày ${weekdayOptions.find(d => d.value === dayOfWeek)?.label || dayOfWeek} không hỗ trợ ca làm đã chọn do bệnh viện đóng cửa hoặc thời gian không hợp lệ.`
+        }));
+        return;
+      }
     }
-    if (!weekdays || weekdays.length === 0) {
-      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ngày trong tuần!' }));
-      return;
-    }
-    if (!shift || shift.length === 0) {
-      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn ca làm!' }));
-      return;
-    }
-    if (!dateRange || dateRange.length !== 2) {
-      dispatch(setMessage({ type: 'error', content: 'Vui lòng chọn khoảng thời gian!' }));
-      return;
-    }
-    const shiftsPayload = shift.map((sh) => shiftTimesMap[sh]);
+
+    const firstDayShiftTimesMap = getShiftTimesByDay(weekdays[0]);
+    const shiftsPayload = shift.map((sh) => {
+      const times = firstDayShiftTimesMap[sh];
+      return {
+        startTime: times.startTime,
+        endTime: times.endTime,
+      };
+    });
 
     const payload = {
       doctorIds: doctorIds,
@@ -514,19 +658,23 @@ const AdminDoctorShiftManagement = () => {
       reasonOfUnavailability: "",
     };
 
-    console.log("Payload gửi đi in create:", JSON.stringify(payload));
+    console.log("Bulk create payload (1 lần gọi):", JSON.stringify(payload));
+    await createSchedule(payload);
 
-    try {
-      await createSchedule(payload);
-      setFlag(prev => !prev);
-      dispatch(setMessage({ type: 'success', content: 'Tạo lịch mẫu thành công!!' }));
-      bulkForm.resetFields();
-    } catch (error) {
-      console.error("Lỗi khi tạo lịch mẫu:", error);
-      dispatch(setMessage({ type: 'error', content: 'Tạo lịch mẫu thất bại, vui lòng thử lại sau!' }));
-    }
-  };
+    dispatch(setMessage({ type: 'success', content: 'Tạo lịch mẫu thành công!' }));
+    setFlag(prev => !prev);
+    bulkForm.resetFields();
 
+  } catch (error) {
+    console.error("Lỗi khi tạo lịch mẫu:", error);
+    dispatch(setMessage({ type: 'error', content: 'Tạo lịch mẫu thất bại, vui lòng thử lại sau!' }));
+  }
+};
+
+
+  const closedDays = React.useMemo(() => {
+    return workingDates.filter(d => d.isClosed).map(d => d.dayOfWeek);
+  }, [workingDates]);
   const Legend = () => (
     <Row justify="center" gutter={16} style={{ marginBottom: 20 }}>
       <Col>
@@ -629,7 +777,6 @@ const AdminDoctorShiftManagement = () => {
             </Row>
 
             <Legend />
-
             <Row gutter={28}>
               <Col md={8} xs={24} style={{ marginBottom: 24 }}>
                 <div
@@ -689,7 +836,12 @@ const AdminDoctorShiftManagement = () => {
                       label="Ngày trong tuần"
                       rules={[{ required: true, message: "Vui lòng chọn ngày trong tuần." }]}
                     >
-                      <Checkbox.Group options={weekdayOptions} />
+                      <Checkbox.Group
+                        options={weekdayOptions.map(opt => ({
+                          ...opt,
+                          disabled: closedDays.includes(opt.value),  
+                        }))}
+                      />
                     </Form.Item>
 
                     <Form.Item
@@ -736,7 +888,7 @@ const AdminDoctorShiftManagement = () => {
                     flexDirection: "column",
                   }}
                 >
-                  <Row justify="end" style={{ marginBottom: 8 }}>
+                  {/* <Row justify="end" style={{ marginBottom: 8 }}>
                     <Button
                       type="primary"
                       icon={<PlusOutlined />}
@@ -751,11 +903,12 @@ const AdminDoctorShiftManagement = () => {
                     >
                       Tạo sự kiện
                     </Button>
-                  </Row>
+                  </Row> */}
 
                   <FullCalendar
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                     initialView="timeGridWeek"
+
                     ref={calendarRef}
                     eventContent={renderEventContent}
                     datesSet={handleDatesSet}
@@ -764,7 +917,7 @@ const AdminDoctorShiftManagement = () => {
                       center: "title",
                       end: "dayGridMonth,timeGridWeek,timeGridDay",
                     }}
-                    locale="vi"
+                    locale={viLocale}
                     events={events}
                     height={600}
                     eventClick={handleEventClick}
@@ -865,11 +1018,12 @@ const AdminDoctorShiftManagement = () => {
                       label="Ca làm"
                       rules={[{ required: true, message: "Vui lòng chọn ca làm." }]}
                     >
-                      <Select mode="multiple" style={{ borderRadius: 8 }}>
+                      <Select mode={shiftSelectMode} style={{ borderRadius: 8 }}>
                         <Option value="morning">Sáng</Option>
                         <Option value="afternoon">Chiều</Option>
                       </Select>
                     </Form.Item>
+
                   </Col>
                 </Row>
                 {editingShift && (
@@ -885,6 +1039,25 @@ const AdminDoctorShiftManagement = () => {
                     </Select>
                   </Form.Item>
                 )}
+                <div style={{ fontSize: 14, color: "#555", marginTop: 8, userSelect: "none", marginLeft: 10 }}>
+                  {form.getFieldValue("workDate") ? (() => {
+                    const dayOfWeek = dayjs(form.getFieldValue("workDate")).day();
+                    const times = getShiftTimesByDay(dayOfWeek);
+
+                    return (
+                      <>
+                        <div>
+                          <b>Ca sáng:</b> {times.morning?.startTime || "--"} - {times.morning?.endTime || "--"}
+                        </div>
+                        <div>
+                          <b>Ca chiều:</b> {times.afternoon?.startTime || "--"} - {times.afternoon?.endTime || "--"}
+                        </div>
+                      </>
+                    );
+                  })() : (
+                    <div>Vui lòng chọn ngày làm việc để xem giờ ca làm.</div>
+                  )}
+                </div>
               </Form>
             </Modal>
 
@@ -912,11 +1085,20 @@ const AdminDoctorShiftManagement = () => {
                 >
                   Sửa
                 </Button>,
+                // <Button
+                //   key="delete"
+                //   danger
+                //   disabled={isShiftDisabled(selectedEvent)}
+                //   onClick={() => onDeleteShift(selectedEvent.id)}
+                //   style={{ borderRadius: 8 }}
+                // >
+                //   Xoá
+                // </Button>,
                 <Button
                   key="delete"
                   danger
                   disabled={isShiftDisabled(selectedEvent)}
-                  onClick={() => onDeleteShift(selectedEvent.id)}
+                  onClick={() => showDeleteConfirm(selectedEvent)}
                   style={{ borderRadius: 8 }}
                 >
                   Xoá
@@ -960,7 +1142,7 @@ const AdminDoctorShiftManagement = () => {
                       <List.Item key={p.id}>
                         <List.Item.Meta
                           title={<b>{p.name}</b>}
-                          description={`Tuổi: ${p.age} | Giới tính: ${p.gender} | Dịch vụ: ${p.service} | Ghi chú: ${p.note || "Không có"}`}
+                          description={`Tuổi: ${p.age} | Giới tính: ${p.gender} | Dịch vụ: ${p.serviceName} | Giá: ${p.servicePrice} | Ghi chú: ${p.note || "Không có"}`}
                         />
                       </List.Item>
                     )}
@@ -972,6 +1154,32 @@ const AdminDoctorShiftManagement = () => {
                 <div>Không có dữ liệu lịch làm việc.</div>
               )}
             </Modal>
+
+            <Modal
+              visible={deleteConfirmVisible}
+              title="Xác nhận xóa ca làm việc?"
+              onOk={async () => {
+                try {
+                  console.log("Deleting shift:", shiftToDelete.id);
+                  await deleteDoctorSchedule(shiftToDelete.id);
+                  setFlag(prev => !prev);
+                  dispatch(setMessage({ type: 'success', content: 'Xóa ca làm việc thành công!' }));
+                } catch (error) {
+                  dispatch(setMessage({ type: 'error', content: 'Lỗi xoá ca làm việc!' }));
+                } finally {
+                  setDeleteConfirmVisible(false);
+                  setShiftToDelete(null);
+                  setModalDetail(false);
+                }
+              }}
+              onCancel={() => {
+                setDeleteConfirmVisible(false);
+                setShiftToDelete(null);
+              }}
+              okText="Xóa"
+              cancelText="Hủy"
+              centered
+            />
           </div>
         </div>
       </ConfigProvider>

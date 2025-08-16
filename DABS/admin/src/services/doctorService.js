@@ -91,7 +91,7 @@ export const getDoctorsByDepartment = async (departmentId) => {
       await new Promise(resolve => setTimeout(resolve, 500));
       return sampleDoctors.filter(doctor => doctor.departmentId === parseInt(departmentId));
     }
-    
+
     const response = await api.get(`/departments/${departmentId}/doctors`);
     return response.data;
   } catch (error) {
@@ -103,38 +103,11 @@ export const getDoctorsByDepartment = async (departmentId) => {
 // Get all doctors
 export const getAllDoctors = async (params = {}) => {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      let filteredDoctors = [...sampleDoctors];
-      
-      if (params.search) {
-        const searchLower = params.search.toLowerCase();
-        filteredDoctors = filteredDoctors.filter(doctor => 
-          doctor.name.toLowerCase().includes(searchLower) ||
-          doctor.specialization.toLowerCase().includes(searchLower) ||
-          doctor.email.toLowerCase().includes(searchLower)
-        );
-      }
-      
-      if (params.status && params.status !== 'all') {
-        filteredDoctors = filteredDoctors.filter(doctor => doctor.status === params.status);
-      }
-      
-      if (params.departmentId) {
-        filteredDoctors = filteredDoctors.filter(doctor => doctor.departmentId === parseInt(params.departmentId));
-      }
-      
-      return {
-        items: filteredDoctors,
-        total: filteredDoctors.length
-      };
-    }
-    
-    const response = await api.get('/doctors', { params });
-    return response.data;
+    const result = await getAuth(`/doctors`);
+    console.log(`Fetched doctors:`, result);
+    return result.result;
   } catch (error) {
-    console.error('Error fetching doctors:', error);
+    console.error(`Error fetching doctors:`, error.message);
     throw error;
   }
 };
@@ -142,40 +115,85 @@ export const getAllDoctors = async (params = {}) => {
 // Create doctor
 export const createDoctor = async (doctorData) => {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log('🔄 createDoctor called with:', doctorData);
+
+    const response = await postAuth('/doctors/create', doctorData);
+    console.log('📥 createDoctor raw response:', response);
+
+    // ✅ Handle response
+    if (response && response.data) {
+      console.log('✅ createDoctor success:', response.data);
       return {
-        ...doctorData,
-        id: sampleDoctors.length + 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        success: true,
+        data: response.data,
+        message: 'Doctor created successfully'
+      };
+    } else if (response) {
+      console.log('✅ createDoctor success (direct):', response);
+      return {
+        success: true,
+        data: response,
+        message: 'Doctor created successfully'
+      };
+    } else {
+      throw new Error('Unexpected response format');
+    }
+  } catch (error) {
+    console.error('❌ createDoctor error:', error);
+
+    // ✅ Enhanced error logging
+    if (error.response) {
+      console.error('📄 Error response data:', error.response.data);
+      console.error('🔢 Error status:', error.response.status);
+      console.error('📋 Error headers:', error.response.headers);
+
+      // Log the actual API error message
+      if (error.response.data) {
+        console.error('🚨 API Error Message:', error.response.data.message || error.response.data.title || error.response.data);
+      }
+
+      return {
+        success: false,
+        error: error.response.data,
+        status: error.response.status,
+        message: error.response.data?.message || error.response.data?.title || 'Failed to create doctor'
+      };
+    } else if (error.request) {
+      console.error('📡 Network error:', error.request);
+      return {
+        success: false,
+        error: 'Network error',
+        message: 'Unable to connect to server. Please check your internet connection.'
+      };
+    } else {
+      console.error('⚙️ Setup error:', error.message);
+      return {
+        success: false,
+        error: error.message,
+        message: error.message || 'An unexpected error occurred'
       };
     }
-    
-    const response = await api.post('/doctors/create', doctorData);
-    return response.data;
-  } catch (error) {
-    console.error('Error creating doctor:', error);
-    throw error;
   }
 };
 
 // Update doctor
-export const updateDoctor = async (id, doctorData) => {
+export const updateDoctor = async (updateData) => {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return {
-        ...doctorData,
-        id,
-        updatedAt: new Date().toISOString()
-      };
-    }
-    
-    const response = await api.put(`/doctors/${id}`, doctorData);
+    console.log('📤 Sending updateDoctor request to /api/v1/doctors/update');
+    console.log('📤 Update data:', JSON.stringify(updateData, null, 2));
+
+    // ✅ Use correct endpoint from swagger
+    const response = await api.put('/doctors/update', updateData);
+
+    console.log('✅ UpdateDoctor response:', response.data);
     return response.data;
+
   } catch (error) {
-    console.error('Error updating doctor:', error);
+    console.error('❌ UpdateDoctor error:', error);
+    console.error('❌ Error response:', error.response?.data);
+    console.error('❌ Error status:', error.response?.status);
+    console.error('❌ Request URL:', error.config?.url);
+    console.error('❌ Request method:', error.config?.method);
     throw error;
   }
 };
@@ -183,12 +201,9 @@ export const updateDoctor = async (id, doctorData) => {
 // Delete doctor
 export const deleteDoctor = async (id) => {
   try {
-    if (process.env.NODE_ENV === 'development') {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return true;
-    }
-    
-    const response = await api.delete(`/doctors/${id}`);
+
+
+    const response = await deleteAuth(`/doctors`, id);
     return response.data;
   } catch (error) {
     console.error('Error deleting doctor:', error);
@@ -203,7 +218,7 @@ export const assignDoctorToDepartment = async (doctorId, departmentId) => {
       await new Promise(resolve => setTimeout(resolve, 600));
       return true;
     }
-    
+
     const response = await api.put(`/doctors/${doctorId}/assign-department`, { departmentId });
     return response.data;
   } catch (error) {
@@ -245,6 +260,45 @@ export const updateDoctorByDoctor = async (userData) => {
     return result;
   } catch (error) {
     console.error(`Error updating user with ID ${userData.id}:`, error.message);
+    throw error;
+  }
+};
+
+// Alias for getAllDoctors to support StaffManagement component
+
+
+// Function to update doctor status
+export const updateDoctorStatus = async (doctorId, status) => {
+  try {
+    if (process.env.NODE_ENV === 'development') {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      // Update the sample data for development
+      const doctor = sampleDoctors.find(d => d.id === doctorId);
+      if (doctor) {
+        doctor.status = status;
+        doctor.isActive = status === 'active';
+      }
+      return { success: true, message: 'Doctor status updated successfully' };
+    }
+
+    const response = await api.put(`/doctors/${doctorId}/status`, { status });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating doctor status:', error);
+    throw error;
+  }
+};
+
+
+export const getDoctorDetail = async (id) => {
+  try {
+    const result = await get(`/doctors/${id}`);
+    if (!result || !result.result) {
+      throw new Error('doctors data is missing in the response.');
+    }
+    return result.result;
+  } catch (error) {
+    console.error(`Error fetching doctors with ID ${id}:`, error.message);
     throw error;
   }
 };
