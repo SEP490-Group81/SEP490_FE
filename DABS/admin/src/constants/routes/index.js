@@ -107,9 +107,9 @@ export const routes = [
     children: [
       { index: true, element: <HospitalStaffHome /> },
       { path: "review-feedback", element: <ReviewFeedback /> },
-      { path: "staff-profile", element: <StaffProfile /> },
-      { path: "work-schedule", element: <StaffWorkSchedule /> },
-      { path: "request-leave", element: <DoctorRequestLeave /> },
+      { path: "staff-profile", element: <StaffProfile /> },  // đã vẽ
+      { path: "work-schedule", element: <StaffWorkSchedule /> }, // đã vẽ
+      { path: "request-leave", element: <DoctorRequestLeave /> }, // đã vẽ
     ],
   },
   {
