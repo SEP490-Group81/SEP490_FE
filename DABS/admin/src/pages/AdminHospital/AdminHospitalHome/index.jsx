@@ -41,13 +41,7 @@ const AdminHospitalHome = () => {
       color: "#fffbe6",
       borderColor: "#ffe58f",
     },
-    {
-      title: "Bệnh nhân đang điều trị",
-      value: 150,
-      icon: <UserOutlined />,
-      color: "#fff0f6",
-      borderColor: "#ffadd2",
-    },
+    
   ];
 
   const notifications = [

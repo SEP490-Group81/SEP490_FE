@@ -40,7 +40,7 @@ function MenuSider() {
         }
     ];
 
-    
+
     const hospitalAdminItems = [
         {
             key: "home",
@@ -51,6 +51,11 @@ function MenuSider() {
             key: "hospital-statistic",
             label: <Link to="/admin-hospital/hospital-statistic">Thống kê</Link>,
             icon: <LineChartOutlined />,
+        },
+        {
+            key: "payment-list",
+            label: <Link to="/admin-hospital/payment-list">Thanh toán</Link>,
+            icon: <UnorderedListOutlined />,
         },
         {
             key: "staffs",
@@ -104,11 +109,7 @@ function MenuSider() {
             label: <Link to="/admin-hospital/leave-request-management">Đơn xin nghỉ phép</Link>,
             icon: <InboxOutlined />,
         },
-        // {
-        //     key: "payment-list",
-        //     label: <Link to="/admin-hospital/payment-list">Thanh toán</Link>,
-        //     icon: <UnorderedListOutlined />,
-        // },
+
     ];
 
     const doctorItems = [
@@ -140,7 +141,7 @@ function MenuSider() {
             label: <Link to="/nurse">Dashboard</Link>,
             icon: <DashboardOutlined />,
         },
-        
+
         {
             key: "nurse-profile",
             label: <Link to="/nurse/nurse-profile">Hồ sơ cá nhân</Link>,

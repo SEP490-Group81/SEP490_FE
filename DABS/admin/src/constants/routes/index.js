@@ -40,6 +40,7 @@ import PaymentCancelled from "../../pages/Payment/PaymentCancelled";
 import { DOCTOR, HOSPITALADMIN, HOSPITALSTAFF, NURSE, SYSTEMADMIN } from "../roles/role";
 import MyHospital from "../../pages/AdminHospital/HospitalDetail/HospitalDetail";
 import PatientAppointmentList from "../../pages/Nurse/PatientAppointmentList";
+import AdminTrackPaymentPage from "../../pages/AdminHospital/PaymentTracking/AdminTrackPayment";
 
 export const routes = [
   {
@@ -76,7 +77,7 @@ export const routes = [
       { path: "medical-service-management", element: <MedicalServiceManagement /> },  // đã vẽ
       { path: "leave-request-management", element: <LeaveRequestManagement /> }, // đã vẽ
       { path: "hospital-statistic", element: <HospitalStatisticPage /> },
-    //  { path: "payment-list", element: <NurseUnpaidBookingList /> },
+      { path: "payment-list", element: <AdminTrackPaymentPage /> },
       {
         path: "hospital-detail",
         element: <MyHospital />,
