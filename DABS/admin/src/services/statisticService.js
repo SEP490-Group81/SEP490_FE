@@ -15,3 +15,27 @@ export const getStatisticHospitalId = async (fromDate, toDate) => {
     throw error;
   }
 };
+
+export const getHospitalParameter = async () => {
+  try {
+ 
+    const result = await getAuth("/dashboards/hospital-parameter");
+    console.log("result is : ", result);
+    return result;
+  } catch (error) {
+    console.error(`Error fetching statistic:`, error.message);
+    throw error;
+  }
+};
+
+
+export const getSystemAdminDashboard = async (hospitalId) => {
+  try {
+    const result = await getAuth(`/dashboards/system-dashboard/${hospitalId}`);
+    console.log("result is : ", result);
+    return result;
+  } catch (error) {
+    console.error(`Error fetching statistic:`, error.message);
+    throw error;
+  }
+};

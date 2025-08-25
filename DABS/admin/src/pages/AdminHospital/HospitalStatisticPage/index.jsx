@@ -16,7 +16,8 @@ import utc from "dayjs/plugin/utc";
 import "dayjs/locale/vi";
 import viVN from "antd/es/locale/vi_VN";
 import { getStatisticHospitalId } from "../../../services/statisticService";
-dayjs.extend(utc);
+import customParseFormat from "dayjs/plugin/customParseFormat";
+dayjs.extend(customParseFormat);
 dayjs.locale("vi");
 
 const { Title } = Typography;
@@ -41,6 +42,16 @@ const HospitalStatisticPage = () => {
     trangThaiBacSi: [],
   });
 
+  const getStatusText = (status) => {
+    switch (status) {
+      case 1: return "Đang chờ";
+      case 2: return "Đã xác nhận";
+      case 3: return "Đã hủy";
+      case 4: return "Hoàn thành";
+      default: return "Không rõ";
+    }
+  };
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -56,6 +67,8 @@ const HospitalStatisticPage = () => {
           doanhThu: data.revenue,
           soNhanVienCoMat: data.staffLeaveToday,
           soNhanVienHienCo: 0,
+          tongBacSi: data.totalDoctor,
+          tongNhanVien: data.totalStaff,
           doanhThuTheoNgay: data.dailyRevenues.map(item => ({
             ngay: item.dayLabel,
             doanhThu: item.revenue,
@@ -145,8 +158,28 @@ const HospitalStatisticPage = () => {
           <Col span={4}>
             <Card style={{ backgroundColor: "#f0f5ff" }}>
               <Statistic
-                title="Nhân viên (Hiện diện / Tổng)"
-                value={`${stats.soNhanVienCoMat} / ${stats.soNhanVienHienCo}`}
+                title="Nhân viên vắng"
+                value={`${stats.soNhanVienCoMat}`}
+                valueStyle={{ color: "#52c41a" }}
+                loading={loading}
+              />
+            </Card>
+          </Col>
+           <Col span={4}>
+            <Card style={{ backgroundColor: "#f0f5ff" }}>
+              <Statistic
+                title="Số lượng bác sĩ"
+                value={`${stats.tongBacSi}`}
+                valueStyle={{ color: "#52c41a" }}
+                loading={loading}
+              />
+            </Card>
+          </Col>
+           <Col span={4}>
+            <Card style={{ backgroundColor: "#f0f5ff" }}>
+              <Statistic
+                title="Số lượng nhân viên"
+                value={`${stats.tongNhanVien}`}
                 valueStyle={{ color: "#52c41a" }}
                 loading={loading}
               />
@@ -157,6 +190,7 @@ const HospitalStatisticPage = () => {
         <Row gutter={16} style={{ marginBottom: 24, textAlign: "right" }}>
           <Col span={24}>
             <RangePicker
+            locale={viVN}
               value={dateRange}
               onChange={(dates) => dates && setDateRange(dates)}
               format="DD/MM/YYYY"
@@ -186,12 +220,32 @@ const HospitalStatisticPage = () => {
               <Table
                 size="small"
                 pagination={{ pageSize: 5 }}
-                dataSource={stats.lichHen}
+                dataSource={stats.lichHen.map((item) => ({
+                  key: item.id,
+                  benhNhan: `Bệnh nhân #${item.patientId}`,
+                  bacSi: `Bác sĩ ${item.serviceId}`,
+                  ngay: dayjs(item.appointmentTime).format("DD/MM/YYYY"),
+                  dichVu: item.serviceName,
+                  trangThai: getStatusText(item.status),
+                }))}
                 columns={[
                   { title: "Tên bệnh nhân", dataIndex: "benhNhan", key: "benhNhan" },
                   { title: "Bác sĩ", dataIndex: "bacSi", key: "bacSi" },
                   { title: "Ngày khám", dataIndex: "ngay", key: "ngay" },
                   { title: "Dịch vụ", dataIndex: "dichVu", key: "dichVu" },
+                  {
+                    title: "Trạng thái",
+                    dataIndex: "trangThai",
+                    key: "trangThai",
+                    render: (text) => {
+                      let color = "blue";
+                      if (text === "Đang chờ") color = "orange";
+                      else if (text === "Đã xác nhận") color = "green";
+                      else if (text === "Đã hủy") color = "red";
+                      else if (text === "Hoàn thành") color = "blue";
+                      return <Tag color={color}>{text}</Tag>;
+                    }
+                  },
                 ]}
                 locale={{ emptyText: "Không có lịch hẹn nào" }}
                 loading={loading}
@@ -200,28 +254,7 @@ const HospitalStatisticPage = () => {
           </Col>
         </Row>
 
-        <Row gutter={16} style={{ marginBottom: 24 }}>
-          <Col span={24}>
-            <Card title="Trạng thái bác sĩ" loading={loading}>
-              <Table
-                size="small"
-                pagination={false}
-                dataSource={stats.trangThaiBacSi}
-                columns={[
-                  { title: "Tên bác sĩ", dataIndex: "ten", key: "ten" },
-                  {
-                    title: "Trạng thái",
-                    dataIndex: "trangThai",
-                    key: "trangThai",
-                    render: (text) => <Tag color={text === "Có mặt" ? "green" : "orange"}>{text}</Tag>,
-                  },
-                ]}
-                locale={{ emptyText: "Không có dữ liệu trạng thái bác sĩ" }}
-                loading={loading}
-              />
-            </Card>
-          </Col>
-        </Row>
+  
       </div>
     </ConfigProvider>
   );
