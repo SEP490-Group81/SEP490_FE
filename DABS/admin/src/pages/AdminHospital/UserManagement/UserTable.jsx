@@ -228,29 +228,8 @@ const UserTable = ({ users, loading, pagination, onChange, onReload }) => {
                 );
             },
         },
-        {
-            title: 'Bệnh viện',
-            key: 'hospital',
-            width: 180,
-            render: (_, record) => (
-                <span style={{
-                    fontSize: '12px',
-                    color: record.hospitalName ? '#333' : '#999'
-                }}>
-                    {record.hospitalName || 'Chưa phân công'}
-                </span>
-            ),
-        },
-        {
-            title: 'Trạng thái',
-            key: 'status',
-            width: 120,
-            render: (_, record) => (
-                <Tag color={getStatusColor(record.active)} className="user-status-tag">
-                    {record.active ? 'HOẠT ĐỘNG' : 'TẠM KHÓA'}
-                </Tag>
-            ),
-        },
+
+
         {
             title: 'Xác thực',
             key: 'verification',
