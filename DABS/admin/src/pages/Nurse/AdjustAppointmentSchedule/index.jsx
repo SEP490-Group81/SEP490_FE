@@ -29,7 +29,7 @@ import {
   StopOutlined,
 } from "@ant-design/icons";
 import { getHospitalSpecializationSchedule } from "../../../services/scheduleService";
-import { getAllPatients } from "../../../services/userService";
+import { getPatientByHospitalId } from "../../../services/userService";
 import {
   changeAppointmentStatus,
   changeAppointmentTime,
@@ -52,7 +52,7 @@ const APPOINTMENT_STATUS = {
 
 const AdjustAppointmentSchedule = () => {
   const hospitalId = useSelector((state) => state.user.user?.hospitals?.[0]?.id);
-
+  const user = useSelector((state) => state.user.user || null);
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [specializations, setSpecializations] = useState([]);
@@ -77,7 +77,52 @@ const AdjustAppointmentSchedule = () => {
 
   const [filterDateFrom, setFilterDateFrom] = useState(currentRange.start);
   const [filterDateTo, setFilterDateTo] = useState(currentRange.end);
+  const [showGroupedModal, setShowGroupedModal] = useState(false);
+  const [groupedEvents, setGroupedEvents] = useState([]);
+
+  const [detailEvent, setDetailEvent] = useState(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+
   const dispatch = useDispatch();
+
+
+  const groupEvents = (events) => {
+    const grouped = [];
+    const visited = new Set();
+
+    for (let i = 0; i < events.length; i++) {
+      if (visited.has(events[i].id)) continue;
+
+      const group = [events[i]];
+      visited.add(events[i].id);
+
+      for (let j = i + 1; j < events.length; j++) {
+        if (visited.has(events[j].id)) continue;
+
+        if (events[j].start === events[i].start && events[j].end === events[i].end) {
+          group.push(events[j]);
+          visited.add(events[j].id);
+        }
+      }
+
+      if (group.length > 1) {
+        grouped.push({
+          id: 'group-' + group[0].id,
+          title: `Có ${group.length} lịch hẹn`,
+          start: group[0].start,
+          end: group[0].end,
+          room: "Phòng nhiều dịch vụ",        
+          serviceName: group.extendedProps?.serviceName,
+          groupedEvents: group,
+          isGroup: true,
+          backgroundColor: "#90caf9",
+        });
+      } else {
+        grouped.push(group[0]);
+      }
+    }
+    return grouped;
+  };
 
   useEffect(() => {
     const fetchSchedules = async () => {
@@ -85,6 +130,33 @@ const AdjustAppointmentSchedule = () => {
     };
     fetchSchedules();
   }, [filterDoctorId, filterSpecId, hospitalId, filterDateFrom, filterDateTo]);
+
+  const EVENT_COLORS = {
+    PENDING: {
+      backgroundColor: "#fffde7",
+      borderColor: "#ffd600",
+      textColor: "#5d4037",
+      iconColor: "#fbc02d"
+    },
+    CONFIRMED: {
+      backgroundColor: "#e8f5e9",
+      borderColor: "#43a047",
+      textColor: "#1b5e20",
+      iconColor: "#388e3c"
+    },
+    COMPLETED: {
+      backgroundColor: "#e3f2fd",
+      borderColor: "#1e88e5",
+      textColor: "#0d47a1",
+      iconColor: "#1976d2"
+    },
+    CANCELLED: {
+      backgroundColor: "#eeeeee",
+      borderColor: "#bdbdbd",
+      textColor: "#616161",
+      iconColor: "#9e9e9e"
+    }
+  };
 
 
   useEffect(() => {
@@ -122,15 +194,36 @@ const AdjustAppointmentSchedule = () => {
     </Row>
   );
 
-  const defaultEventColor = {
-    backgroundColor: "#cfd8dc",
-    borderColor: "#42a5f5",
-    textColor: "#0d47a1",
-  };
-  const renderEventContent = (eventInfo) => {
-    const { title, extendedProps } = eventInfo.event;
-    const status = extendedProps.status;
+  const filteredAppointments = appointments.filter(a =>
+    a.extendedProps.status !== APPOINTMENT_STATUS.CANCELLED &&
+    a.extendedProps.status !== APPOINTMENT_STATUS.COMPLETED
+  );
 
+  const groupedAppointments = groupEvents(filteredAppointments);
+
+  const finalEvents = groupedAppointments.filter(event => {
+    if (event.extendedProps?.isGroup) {
+      return true;
+    }
+    return !groupedAppointments.some(groupEvent =>
+      groupEvent.extendedProps?.isGroup &&
+      groupEvent.start === event.start &&
+      groupEvent.end === event.end
+    );
+  });
+  const renderEventContent = (eventInfo) => {
+    const { title, extendedProps, backgroundColor, borderColor, textColor } = eventInfo.event;
+    const status = extendedProps.status;
+    if (extendedProps.isGroup) {
+      return (
+        <div style={{ padding: "4px 8px", background: backgroundColor, border: `1px solid ${borderColor}`, borderRadius: 8 }}>
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <CalendarOutlined style={{ color: textColor, marginRight: 6 }} />
+            <b style={{ color: textColor, flex: 1, fontWeight: "700", fontSize: 14 }}>{title}</b>
+          </div>
+        </div>
+      );
+    }
     let icon = null;
     let color = "#174378";
     let statusColor = "#0b2a44";
@@ -148,12 +241,12 @@ const AdjustAppointmentSchedule = () => {
         break;
       case APPOINTMENT_STATUS.COMPLETED:
         icon = <CalendarOutlined style={{ color: "#1976d2", marginRight: 6 }} />;
-        color = "#0d47a1";  
+        color = "#0d47a1";
         statusColor = "#0b3d91";
         break;
       case APPOINTMENT_STATUS.CANCELLED:
         icon = <StopOutlined style={{ color: "#9e9e9e", marginRight: 6 }} />; // xám mềm
-        color = "#424242";  // xám đen nhẹ
+        color = "#424242";
         statusColor = "#616161";
         break;
       default:
@@ -196,34 +289,45 @@ const AdjustAppointmentSchedule = () => {
 
 
   useEffect(() => {
-    if (!selectedEvent) {
+    const currentEvent = selectedEvent || detailEvent;
+
+    // Nếu không có event thì xóa steps
+    if (!currentEvent) {
       setServiceSteps([]);
       return;
     }
-    const serviceId = selectedEvent.extendedProps.serviceId;
-    console.log("service id is : " + serviceId);
+
+    const serviceId = currentEvent.extendedProps?.serviceId;
     if (!serviceId) {
       setServiceSteps([]);
       return;
     }
+
+    let isMounted = true;
     (async () => {
       try {
         const steps = await getStepByServiceId(serviceId);
-        console.log("stepss is ", JSON.stringify(steps));
-        setServiceSteps(steps || []);
+        if (isMounted) setServiceSteps(steps || []);
       } catch {
-        setServiceSteps([]);
+        if (isMounted) setServiceSteps([]);
       }
     })();
-  }, [selectedEvent]);
+
+    // Cleanup function tránh update state khi component đã unmount
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedEvent, detailEvent]);
+
+
 
   const isSpecializationStepEnabled = serviceSteps.some(step => step.steps.id === 1 && step.status === true);
-  const isDoctorStepEnabled = serviceSteps.some(step => step.steps.id === 5 && step.status === true);
+  const isDoctorStepEnabled = serviceSteps.some(step => step.steps.id === 2 && step.status === true);
 
   useEffect(() => {
     (async () => {
       try {
-        const data = await getAllPatients();
+        const data = await getPatientByHospitalId(user?.hospitals?.[0]?.id);;
         setPatients(data || []);
       } catch {
         console.error("Failed to fetch patients");
@@ -269,6 +373,8 @@ const AdjustAppointmentSchedule = () => {
           currentRange.end.toISOString()
         );
         console.log("list appoint is : " + JSON.stringify(list));
+
+
         const events = list.map((item) => {
           const workDateStr = item.doctorSchedule.workDate.split("T")[0];
           const startDT = dayjs(`${workDateStr}T${item.doctorSchedule.startTime}`).toISOString();
@@ -277,10 +383,14 @@ const AdjustAppointmentSchedule = () => {
           const classNames = [];
           if (item.status === APPOINTMENT_STATUS.CANCELLED) classNames.push("fc-event-cancelled");
           if (item.status === APPOINTMENT_STATUS.COMPLETED) classNames.push("fc-event-completed");
+          const statusKey = Object.keys(APPOINTMENT_STATUS).find(
+            k => APPOINTMENT_STATUS[k] === item.status
+          );
+          const eventColor = EVENT_COLORS[statusKey] || {};
           return {
             id: `appointment-${item.id}`,
             title: `Hẹn khám`,
-            backgroundColor: defaultEventColor.backgroundColor,
+            backgroundColor: eventColor.backgroundColor,
             start: startDT,
             end: endDT,
             classNames,
@@ -294,7 +404,7 @@ const AdjustAppointmentSchedule = () => {
               specializationName: item.doctorSchedule.specialization?.name,
               department: item.doctorSchedule.department,
               note: item.note,
-              serviceId: item.service?.id,
+              serviceId: item.serviceId,
               status: item.status,
               room: item.doctorSchedule.room?.name,
               serviceName: item.serviceName,
@@ -344,11 +454,16 @@ const AdjustAppointmentSchedule = () => {
   };
 
   const openModal = async (event) => {
-    setSelectedEvent(event);
-    setFilterDoctorId(event.extendedProps.doctorId || null);
-    setFilterSpecId(event.extendedProps.specializationId || null);
-    setSelectedScheduleId(null);
-    setModalOpen(true);
+    if (event.extendedProps.isGroup) {
+      setGroupedEvents(event.extendedProps.groupedEvents);
+      setShowGroupedModal(true);
+    } else {
+      setSelectedEvent(event);
+      setFilterDoctorId(event.extendedProps.doctorId || null);
+      setFilterSpecId(event.extendedProps.specializationId || null);
+      setSelectedScheduleId(null);
+      setModalOpen(true);
+    }
 
     await loadAvailableSchedules(event.extendedProps.doctorId, event.extendedProps.specializationId);
   };
@@ -384,7 +499,7 @@ const AdjustAppointmentSchedule = () => {
 
     try {
       await changeAppointmentStatus(appointmentId, newStatus);
-      dispatch(setMessage({ type: "success", content: `Đã cập nhật trạng thái thành "${newStatus === APPOINTMENT_STATUS.CONFIRMED ? "Chấp nhận" : "Hoàn thành"}".` }));
+      dispatch(setMessage({ type: "success", content: `Đã cập nhật trạng thái thành "${newStatus === APPOINTMENT_STATUS.CONFIRMED ? "Xác nhận" : "Hoàn thành"}".` }));
       setFlag(prev => !prev);
       setModalOpen(false);
     } catch {
@@ -451,7 +566,7 @@ const AdjustAppointmentSchedule = () => {
           <Title level={2} style={{ textAlign: "center", marginBottom: 20 }}>
             Quản lý lịch hẹn & ca làm việc
           </Title>
-          <Legend />
+          {/* <Legend /> */}
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={8}>
               <Select
@@ -479,11 +594,8 @@ const AdjustAppointmentSchedule = () => {
             initialView="timeGridWeek"
             locale={viLocale}
             editable={false}
-            events={appointments.filter(
-              (a) =>
-                a.extendedProps.status !== APPOINTMENT_STATUS.CANCELLED &&
-                a.extendedProps.status !== APPOINTMENT_STATUS.COMPLETED
-            )}
+            eventDisplay="list-item"
+            events={finalEvents}
             eventContent={renderEventContent}
             eventClick={({ event }) => openModal(event)}
             height={600}
@@ -500,7 +612,175 @@ const AdjustAppointmentSchedule = () => {
             firstDay={1}
             initialDate={currentRange.start.toISOString()}
           />
+          <Modal
+            open={showGroupedModal}
+            onCancel={() => setShowGroupedModal(false)}
+            footer={null}
+            title="Danh sách lịch hẹn nhóm"
+          >
+            <List
+              dataSource={groupedEvents}
+              renderItem={(item) => (
+                <List.Item style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    openModal(item)
+                    setShowGroupedModal(false)
+                  }}>
+                  <Text strong>{item.title}</Text> -{" "}
+                  <Text>{typeof item.extendedProps?.room === 'string' ? item.extendedProps.room : item.extendedProps?.room?.name}</Text> -{" "}
+                  <Text>{item.extendedProps?.serviceName}</Text>
+                </List.Item>
+              )}
+            />
+          </Modal>
+          <Modal
+            open={detailModalOpen}
+            onCancel={() => setDetailModalOpen(false)}
+            footer={null}
+            centered
+            title={detailEvent?.title ? `Chi tiết: ${detailEvent.title}` : "Chi tiết"}
+            width={700}
+          >
+            {detailEvent ? (
+              <>
+                <p>
+                  <b>Thời gian:</b> {dayjs(detailEvent.start).format("DD/MM/YYYY HH:mm")} -{" "}
+                  {dayjs(detailEvent.end).format("HH:mm")}
+                </p>
+                <p><b>Dịch vụ:</b> {detailEvent.extendedProps.serviceName}</p>
+                <p><b>Bệnh nhân:</b> {detailEvent.extendedProps.patientName}</p>
+                <p><b>Chuyên khoa hiện tại:</b> {detailEvent.extendedProps.specializationName || "Không rõ"}</p>
+                <p><b>Phòng:</b> {detailEvent.extendedProps.room || "Không rõ"}</p>
+                <p><b>Trạng thái:</b> {getStatusText(detailEvent.extendedProps.status)}</p>
+                <p><b>Ghi chú:</b> {detailEvent.extendedProps.note || "Không có"}</p>
 
+                <Row gutter={16} style={{ marginTop: 16 }}>
+
+                  <Col span={12}>
+                    <label>Bác sĩ (lọc ca khả dụng):</label>
+                    <Select
+                      allowClear
+                      style={{ width: "100%" }}
+                      value={filterDoctorId}
+                      onChange={setFilterDoctorId}
+                      placeholder="Chọn bác sĩ"
+                      showSearch
+                      disabled={!isDoctorStepEnabled}
+                      filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+                    >
+                      {doctors.map(doc => (
+                        <Option key={doc.id} value={doc.id}>
+                          {doc.user?.fullname || doc.description || `Bác sĩ #${doc.id}`}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Col>
+                  <Col span={12}>
+                    <label>Khoảng ngày:</label>
+                    <RangePicker
+                      value={[filterDateFrom, filterDateTo]}
+                      format="DD/MM/YYYY"
+                      onChange={(dates) => {
+                        setFilterDateFrom(dates?.[0] || null);
+                        setFilterDateTo(dates?.[1] || null);
+                      }}
+                      allowEmpty={[false, false]}
+                      style={{ width: "100%" }}
+                    />
+                  </Col>
+                  <Col span={12}>
+                    <label>Chuyên khoa (lọc ca khả dụng):</label>
+                    <Select
+                      allowClear
+                      style={{ width: "100%" }}
+                      value={filterSpecId}
+                      onChange={setFilterSpecId}
+                      placeholder="Chọn chuyên khoa"
+                      showSearch
+                      disabled={!isSpecializationStepEnabled}
+                      filterOption={(input, option) => option.children.toLowerCase().includes(input.toLowerCase())}
+                    >
+                      {specializations.map(spec => (
+                        <Option key={spec.id} value={spec.id}>{spec.name}</Option>
+                      ))}
+                    </Select>
+                  </Col>
+                </Row>
+
+                <div style={{ marginTop: 20 }}>
+                  <label>Chọn ca làm việc khả dụng để đổi lịch:</label>
+                  {availableSchedules.length === 0 ? (
+                    <Text type="secondary">
+                      Vui lòng chọn bác sĩ hoặc chuyên khoa để hiển thị ca làm việc khả dụng
+                    </Text>
+                  ) : (
+                    <List
+                      bordered
+                      dataSource={availableSchedules}
+                      renderItem={(item) => {
+                        const workDate = dayjs(item.workDate).format("DD/MM/YYYY");
+                        return (
+                          <List.Item
+                            style={{
+                              cursor: "pointer",
+                              backgroundColor: selectedScheduleId === item.id ? "rgba(100, 181, 246, 0.3)" : "transparent",
+                            }}
+                            onClick={() => setSelectedScheduleId(item.id)}
+                          >
+                            <Text strong>
+                              Ca {item.startTime >= "07:30:00" && item.endTime <= "12:00:00" ? "Sáng" : "Chiều"} - {workDate}
+                            </Text>
+                            <br />
+                            <Text>
+                              {item.startTime} - {item.endTime} - Phòng {item.roomName || "Không rõ"}
+                            </Text>
+                          </List.Item>
+                        );
+                      }}
+                      style={{ maxHeight: 200, overflowY: "auto", marginBottom: 16 }}
+                    />
+                  )}
+                </div>
+
+                <div style={{ textAlign: "right" }}>
+                  <Button
+                    type="primary"
+                    disabled={
+                      !selectedScheduleId ||
+                      detailEvent?.extendedProps.status === APPOINTMENT_STATUS.CANCELLED ||
+                      detailEvent?.extendedProps.status === APPOINTMENT_STATUS.COMPLETED
+                    }
+                    onClick={handleChangeTime}
+                    style={{ marginRight: 8 }}
+                  >
+                    Đổi lịch hẹn
+                  </Button>
+                  {nextStatusLabel && (
+                    <Button
+                      type="primary"
+                      disabled={
+                        detailEvent?.extendedProps.status === APPOINTMENT_STATUS.CANCELLED ||
+                        detailEvent?.extendedProps.status === APPOINTMENT_STATUS.COMPLETED
+                      }
+                      onClick={handleChangeStatus}
+                      style={{ marginRight: 8 }}
+                    >
+                      {nextStatusLabel}
+                    </Button>
+                  )}
+                  <Button
+                    danger
+                    disabled={detailEvent?.extendedProps.status === APPOINTMENT_STATUS.CANCELLED}
+                    onClick={handleCancelAppointment}
+                  >
+                    Hủy lịch hẹn
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <p>Không có dữ liệu</p>
+            )}
+          </Modal>
           <Modal
             open={modalOpen}
             onCancel={() => setModalOpen(false)}

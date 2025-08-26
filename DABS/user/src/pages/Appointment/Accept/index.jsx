@@ -357,9 +357,11 @@ function AppointmentReviewPage() {
                                             label: "Ngày khám",
                                             value: (
                                                 <>
-                                                    {stepData?.date || "Không rõ"} (
+                                                    {stepData?.date
+                                                        ? dayjs(stepData.date).format("DD/MM/YYYY")
+                                                        : "Không rõ"} (
                                                     <span style={{ fontWeight: 500 }}>
-                                                        {stepData?.shift === 'morning' ? 'Buổi sáng' : 'Buổi chiều'}
+                                                        {stepData?.shift === "morning" ? "Buổi sáng" : "Buổi chiều"}
                                                     </span>
                                                     )
                                                 </>
@@ -409,7 +411,7 @@ function AppointmentReviewPage() {
                                         </span>
                                         <Button
                                             type="link"
-                                            onClick={() => navigate("/profile")}
+                                            onClick={() => navigate("/profile", { state: { from: "appointmentReview", returnData: stepData } })}
                                             icon={<EyeOutlined />}
                                         >
                                             Xem chi tiết
