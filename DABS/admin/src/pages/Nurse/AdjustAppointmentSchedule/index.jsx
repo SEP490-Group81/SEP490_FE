@@ -111,7 +111,7 @@ const AdjustAppointmentSchedule = () => {
           title: `Có ${group.length} lịch hẹn`,
           start: group[0].start,
           end: group[0].end,
-          room: "Phòng nhiều dịch vụ",          // thêm tên phòng
+          room: "Phòng nhiều dịch vụ",        
           serviceName: group.extendedProps?.serviceName,
           groupedEvents: group,
           isGroup: true,
@@ -566,7 +566,7 @@ const AdjustAppointmentSchedule = () => {
           <Title level={2} style={{ textAlign: "center", marginBottom: 20 }}>
             Quản lý lịch hẹn & ca làm việc
           </Title>
-          <Legend />
+          {/* <Legend /> */}
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={8}>
               <Select

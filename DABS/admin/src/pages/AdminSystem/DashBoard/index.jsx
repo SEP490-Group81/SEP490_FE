@@ -244,7 +244,7 @@ const AdminSystemHomePage = () => {
                   />
                 </Card>
               </Col>
-              <Col xs={24} sm={12} md={6}>
+              {/* <Col xs={24} sm={12} md={6}>
                 <Card>
                   <Statistic
                     title="Doanh thu hôm nay (VNĐ)"
@@ -254,7 +254,7 @@ const AdminSystemHomePage = () => {
                     valueStyle={{ color: "#096dd9", fontWeight: "bold" }}
                   />
                 </Card>
-              </Col>
+              </Col> */}
             </Row>
 
             <RangePicker

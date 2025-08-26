@@ -179,7 +179,7 @@ const BookingHistory = () => {
 
                     // Patient information (using current user data)
                     patientName: user?.name || user?.fullName || 'Chưa có thông tin',
-                    patientPhone: user?.phone || 'Chưa có thông tin',
+                    patientPhone: user?.phoneNumber || 'Chưa có thông tin',
                     patientEmail: user?.email || 'Chưa có thông tin',
 
                     // Hospital information from doctorSchedule.hospital
