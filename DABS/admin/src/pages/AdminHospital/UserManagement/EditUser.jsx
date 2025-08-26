@@ -22,7 +22,7 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
     const [wards, setWards] = useState([]);
     const [selectedProvince, setSelectedProvince] = useState(null);
     const [loadingProvinces, setLoadingProvinces] = useState(false);
-    
+
     // ✅ Redux hooks for message handling
     const dispatch = useDispatch();
     const messageState = useSelector(state => state.message);
@@ -35,9 +35,9 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
     // ✅ Updated roles data matching your system
     const roles = [
         { id: 1, name: 'Người dùng', roleType: 1 },
-        
+
         { id: 4, name: 'Quản trị viên Bệnh viện', roleType: 4 },
-        
+
         { id: 6, name: 'Bệnh nhân', roleType: 6 },
         { id: 7, name: 'Y tá', roleType: 7 }
     ];
@@ -47,11 +47,11 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
         console.log('🎭 Role changed to:', roleId);
         const role = roles.find(r => r.id === roleId);
         setCurrentUserRole(role);
-        
+
         // ✅ Check if selected role is Patient (roleType: 6)
         const isPatient = role?.roleType === 6;
         setIsPatientRole(isPatient);
-        
+
         console.log('🔍 Is Patient Role:', isPatient);
     };
 
@@ -119,13 +119,13 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
         setLoadingProvinces(true);
         try {
             console.log('🔄 Đang tải danh sách tỉnh thành...');
-            
+
             const provincesData = await getProvinces();
             console.log('🌏 Đã tải tỉnh thành:', provincesData);
-            
+
             const processedProvinces = provincesData?.data || [];
             setProvinces(processedProvinces);
-            
+
             if (processedProvinces.length > 0) {
                 dispatch(setMessage({
                     type: 'success',
@@ -155,19 +155,19 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
         setLoading(true);
         try {
             console.log('🔄 Đang tải thông tin người dùng ID:', userId);
-            
+
             const userData = await getUserById(userId);
             console.log('👤 Dữ liệu người dùng từ API:', userData);
-            
+
             if (userData) {
                 setUserDetails(userData);
 
                 // ✅ NEW: Map current user role properly
                 let mappedRoleId = roles[0].id; // Default role
-                
+
                 if (userData.role) {
                     console.log('🎭 Role từ API:', userData.role);
-                    
+
                     // ✅ First try to find by roleType (more reliable)
                     const roleByType = roles.find(r => r.roleType === userData.role.roleType);
                     if (roleByType) {
@@ -297,12 +297,12 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
 
             if (isSuccess) {
                 console.log('✅ Cập nhật người dùng thành công');
-                
+
                 dispatch(setMessage({
                     type: 'success',
                     content: `🎉 Cập nhật ${values.fullname} thành công!`
                 }));
-                
+
                 // ✅ Reset state and close modal
                 setTimeout(() => {
                     setUserDetails(null);
@@ -317,7 +317,7 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
                 // ✅ Handle API error responses
                 const errorTitle = response?.title || response?.message || 'UPDATE_FAILED';
                 console.error('❌ Cập nhật thất bại:', errorTitle);
-                
+
                 dispatch(setMessage({
                     type: 'error',
                     content: getErrorMessage(errorTitle)
@@ -333,7 +333,7 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
             if (error.response?.data) {
                 const responseData = error.response.data;
                 console.log('📋 Error response data:', responseData);
-                
+
                 if (responseData.title) {
                     errorTitle = responseData.title;
                 } else if (responseData.message) {
@@ -368,7 +368,7 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
         setSelectedProvince(null);
         setWards([]);
         form.resetFields();
-        
+
         if (onCancel && typeof onCancel === 'function') {
             onCancel();
         }
@@ -437,10 +437,10 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
                         preserve={false}
                     >
                         {/* Account Information */}
-                        <div style={{ 
-                            marginBottom: 24, 
-                            padding: '16px', 
-                            background: '#f0f7ff', 
+                        <div style={{
+                            marginBottom: 24,
+                            padding: '16px',
+                            background: '#f0f7ff',
                             borderRadius: '8px',
                             border: '1px solid #d6e4ff'
                         }}>
@@ -468,13 +468,13 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
                                         rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
                                         hasFeedback
                                     >
-                                        <Select 
+                                        <Select
                                             placeholder="Chọn vai trò người dùng"
                                             onChange={handleRoleChange}
                                         >
                                             {roles.map(role => (
                                                 <Option key={role.id} value={role.id}>
-                                                    {role.name} (Type: {role.roleType})
+                                                    {role.name}
                                                     {role.roleType === 6 && (
                                                         <span style={{ color: '#fa8c16', marginLeft: 8 }}>
                                                             - Bệnh nhân
@@ -536,10 +536,10 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
                         </div>
 
                         {/* Personal Information */}
-                        <div style={{ 
-                            marginBottom: 24, 
-                            padding: '16px', 
-                            background: '#f6ffed', 
+                        <div style={{
+                            marginBottom: 24,
+                            padding: '16px',
+                            background: '#f6ffed',
                             borderRadius: '8px',
                             border: '1px solid #b7eb8f'
                         }}>
@@ -588,8 +588,8 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
                                     </Form.Item>
                                 </Col>
                                 <Col span={8}>
-                                    <Form.Item 
-                                        name="dob" 
+                                    <Form.Item
+                                        name="dob"
                                         label="Ngày sinh"
                                         rules={[
                                             {
@@ -616,8 +616,8 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
 
                             <Row gutter={16}>
                                 <Col span={12}>
-                                    <Form.Item 
-                                        name="job" 
+                                    <Form.Item
+                                        name="job"
                                         label="Nghề nghiệp"
                                         rules={[
                                             { max: 50, message: 'Nghề nghiệp không được vượt quá 50 ký tự' }
@@ -645,10 +645,10 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
                         </div>
 
                         {/* Address Information */}
-                        <div style={{ 
-                            marginBottom: 24, 
-                            padding: '16px', 
-                            background: '#fff7e6', 
+                        <div style={{
+                            marginBottom: 24,
+                            padding: '16px',
+                            background: '#fff7e6',
                             borderRadius: '8px',
                             border: '1px solid #ffd591'
                         }}>
@@ -656,8 +656,8 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
 
                             <Row gutter={16}>
                                 <Col span={8}>
-                                    <Form.Item 
-                                        name="province" 
+                                    <Form.Item
+                                        name="province"
                                         label="Tỉnh/Thành phố"
                                         rules={[
                                             { max: 50, message: 'Tỉnh/Thành phố không được vượt quá 50 ký tự' }
@@ -679,8 +679,8 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
                                     </Form.Item>
                                 </Col>
                                 <Col span={8}>
-                                    <Form.Item 
-                                        name="ward" 
+                                    <Form.Item
+                                        name="ward"
                                         label="Quận/Huyện"
                                         rules={[
                                             { max: 50, message: 'Quận/Huyện không được vượt quá 50 ký tự' }
@@ -702,8 +702,8 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
                                     </Form.Item>
                                 </Col>
                                 <Col span={8}>
-                                    <Form.Item 
-                                        name="streetAddress" 
+                                    <Form.Item
+                                        name="streetAddress"
                                         label="Địa chỉ cụ thể"
                                         rules={[
                                             { max: 200, message: 'Địa chỉ không được vượt quá 200 ký tự' }
@@ -751,10 +751,10 @@ const EditUser = ({ visible, record, onCancel, onSuccess }) => {
                                 </Button>
                             </Col>
                             <Col>
-                                <Button 
-                                    type="primary" 
-                                    htmlType="submit" 
-                                    loading={loading} 
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    loading={loading}
                                     icon={<EditOutlined />}
                                     size="large"
                                     style={{
