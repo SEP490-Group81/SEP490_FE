@@ -102,9 +102,7 @@ const BookingDetailDrawer = ({ booking, visible, onClose }) => {
             <Descriptions.Item label="Phí dịch vụ">
               <DollarOutlined /> {booking.fee?.toLocaleString() || 0} VNĐ
             </Descriptions.Item>
-            <Descriptions.Item label="Số thứ tự">
-              <BookOutlined /> #{booking.appointmentNumber || 0}
-            </Descriptions.Item>
+            
           </Descriptions>
         </div>
 
