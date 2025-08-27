@@ -858,21 +858,7 @@ const StaffManagementPage = () => {
                 </div>
             ),
         },
-        {
-            title: 'Trạng thái',
-            key: 'status',
-            width: 140,
-            render: (_, staffMember) => (
-                <Tag
-                    color={staffMember.status === 'active' ? 'success' : 'error'}
-                    icon={staffMember.status === 'active' ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => handleStatusToggle(staffMember)}
-                >
-                    {staffMember.status === 'active' ? 'HOẠT ĐỘNG' : 'VÔ HIỆU'}
-                </Tag>
-            ),
-        },
+
         {
             title: 'Hành động',
             key: 'actions',
